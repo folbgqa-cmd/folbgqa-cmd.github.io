@@ -995,4 +995,136 @@ function openColorPicker(e,ri,btnEl,rowEl){
     panel.appendChild(lbl);
     section.colors.forEach(c=>{
       const btn=document.createElement('button');
-      btn.className='cp-sw'+(cur
+      btn.className='cp-sw'+(currentColor===c?' sel':'');
+      btn.style.background=c;
+      if(c==='#ffffff')btn.style.border='2px solid #d1d9e0';
+      btn.onclick=ev=>{
+        ev.stopPropagation();
+        const t=getTable();if(!t)return;
+        t.rows[ri]._color=c;saveData();
+        if(btnEl)btnEl.style.background=c;
+        if(rowEl)rowEl.style.background=c;
+        closeCP();
+      };
+      panel.appendChild(btn);
+    });
+  });
+
+  const rect=e.target.getBoundingClientRect();
+  panel.style.top=(rect.bottom+6)+'px';
+  const right=window.innerWidth-rect.right+rect.width/2;
+  panel.style.right=Math.max(4,Math.min(window.innerWidth-50,right))+'px';
+  panel.style.left='auto';
+  panel.classList.add('open');
+  setTimeout(()=>document.addEventListener('click',closeCPOnClick),10);
+}
+function closeCPOnClick(){closeCP();document.removeEventListener('click',closeCPOnClick)}
+function closeCP(){document.getElementById('cp-panel').classList.remove('open')}
+
+// ─── SHARE (FIXED) ───
+function buildShareHTML(){
+  const tbl=getTable();if(!tbl)return '';
+  const cur=tbl.cur||'IQD';const sym=SYM[cur];
+  const colHeaders=tbl.cols.map(c=>`<th>${h(c.name)||'—'}</th>`).join('');
+  const rowsHTML=tbl.rows.map(row=>{
+    const maxC=Math.max(tbl.cols.length,row.cells.length);
+    let cells='';for(let i=0;i<maxC;i++)cells+=`<td style="background:${row._color||'#fff'}">${h(row.cells[i]||'')}</td>`;
+    return `<tr>${cells}</tr>`;
+  }).join('');
+  const totalNums=tbl.cols.filter(c=>c.type==='number').map((col,ci)=>{
+    let s=0;tbl.rows.forEach(r=>{const v=parseFloat(r.cells[ci]);if(!isNaN(v))s+=v});
+    const iqd=toIQD(s,cur);
+    return `<div><strong>${h(col.name)||'مبلغ'}:</strong> ${fmtN(s)} ${sym} | ${fmtN(iqd)} د.ع | ${fmtN(iqd/rates.usd,2)} $ | ${fmtN(iqd/rates.eur,2)} €</div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+<title>${h(tbl.name)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<style>body{font-family:'Tajawal',sans-serif;padding:20px;color:#1e293b}
+h1{font-size:22px;margin-bottom:6px}
+.meta{color:#64748b;font-size:13px;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#334155;color:#e2e8f0;padding:8px 10px;text-align:right}
+td{padding:8px 10px;border:1px solid #e2e8f0}
+.totals{margin-top:16px;background:#f8fafc;padding:12px;border-radius:8px;font-size:13px}
+</style></head><body>
+<h1>📋 ${h(tbl.name)}</h1>
+<div class="meta">العملة: ${cur} | الصفوف: ${tbl.rows.length} | التاريخ: ${new Date().toLocaleDateString('ar-IQ')}</div>
+<table><thead><tr>${colHeaders}</tr></thead><tbody>${rowsHTML}</tbody></table>
+${totalNums?`<div class="totals"><strong>الإجماليات:</strong><br>${totalNums}</div>`:''}
+</body></html>`;
+}
+
+function buildShareText(){
+  const tbl=getTable();if(!tbl)return '';
+  const cur=tbl.cur||'IQD';const sym=SYM[cur];
+  let text=`📋 ${tbl.name}\n`;
+  text+=`📅 ${new Date().toLocaleDateString('ar-IQ')}\n`;
+  if(tbl.cols.length){
+    text+='\n'+tbl.cols.map(c=>c.name||'—').join(' | ')+'\n';
+    text+='─'.repeat(30)+'\n';
+    tbl.rows.forEach(row=>{
+      const cells=tbl.cols.map((_,ci)=>row.cells[ci]||'');
+      text+=cells.join(' | ')+'\n';
+    });
+  }
+  tbl.cols.forEach((col,ci)=>{
+    if(col.type==='number'){
+      let s=0;tbl.rows.forEach(r=>{const v=parseFloat(r.cells[ci]);if(!isNaN(v))s+=v});
+      const iqd=toIQD(s,cur);
+      text+=`\n💰 ${col.name||'المجموع'}: ${fmtN(s)} ${sym}`;
+      if(cur!=='IQD')text+=` (${fmtN(iqd)} د.ع)`;
+    }
+  });
+  return text;
+}
+
+function openShareModal(){document.getElementById('share-modal').classList.add('open')}
+
+function shareWA(){
+  const text=buildShareText();
+  const encoded=encodeURIComponent(text);
+  window.open(`https://wa.me/?text=${encoded}`,'_blank');
+  closeModal('share-modal');
+}
+
+function shareTG(){
+  const text=buildShareText();
+  const encoded=encodeURIComponent(text);
+  window.open(`https://t.me/share/url?url=&text=${encoded}`,'_blank');
+  closeModal('share-modal');
+}
+
+function shareCopyLink(){
+  const text=buildShareText();
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>{
+      alert('✅ تم نسخ الجدول كنص — الصقه في واتساب أو تليكرام');
+    }).catch(()=>{
+      prompt('انسخ النص:',text);
+    });
+  } else {
+    prompt('انسخ النص:',text);
+  }
+  closeModal('share-modal');
+}
+
+function shareDownload(){
+  const tbl=getTable();if(!tbl)return;
+  const html=buildShareHTML();
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${tbl.name}.html`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  closeModal('share-modal');
+}
+
+// ─── MODALS ───
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+</script>
+</body>
+      </html>
