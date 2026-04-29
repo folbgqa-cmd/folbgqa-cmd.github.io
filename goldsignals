@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>محلل الذهب XAUUSD</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#FFD700; --gold-dark:#B8860B;
+  --bg:#0A0A0F; --bg3:#141420;
+  --surface:#1A1A2E; --border:rgba(255,215,0,0.15);
+  --text:#E8E8F0; --text-dim:#888899;
+  --green:#00FF88; --red:#FF4466; --blue:#4488FF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 20%,rgba(255,215,0,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(255,215,0,.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,215,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,215,0,.03) 1px,transparent 1px);background-size:40px 40px;z-index:0;pointer-events:none;}
+.container{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:16px;}
+header{text-align:center;padding:30px 0 22px;}
+.logo-text{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,5vw,2.6rem);font-weight:900;background:linear-gradient(135deg,var(--gold) 0%,#FFF4A0 50%,var(--gold-dark) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 18px rgba(255,215,0,.3));letter-spacing:3px;}
+.subtitle{color:var(--text-dim);font-size:.83rem;margin-top:6px;letter-spacing:2px;}
+.gold-line{width:160px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:12px auto;}
+
+/* upload */
+.upload-wrap{background:var(--surface);border:2px dashed rgba(255,215,0,.3);border-radius:16px;padding:34px 20px;text-align:center;margin-bottom:14px;}
+.upload-wrap.has-img{padding:0;border-style:solid;overflow:hidden;}
+.upload-wrap img{width:100%;max-height:370px;object-fit:contain;background:#000;display:block;border-radius:14px;}
+.upload-icon{font-size:2.6rem;display:block;margin-bottom:10px;}
+.upload-wrap h3{color:var(--gold);font-size:1.05rem;margin-bottom:4px;}
+.upload-wrap p{color:var(--text-dim);font-size:.8rem;margin-bottom:14px;}
+
+/* زر اختيار الصورة — واضح وكبير */
+.pick-btn{
+  display:inline-block;
+  background:linear-gradient(135deg,var(--gold-dark),var(--gold));
+  color:#000;font-family:'Cairo',sans-serif;
+  font-size:1rem;font-weight:900;
+  padding:13px 36px;border-radius:10px;border:none;
+  cursor:pointer;letter-spacing:1px;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+}
+.pick-btn:active{opacity:.8;}
+
+.img-actions{display:flex;gap:10px;padding:10px;justify-content:flex-end;}
+.change-btn,.remove-btn2{font-family:'Cairo',sans-serif;font-size:.82rem;font-weight:700;padding:7px 16px;border-radius:8px;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+.change-btn{background:rgba(255,215,0,.15);color:var(--gold);border:1px solid rgba(255,215,0,.3);}
+.remove-btn2{background:rgba(255,68,102,.15);color:var(--red);border:1px solid rgba(255,68,102,.3);}
+
+.context-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:13px;}
+.input-group{display:flex;flex-direction:column;gap:5px;}
+.input-group label{color:var(--gold);font-size:.76rem;font-weight:700;letter-spacing:1px;}
+.input-group select,.input-group input{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:.9rem;outline:none;direction:rtl;-webkit-appearance:none;}
+
+.analyze-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-dark));border:none;border-radius:12px;color:#000;font-family:'Cairo',sans-serif;font-size:1.05rem;font-weight:900;cursor:pointer;letter-spacing:2px;margin-bottom:18px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:opacity .2s;}
+.analyze-btn:active{opacity:.8;}
+.analyze-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.loading{display:none;text-align:center;padding:34px;}
+.loading-ring{width:54px;height:54px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 13px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{color:var(--gold);font-weight:700;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+#result{display:none;}
+.no-trade{background:linear-gradient(135deg,rgba(255,68,102,.1),rgba(255,68,102,.05));border:1px solid rgba(255,68,102,.3);border-radius:16px;padding:26px;text-align:center;}
+.no-trade .icon{font-size:2rem;margin-bottom:9px;}
+.no-trade h3{color:var(--red);font-size:1.15rem;margin-bottom:5px;}
+.no-trade p{color:var(--text-dim);line-height:1.8;}
+.trade-card{border-radius:16px;overflow:hidden;border:1px solid var(--border);margin-bottom:13px;}
+.trade-header{padding:17px 21px;display:flex;align-items:center;justify-content:space-between;}
+.trade-header.buy{background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,136,.05));border-bottom:1px solid rgba(0,255,136,.2);}
+.trade-header.sell{background:linear-gradient(135deg,rgba(255,68,102,.15),rgba(255,68,102,.05));border-bottom:1px solid rgba(255,68,102,.2);}
+.trade-type{font-family:'Orbitron',monospace;font-size:1.35rem;font-weight:900;letter-spacing:3px;}
+.trade-type.buy{color:var(--green);}
+.trade-type.sell{color:var(--red);}
+.strength-badge{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.strength-label{color:var(--text-dim);font-size:.67rem;font-weight:700;}
+.strength-circle{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;font-size:.92rem;}
+.strength-circle.high{background:conic-gradient(var(--green) var(--pct),rgba(255,255,255,.05) 0);color:var(--green);box-shadow:0 0 16px rgba(0,255,136,.3);}
+.strength-circle.medium{background:conic-gradient(var(--gold) var(--pct),rgba(255,255,255,.05) 0);color:var(--gold);box-shadow:0 0 16px rgba(255,215,0,.3);}
+.strength-circle.low{background:conic-gradient(var(--red) var(--pct),rgba(255,255,255,.05) 0);color:var(--red);box-shadow:0 0 16px rgba(255,68,102,.3);}
+.strength-inner{width:40px;height:40px;background:var(--bg3);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.levels-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--bg3);}
+.level-item{background:var(--surface);padding:13px 17px;display:flex;flex-direction:column;gap:3px;}
+.level-label{font-size:.68rem;font-weight:700;letter-spacing:1px;}
+.level-value{font-family:'Orbitron',monospace;font-size:.93rem;font-weight:700;color:var(--text);}
+.entry-label{color:var(--blue);} .sl-label{color:var(--red);} .tp1-label{color:rgba(0,255,136,.7);} .tp2-label{color:rgba(0,255,136,.85);} .tp3-label{color:var(--green);} .rr-label{color:var(--gold);} .cool-label{color:var(--blue);} .time-label{color:var(--gold);}
+.reason-box{background:var(--surface);padding:17px 21px;border-top:1px solid var(--border);}
+.reason-box h4{color:var(--gold);font-size:.76rem;font-weight:700;letter-spacing:2px;margin-bottom:7px;}
+.reason-box p{color:var(--text-dim);line-height:1.9;font-size:.87rem;}
+.analysis-raw{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;white-space:pre-wrap;line-height:1.9;font-size:.86rem;color:var(--text);direction:rtl;text-align:right;}
+.disclaimer{text-align:center;padding:18px;color:var(--text-dim);font-size:.72rem;border-top:1px solid var(--border);margin-top:24px;line-height:1.7;}
+@keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.slide-in{animation:slideIn .4s ease forwards;}
+@media(max-width:480px){.context-row,.levels-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="container">
+
+  <header>
+    <div class="logo-text">XAUUSD ANALYZER</div>
+    <div class="gold-line"></div>
+    <div class="subtitle">محلل الذهب الاحترافي · SMC · ICT · Price Action</div>
+  </header>
+
+  <!-- رفع الصورة -->
+  <div class="upload-wrap" id="uploadWrap">
+    <span class="upload-icon">📊</span>
+    <h3>ارفع صورة الشارت</h3>
+    <p>اضغط الزر أدناه لاختيار صورة من معرضك</p>
+    <button class="pick-btn" id="pickBtn" type="button">📂 اختر صورة</button>
+  </div>
+
+  <!-- input مستقل خارج أي عنصر آخر -->
+  <input type="file" id="fileInput" accept="image/*" style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;">
+
+  <div class="context-row">
+    <div class="input-group">
+      <label>⏱ الإطار الزمني</label>
+      <select id="timeframe">
+        <option value="M1">M1</option>
+        <option value="M5" selected>M5</option>
+        <option value="M15">M15</option>
+        <option value="M30">M30</option>
+        <option value="H1">H1</option>
+        <option value="H4">H4</option>
+        <option value="D1">D1</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>💰 السعر الحالي (اختياري)</label>
+      <input type="number" id="currentPrice" placeholder="مثال: 3340.50" step="0.01" inputmode="decimal">
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" type="button">⚡ حلل الشارت الآن</button>
+
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <p>جاري تحليل الشارت بدقة...</p>
+  </div>
+
+  <div id="result"></div>
+
+  <div class="disclaimer">⚠️ هذا التحليل لأغراض تعليمية فقط · التداول ينطوي على مخاطر · استخدم إدارة رأس مال صارمة</div>
+</div>
+
+<script>
+var imageBase64 = null;
+
+// زر اختيار الصورة
+document.getElementById('pickBtn').addEventListener('click', function() {
+  document.getElementById('fileInput').click();
+});
+
+// لما يختار ملف
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  loadImage(file);
+});
+
+// تحليل
+document.getElementById('analyzeBtn').addEventListener('click', analyzeChart);
+
+function loadImage(file) {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    imageBase64 = ev.target.result.split(',')[1];
+    var wrap = document.getElementById('uploadWrap');
+    wrap.className = 'upload-wrap has-img';
+    wrap.innerHTML =
+      '<img src="' + ev.target.result + '" alt="chart">' +
+      '<div class="img-actions">' +
+        '<button class="change-btn" type="button" onclick="changeImg()">🔄 تغيير</button>' +
+        '<button class="remove-btn2" type="button" onclick="removeImg()">🗑 حذف</button>' +
+      '</div>';
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('result').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function changeImg() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInput').click();
+}
+
+function removeImg() {
+  imageBase64 = null;
+  document.getElementById('fileInput').value = '';
+  var wrap = document.getElementById('uploadWrap');
+  wrap.className = 'upload-wrap';
+  wrap.innerHTML =
+    '<span class="upload-icon">📊</span>' +
+    '<h3>ارفع صورة الشارت</h3>' +
+    '<p>اضغط الزر أدناه لاختيار صورة من معرضك</p>' +
+    '<button class="pick-btn" id="pickBtn" type="button">📂 اختر صورة</button>';
+  document.getElementById('pickBtn').addEventListener('click', function() {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('result').innerHTML = '';
+}
+
+async function analyzeChart() {
+  if (!imageBase64) { alert('ارفع صورة الشارت أول!'); return; }
+
+  var tf    = document.getElementById('timeframe').value;
+  var price = document.getElementById('currentPrice').value;
+  var btn   = document.getElementById('analyzeBtn');
+
+  btn.disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('result').style.display  = 'none';
+  document.getElementById('result').innerHTML = '';
+
+  var sys = 'أنت محلل تداول احترافي ومتخصص بزوج الذهب XAUUSD فقط.\n' +
+    'مهمتك تقديم صفقات قوية وعالية الاحتمال اعتماداً على تحليل لحظي مباشر.\n' +
+    'اعتمد على: Price Action, SMC, ICT, Supply & Demand, S&R, Liquidity, Trend, Momentum, Candlestick.\n\n' +
+    'التعليمات:\n' +
+    '1. حلل السعر أولاً.\n2. لا ترسل صفقة إلا إذا كانت واضحة ومؤكدة.\n' +
+    '3. تجنب احتمال انعكاس عالي.\n4. إذا السوق غير واضح لا ترسل صفقة.\n5. جاوب باللهجة العراقية.\n\n' +
+    'إذا وجدت فرصة، أرجع JSON فقط:\n' +
+    '{"hasTrade":true,"type":"شراء أو بيع","entry":"السعر","entryCool":"سعر أو null","stopLoss":"السعر","tp1":"السعر","tp2":"السعر","tp3":"السعر","rr":"1:X","strength":8,"reason":"السبب الفني","timing":"الآن أو انتظار"}\n\n' +
+    'إذا ما في فرصة:\n{"hasTrade":false,"reason":"السبب"}';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type:'image/jpeg', data:imageBase64 } },
+            { type:'text',  text:'الإطار الزمني: ' + tf + (price ? '\nالسعر الحالي: '+price : '') + '\nحلل هذا الشارت وأعطني أقوى صفقة.' }
+          ]
+        }]
+      })
+    });
+
+    var data = await res.json();
+    var text = data.content.map(function(i){ return i.text||''; }).join('');
+
+    var parsed;
+    try {
+      var m = text.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(m[0]);
+    } catch(e) { showRaw(text); return; }
+
+    renderResult(parsed);
+
+  } catch(err) {
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML =
+      '<div class="no-trade slide-in"><div class="icon">⚠️</div><h3>خطأ في الاتصال</h3><p>'+err.message+'</p></div>';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function renderResult(data) {
+  var el = document.getElementById('result');
+  el.style.display = 'block';
+  if (!data.hasTrade) {
+    el.innerHTML = '<div class="no-trade slide-in"><div class="icon">🚫</div><h3>لا توجد صفقة حالياً</h3><p>'+data.reason+'</p></div>';
+    return;
+  }
+  var isBuy = data.type === 'شراء';
+  var tc = isBuy ? 'buy' : 'sell';
+  var icon = isBuy ? '📈' : '📉';
+  var s = parseInt(data.strength)||0;
+  var pct = (s/10*100).toFixed(0)+'%';
+  var sc = s>=8?'high':s>=6?'medium':'low';
+  var hasCool = data.entryCool && data.entryCool !== 'null' && data.entryCool !== null;
+
+  el.innerHTML =
+    '<div class="trade-card slide-in">' +
+      '<div class="trade-header '+tc+'">' +
+        '<div>' +
+          '<div class="trade-type '+tc+'">'+icon+' '+data.type.toUpperCase()+'</div>' +
+          '<div style="color:var(--text-dim);font-size:.7rem;margin-top:3px;letter-spacing:1px;">XAUUSD · XAU/USD</div>' +
+        '</div>' +
+        '<div class="strength-badge">' +
+          '<div class="strength-label">القوة</div>' +
+          '<div class="strength-circle '+sc+'" style="--pct:'+pct+'">' +
+            '<div class="strength-inner">'+s+'/10</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="levels-grid">' +
+        '<div class="level-item"><span class="level-label entry-label">🎯 الدخول</span><span class="level-value">'+data.entry+'</span></div>' +
+        (hasCool
+          ? '<div class="level-item"><span class="level-label cool-label">❄️ دخول تبريد</span><span class="level-value">'+data.entryCool+'</span></div>'
+          : '<div class="level-item"><span class="level-label time-label">⏰ التوقيت</span><span class="level-value" style="font-size:.78rem;font-family:Cairo">'+data.timing+'</span></div>') +
+        '<div class="level-item"><span class="level-label sl-label">🛑 وقف الخسارة</span><span class="level-value">'+data.stopLoss+'</span></div>' +
+        '<div class="level-item"><span class="level-label rr-label">⚖️ نسبة RR</span><span class="level-value">'+data.rr+'</span></div>' +
+        '<div class="level-item"><span class="level-label tp1-label">✅ الهدف 1</span><span class="level-value">'+data.tp1+'</span></div>' +
+        '<div class="level-item"><span class="level-label tp2-label">✅ الهدف 2</span><span class="level-value">'+data.tp2+'</span></div>' +
+        '<div class="level-item" style="grid-column:span 2"><span class="level-label tp3-label">🏆 الهدف 3</span><span class="level-value">'+data.tp3+'</span></div>' +
+      '</div>' +
+      '<div class="reason-box">' +
+        '<h4>📋 السبب الفني</h4>' +
+        '<p>'+data.reason+'</p>' +
+        (hasCool ? '<p style="margin-top:7px;color:var(--gold);font-size:.79rem;">⏰ '+data.timing+'</p>' : '') +
+      '</div>' +
+    '</div>';
+}
+
+function showRaw(text) {
+  var el = document.getElementById('result');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="analysis-raw slide-in">'+text+'</div>';
+}
+</script>
+</body>
+  </html>
