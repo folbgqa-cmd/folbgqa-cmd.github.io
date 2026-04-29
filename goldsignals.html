@@ -1,209 +1,719 @@
-here<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>محلل الشارت</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>محلل الشارت الذكي</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#060b12;color:#dde8f0;font-family:'Tajawal',sans-serif;direction:rtl}
-.app{min-height:100vh;padding:14px 12px;background:radial-gradient(ellipse at 20% 10%,#091525,#060b12)}
-.hdr{text-align:center;padding:20px 0 14px}
-.logo{width:48px;height:48px;background:linear-gradient(135deg,#00d4aa,#0095ff);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px rgba(0,212,170,.3);margin-bottom:8px}
-h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#00d4aa,#0095ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{font-size:11px;color:#1e4a4a;letter-spacing:2px;text-transform:uppercase;margin-top:3px}
-.tags{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px auto;max-width:660px}
-.tag{background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.17);color:#00b890;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:13px}
-.warn{background:rgba(255,175,0,.05);border:1px solid rgba(255,175,0,.13);border-radius:9px;padding:8px 14px;font-size:12px;color:#6a5528;text-align:center}
+:root{
+  --g1:#00d4aa;--g2:#0095ff;
+  --bg:#060b12;--card:rgba(0,14,28,.7);
+  --border:rgba(0,212,170,.15);--muted:#3a6a7a;--text:#dde8f0;--dim:#1a3a4a;
+}
+body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;direction:rtl;min-height:100vh}
+.app{min-height:100vh;background:radial-gradient(ellipse at 20% 5%,#091525,var(--bg));padding:10px}
 
-/* ---- FILE INPUT ZONE ---- */
-.file-zone{position:relative;border:2px dashed rgba(0,212,170,.3);border-radius:16px;background:rgba(0,14,28,.6);padding:38px 20px;text-align:center;transition:border-color .2s}
-.file-zone:hover{border-color:rgba(0,212,170,.6)}
-/* input covers the entire zone so tapping anywhere works */
-.file-zone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
-.up-icon{font-size:48px;margin-bottom:10px;display:block;pointer-events:none}
-.up-title{font-size:19px;font-weight:800;color:#e0ecf8;pointer-events:none}
-.up-hint{font-size:12px;color:#2a5a5a;margin-top:6px;line-height:1.7;pointer-events:none}
-.up-badge{display:inline-block;margin-top:14px;background:linear-gradient(135deg,#00d4aa,#0095ff);color:#000;font-weight:800;font-size:14px;padding:10px 30px;border-radius:30px;pointer-events:none}
+/* HEADER */
+.hdr{text-align:center;padding:16px 0 10px}
+.logo{width:46px;height:46px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px rgba(0,212,170,.3);margin-bottom:7px}
+.hdr h1{font-size:clamp(20px,5vw,30px);font-weight:800;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr p{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
 
-/* preview */
-.prev-zone{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(0,212,170,.2);display:none}
-.prev-zone img{width:100%;max-height:400px;object-fit:contain;display:block;background:#04090f}
-.chg-wrap{position:absolute;top:10px;right:10px;position:relative}
-.chg-wrap input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
-.chg-btn{background:rgba(4,9,15,.88);border:1px solid rgba(255,255,255,.1);color:#bbb;padding:6px 14px;border-radius:8px;font-size:13px;font-family:'Tajawal',sans-serif;display:block}
+.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:11px}
+.warn{background:rgba(255,175,0,.05);border:1px solid rgba(255,175,0,.12);border-radius:9px;padding:7px 13px;font-size:11px;color:#5a4a20;text-align:center}
 
-/* analyze */
-.abtn{width:100%;padding:16px;background:linear-gradient(135deg,#00d4aa,#0095ff);border:none;border-radius:14px;color:#000;font-size:17px;font-weight:800;font-family:'Tajawal',sans-serif;cursor:pointer;transition:all .25s;box-shadow:0 5px 20px rgba(0,212,170,.2)}
-.abtn:disabled{background:linear-gradient(135deg,#1a3333,#1a2835);color:#1e4050;cursor:not-allowed;box-shadow:none}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px}
+.card-title{font-size:13px;font-weight:700;color:var(--g1);margin-bottom:11px;display:flex;align-items:center;gap:7px}
 
-/* loading */
-.ld{text-align:center;padding:38px;background:rgba(0,12,24,.7);border-radius:16px;border:1px solid rgba(0,212,170,.1);display:none}
-.sp{width:48px;height:48px;border:3px solid rgba(0,212,170,.1);border-top-color:#00d4aa;border-right-color:#0095ff;border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 14px}
-@keyframes sp{to{transform:rotate(360deg)}}
+/* UPLOAD */
+.upload-zone{border:2px dashed rgba(0,212,170,.25);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover{border-color:rgba(0,212,170,.55);background:rgba(0,20,40,.4)}
+.upload-zone input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.upload-zone p{font-size:15px;font-weight:700;color:#c0d0e0;margin-top:8px}
+.upload-zone span{font-size:12px;color:var(--muted);margin-top:4px;display:block}
 
-/* result */
-.res{background:rgba(0,10,21,.9);border:1px solid rgba(0,212,170,.11);border-radius:16px;padding:20px;display:none}
-.res h2{font-size:17px;font-weight:800;color:#dde8f0;margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid rgba(0,212,170,.12)}
-.res h2:first-child{margin-top:0}
-.res h3{font-size:14px;font-weight:700;color:#00d4aa;margin:12px 0 6px}
-.drow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;padding:9px 12px;background:rgba(0,212,170,.04);border-radius:8px;margin:4px 0;border:1px solid rgba(0,212,170,.07)}
-.dl{color:#4a8a7a;font-size:13px;font-weight:600}
-.dv{color:#dde8f0;font-size:13px;font-weight:600;font-family:monospace}
-.no-t{background:rgba(255,60,60,.09);border:2px solid rgba(255,60,60,.3);color:#ff6060;padding:13px 18px;border-radius:10px;font-size:18px;font-weight:800;text-align:center;margin:12px 0}
-.yes-t{background:rgba(0,210,100,.09);border:2px solid rgba(0,210,100,.35);color:#00d464;padding:13px 18px;border-radius:10px;font-size:18px;font-weight:800;text-align:center;margin:12px 0}
-.bl{color:#7a9aaa;font-size:13px;line-height:1.85;margin:2px 0}
-.er{background:rgba(255,50,50,.07);border:1px solid rgba(255,50,50,.16);color:#ff7070;padding:12px 15px;border-radius:10px;font-size:13px;text-align:center;display:none}
-.ft{text-align:center;padding:18px;color:#0e2030;font-size:11px;line-height:1.8}
+/* CANVAS WRAPPER */
+.canvas-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#04090e;display:none;touch-action:none}
+#mainCanvas{display:block;width:100%;cursor:crosshair}
+
+/* TOOLBAR */
+.toolbar{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0 4px}
+.mode-btn{padding:8px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(0,12,25,.7);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;transition:all .2s;flex:1;min-width:80px;text-align:center;white-space:nowrap}
+.mode-btn:hover{border-color:rgba(255,255,255,.2);color:#aaa}
+.mode-btn.active-HIGH {background:rgba(255,220,0,.12);border-color:rgba(255,220,0,.4);color:#ffd700}
+.mode-btn.active-LOW  {background:rgba(255,80,80,.12);border-color:rgba(255,80,80,.4);color:#ff6060}
+.mode-btn.active-CURR {background:rgba(0,180,255,.12);border-color:rgba(0,180,255,.4);color:#00b4ff}
+.mode-btn.active-SUP  {background:rgba(0,212,100,.12);border-color:rgba(0,212,100,.4);color:#00d464}
+.mode-btn.active-RES  {background:rgba(255,100,200,.12);border-color:rgba(255,100,200,.4);color:#ff80cc}
+.mode-btn.active-BOS  {background:rgba(180,100,255,.12);border-color:rgba(180,100,255,.4);color:#c06aff}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* INPUTS ROW */
+.irow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.field label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px}
+.field input,.field select{width:100%;background:rgba(0,8,20,.8);border:1px solid rgba(0,212,170,.18);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Tajawal',sans-serif;outline:none;direction:ltr;text-align:center}
+.field input:focus,.field select:focus{border-color:rgba(0,212,170,.5)}
+
+.hint-box{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--muted);line-height:1.8;margin-top:6px}
+.hint-box strong{color:#00b890;display:block;margin-bottom:4px}
+
+/* MARKS STATUS */
+.marks-status{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.mark-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#2a4a5a}
+.mark-chip.done-HIGH{background:rgba(255,220,0,.1);border-color:rgba(255,220,0,.3);color:#ffd700}
+.mark-chip.done-LOW {background:rgba(255,80,80,.1);border-color:rgba(255,80,80,.3);color:#ff6060}
+.mark-chip.done-CURR{background:rgba(0,180,255,.1);border-color:rgba(0,180,255,.3);color:#00b4ff}
+.mark-chip.done-SUP {background:rgba(0,212,100,.1);border-color:rgba(0,212,100,.3);color:#00d464}
+.mark-chip.done-RES {background:rgba(255,100,200,.1);border-color:rgba(255,100,200,.3);color:#ff80cc}
+
+/* ANALYZE */
+.abtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g1),var(--g2));border:none;border-radius:13px;color:#000;font-size:16px;font-weight:800;font-family:'Tajawal',sans-serif;cursor:pointer;box-shadow:0 5px 20px rgba(0,212,170,.2);transition:all .2s}
+.abtn:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(0,212,170,.32)}
+.abtn:disabled{background:linear-gradient(135deg,#1a3333,#1a2835);color:#1e4050;cursor:not-allowed;transform:none;box-shadow:none}
+.clrbtn{width:100%;padding:10px;background:rgba(255,60,60,.08);border:1px solid rgba(255,60,60,.2);border-radius:10px;color:#ff6060;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;cursor:pointer;transition:all .2s;margin-top:7px}
+
+/* RESULT SECTION */
+.res-section{display:none}
+
+/* NO TRADE */
+.no-trade-card{background:rgba(255,55,55,.07);border:2px solid rgba(255,55,55,.22);border-radius:14px;padding:20px;text-align:center}
+.nt-icon{font-size:42px;margin-bottom:8px}
+.nt-title{font-size:21px;font-weight:800;color:#ff6060;margin-bottom:7px}
+.nt-reason{font-size:13px;color:#884444;line-height:1.85}
+
+/* TRADE HEADER */
+.trade-hdr{border-radius:14px;overflow:hidden}
+.th-top{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.th-top.buy{background:rgba(0,200,80,.1);border:2px solid rgba(0,200,80,.28);border-radius:14px 14px 0 0}
+.th-top.sell{background:rgba(255,60,60,.1);border:2px solid rgba(255,60,60,.28);border-radius:14px 14px 0 0}
+.dir-badge{font-size:26px;font-weight:800;display:flex;align-items:center;gap:7px}
+.dir-badge.buy{color:#00d464}.dir-badge.sell{color:#ff5050}
+.strength-ring{width:64px;height:64px;position:relative;flex-shrink:0}
+.strength-ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+.strength-ring .track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:5}
+.strength-ring .fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .6s}
+.strength-ring .fill.buy{stroke:#00d464}.strength-ring .fill.sell{stroke:#ff5050}
+.strength-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.strength-num{font-size:17px;font-weight:800;line-height:1}
+.strength-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* LEVELS GRID */
+.levels-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:rgba(0,8,20,.6);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px}
+.lv{background:rgba(0,12,28,.7);border-radius:9px;padding:10px 12px;border:1px solid rgba(255,255,255,.05)}
+.lv.entry{border-color:rgba(100,150,255,.2)}.lv.sl{border-color:rgba(255,80,80,.2)}
+.lv.tp1{border-color:rgba(0,180,80,.2)}.lv.tp2{border-color:rgba(0,210,100,.2)}.lv.tp3{border-color:rgba(0,240,130,.2)}
+.lv-name{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.lv-name.entry{color:#8aaeff}.lv-name.sl{color:#ff7070}
+.lv-name.tp1{color:#00c864}.lv-name.tp2{color:#00dc82}.lv-name.tp3{color:#00f0a0}
+.lv-price{font-size:19px;font-weight:800;font-family:monospace}
+.lv-note{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* SCHOOLS */
+.schools-card{background:rgba(0,10,22,.6);border:1px solid var(--border);border-radius:12px;padding:13px}
+.sc-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:9px}
+.sc-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.sc-row:last-child{border:none}
+.sc-name{font-size:13px;font-weight:600;color:#7a9aaa;display:flex;align-items:center;gap:6px}
+.sc-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;margin:0 10px}
+.sc-bar{height:5px;border-radius:3px}
+.sc-sig{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap}
+.sc-sig.bull{background:rgba(0,200,80,.1);color:#00c864;border:1px solid rgba(0,200,80,.2)}
+.sc-sig.bear{background:rgba(255,60,60,.1);color:#ff5050;border:1px solid rgba(255,60,60,.2)}
+.sc-sig.neut{background:rgba(255,255,255,.04);color:#3a6a7a;border:1px solid rgba(255,255,255,.07)}
+
+/* REASONS */
+.reasons-card{background:rgba(0,100,60,.04);border:1px solid rgba(0,200,100,.1);border-radius:12px;padding:13px}
+.reasons-card.sell{background:rgba(100,0,0,.04);border-color:rgba(200,50,50,.1)}
+.reason-title{font-size:12px;font-weight:700;color:#009a60;margin-bottom:8px}
+.reason-title.sell{color:#cc4040}
+.reason-item{display:flex;align-items:flex-start;gap:8px;margin:5px 0;font-size:12px;color:#5a9a7a;line-height:1.7}
+.reason-item.sell{color:#9a5050}
+.r-dot{width:6px;height:6px;border-radius:50%;background:var(--g1);flex-shrink:0;margin-top:6px}
+.r-dot.sell{background:#ff5050}
+
+/* CANCEL */
+.cancel-card{background:rgba(255,150,0,.04);border:1px solid rgba(255,150,0,.13);border-radius:12px;padding:12px 15px}
+.cancel-card p:first-child{font-size:12px;font-weight:700;color:#cc8800;margin-bottom:5px}
+.cancel-card p:last-child{font-size:12px;color:#7a5820;line-height:1.8}
+
+/* FOOTER */
+.ft{text-align:center;padding:16px;color:#0e2030;font-size:10px;line-height:1.8}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="hdr">
-    <div class="logo">📈</div>
-    <h1>محلل الشارت الذكي</h1>
-    <p class="sub">AI Forex Analyzer • Multi-Strategy</p>
-  </div>
-  <div class="tags">
-    <span class="tag">Price Action</span><span class="tag">SMC</span><span class="tag">ICT</span>
-    <span class="tag">Wyckoff</span><span class="tag">Elliott Wave</span>
-    <span class="tag">Supply & Demand</span><span class="tag">Fibonacci</span><span class="tag">Classical</span>
-  </div>
-  <div class="wrap">
-    <div class="warn">⚠️ لأغراض تعليمية — إدارة رأس المال مسؤوليتك الشخصية</div>
+<div class="hdr">
+  <div class="logo">📊</div>
+  <h1>محلل الشارت الذكي</h1>
+  <p>No API • No Server • 100% Local</p>
+</div>
 
-    <div class="file-zone" id="fileZone">
-      <input type="file" accept="image/*" id="fi1" onchange="loadImg(this)">
-      <span class="up-icon">🖼️</span>
-      <p class="up-title">اضغط هنا لاختيار صورة</p>
-      <p class="up-hint">من معرض الموبايل أو الكمبيوتر<br>PNG • JPG • WEBP</p>
-      <span class="up-badge">📂 اختر من المعرض</span>
-    </div>
+<div class="wrap">
+<div class="warn">⚠️ لأغراض تعليمية — إدارة رأس المال مسؤوليتك الشخصية</div>
 
-    <div class="prev-zone" id="prevZone">
-      <img id="prevImg" src="" alt="">
-      <div class="chg-wrap" style="position:absolute;top:10px;right:10px">
-        <span class="chg-btn">🔄 تغيير</span>
-        <input type="file" accept="image/*" id="fi2" onchange="loadImg(this)">
-      </div>
-    </div>
-
-    <button class="abtn" id="abtn" disabled onclick="analyze()">🔍 حلل الشارت الآن</button>
-
-    <div class="ld" id="ld">
-      <div class="sp"></div>
-      <p style="color:#00d4aa;font-size:14px;font-weight:700">يتم تحليل الشارت...</p>
-      <p style="color:#1e4a4a;font-size:12px;margin-top:5px">Price Action • SMC • ICT • Fibonacci</p>
-    </div>
-
-    <div class="er" id="er"></div>
-    <div class="res" id="res"></div>
-    <div class="ft">محلل الشارت الذكي • 8 مدارس تحليل • صفقات مؤكدة فقط</div>
+<!-- STEP 1: UPLOAD -->
+<div class="card" id="step1">
+  <div class="card-title">📁 الخطوة 1 — ارفع صورة الشارت</div>
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" accept="image/*" id="fileIn" onchange="loadImage(this)">
+    <div style="font-size:44px">🖼️</div>
+    <p>اضغط لرفع صورة الشارت</p>
+    <span>PNG • JPG • WEBP • من المعرض أو الكمبيوتر</span>
   </div>
 </div>
 
+<!-- STEP 2: MARK + CANVAS -->
+<div class="card" id="step2" style="display:none">
+  <div class="card-title">✏️ الخطوة 2 — حدد النقاط على الشارت</div>
+
+  <div class="hint-box">
+    <strong>📌 كيف تستخدم الأداة:</strong>
+    اختر نوع النقطة من الأزرار أدناه ← ثم اضغط على المكان المناسب في الشارت.<br>
+    <span style="color:#ffd700">■</span> High = أعلى نقطة في الشمعة &nbsp;
+    <span style="color:#ff6060">■</span> Low = أدنى نقطة &nbsp;
+    <span style="color:#00b4ff">■</span> Current = السعر الحالي
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="mode-btn active-HIGH" id="btn-HIGH" onclick="setMode('HIGH')">📈 High</button>
+    <button class="mode-btn" id="btn-LOW"  onclick="setMode('LOW')">📉 Low</button>
+    <button class="mode-btn" id="btn-CURR" onclick="setMode('CURR')">💵 السعر الحالي</button>
+    <button class="mode-btn" id="btn-SUP"  onclick="setMode('SUP')">🟢 دعم</button>
+    <button class="mode-btn" id="btn-RES"  onclick="setMode('RES')">🔴 مقاومة</button>
+    <button class="mode-btn" id="btn-BOS"  onclick="setMode('BOS')">🟣 BOS</button>
+  </div>
+
+  <div class="marks-status" id="marksStatus">
+    <span class="mark-chip" id="chip-HIGH">📈 High: —</span>
+    <span class="mark-chip" id="chip-LOW">📉 Low: —</span>
+    <span class="mark-chip" id="chip-CURR">💵 Current: —</span>
+    <span class="mark-chip" id="chip-SUP">🟢 دعم: 0</span>
+    <span class="mark-chip" id="chip-RES">🔴 مقاومة: 0</span>
+    <span class="mark-chip" id="chip-BOS">🟣 BOS: 0</span>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvasWrap" style="display:block;margin-top:10px">
+    <canvas id="mainCanvas"></canvas>
+  </div>
+
+  <!-- PRICE INPUTS -->
+  <div class="irow" style="margin-top:12px">
+    <div class="field">
+      <label>سعر الـ High (القيمة الفعلية)</label>
+      <input type="number" id="inHigh" placeholder="3340.00" step="0.01" oninput="updateCurrentPrice()">
+    </div>
+    <div class="field">
+      <label>سعر الـ Low (القيمة الفعلية)</label>
+      <input type="number" id="inLow"  placeholder="3300.00" step="0.01" oninput="updateCurrentPrice()">
+    </div>
+    <div class="field">
+      <label>الزوج</label>
+      <select id="inPair" onchange="updateDec()">
+        <option value="2">XAUUSD (ذهب)</option>
+        <option value="5">EURUSD</option>
+        <option value="5">GBPUSD</option>
+        <option value="3">USDJPY</option>
+        <option value="0">BTCUSD</option>
+        <option value="1">NASDAQ</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>الفريم</label>
+      <select id="inTF">
+        <option>M1</option><option>M5</option><option selected>M15</option>
+        <option>M30</option><option>H1</option><option>H4</option><option>D1</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:12px;color:var(--muted)">
+    السعر المحسوب: <strong id="calcPrice" style="color:var(--g1)">— (حدد الـ High والـ Low أولاً)</strong>
+  </div>
+
+  <div style="height:10px"></div>
+  <button class="abtn" id="analyzeBtn" onclick="runAnalysis()">🔍 حلل الشارت</button>
+  <button class="clrbtn" onclick="clearAll()">🗑️ مسح جميع النقاط</button>
+</div>
+
+<!-- RESULT -->
+<div class="res-section" id="resSection"></div>
+
+<div class="ft">محلل الشارت الذكي • يعمل 100% بدون إنترنت بعد التحميل • بدون AI</div>
+</div>
+</div>
+
 <script>
-var b64=null;
-function loadImg(inp){
-  var f=inp.files[0];
-  if(!f)return;
-  var r=new FileReader();
-  r.onload=function(e){
-    b64=e.target.result.split(',')[1];
-    document.getElementById('prevImg').src=e.target.result;
-    document.getElementById('fileZone').style.display='none';
-    document.getElementById('prevZone').style.display='block';
-    document.getElementById('abtn').disabled=false;
-    document.getElementById('res').style.display='none';
-    document.getElementById('er').style.display='none';
+// ─── STATE ────────────────────────────────────────────────────────────────
+var S = {
+  mode: 'HIGH',
+  marks: { HIGH:null, LOW:null, CURR:null, supports:[], resistances:[], bos:[] },
+  img: null,
+  dec: 2
+};
+var canvas = document.getElementById('mainCanvas');
+var ctx    = canvas.getContext('2d');
+
+// ─── IMAGE LOAD ────────────────────────────────────────────────────────────
+function loadImage(inp) {
+  var f = inp.files[0]; if(!f) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      S.img = img;
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      // Constrain display to container
+      var maxW = document.getElementById('canvasWrap').clientWidth || window.innerWidth - 40;
+      canvas.style.width  = '100%';
+      canvas.style.height = 'auto';
+      redraw();
+      document.getElementById('step1').style.display = 'none';
+      document.getElementById('step2').style.display = 'block';
+    };
+    img.src = e.target.result;
   };
   r.readAsDataURL(f);
 }
 
-var SYS=`أنت محلل فوركس خبير. تحلل الشارتات بمدارس متعددة: Price Action, SMC, ICT, Wyckoff, Elliott Wave, Supply & Demand, Fibonacci, Classical.
-قواعد: لا احتمالات - إما صفقة مؤكدة (تقاطع 3 مدارس + R:R 1:2) أو اكتب "لا توجد صفقة".
-عند الصفقة اكتب:
-## تحليل الشارت
-### قراءة السوق
-### المدارس المتقاطعة
-### الصفقة المؤكدة
-- **الاتجاه:** BUY/SELL
-- **الدخول:** [سعر]
-- **وقف الخسارة:** [سعر] | [x] نقطة
-- **الهدف 1:** [سعر] | R:R 1:[x]
-- **الهدف 2:** [سعر] | R:R 1:[x]
-- **الهدف 3:** [سعر] | R:R 1:[x]
-- **نسبة النجاح:** [x]%
-- **مدارس متقاطعة:** [x]/8
-### شروط الإلغاء
-عند عدم الصفقة:
-## تحليل الشارت
-### قراءة السوق
-### لا توجد صفقة الآن
-السبب: [تفصيل]
-### ما الذي ننتظره
-أجب بالعربية فقط.`;
+// ─── MODE ──────────────────────────────────────────────────────────────────
+function setMode(m) {
+  S.mode = m;
+  ['HIGH','LOW','CURR','SUP','RES','BOS'].forEach(function(k) {
+    var btn = document.getElementById('btn-'+k);
+    btn.className = 'mode-btn' + (k===m ? ' active-'+k : '');
+  });
+}
 
-async function analyze(){
-  if(!b64)return;
-  var btn=document.getElementById('abtn');
-  btn.disabled=true;
-  document.getElementById('ld').style.display='block';
-  document.getElementById('res').style.display='none';
-  document.getElementById('er').style.display='none';
-  try{
-    var r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:SYS,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-          {type:'text',text:'حلل هذا الشارت. إذا فيه صفقة مؤكدة اعطيني إياها كاملة، وإذا ماكو صفقة قلي لا توجد صفقة.'}
-        ]}]
-      })
+// ─── CANVAS EVENTS ─────────────────────────────────────────────────────────
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var sx = canvas.width  / rect.width;
+  var sy = canvas.height / rect.height;
+  var cx = e.touches ? e.touches[0].clientX : e.clientX;
+  var cy = e.touches ? e.touches[0].clientY : e.clientY;
+  return { x: (cx - rect.left)*sx, y: (cy - rect.top)*sy };
+}
+
+canvas.addEventListener('click',      onCanvasEvent);
+canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onCanvasEvent(e); }, {passive:false});
+
+function onCanvasEvent(e) {
+  var p = getPos(e);
+  var m = S.mode;
+  if      (m === 'HIGH') { S.marks.HIGH = p; }
+  else if (m === 'LOW')  { S.marks.LOW  = p; }
+  else if (m === 'CURR') { S.marks.CURR = p; }
+  else if (m === 'SUP')  { if(S.marks.supports.length < 4) S.marks.supports.push(p); }
+  else if (m === 'RES')  { if(S.marks.resistances.length < 4) S.marks.resistances.push(p); }
+  else if (m === 'BOS')  { if(S.marks.bos.length < 3) S.marks.bos.push(p); }
+  updateChips();
+  updateCurrentPrice();
+  redraw();
+}
+
+function clearAll() {
+  S.marks = { HIGH:null, LOW:null, CURR:null, supports:[], resistances:[], bos:[] };
+  updateChips();
+  document.getElementById('calcPrice').textContent = '—';
+  document.getElementById('resSection').style.display = 'none';
+  redraw();
+}
+
+// ─── CHIPS UPDATE ──────────────────────────────────────────────────────────
+function updateChips() {
+  var m = S.marks;
+  setChip('HIGH', m.HIGH ? '✅' : '—', m.HIGH ? 'done-HIGH' : '');
+  setChip('LOW',  m.LOW  ? '✅' : '—', m.LOW  ? 'done-LOW'  : '');
+  setChip('CURR', m.CURR ? '✅' : '—', m.CURR ? 'done-CURR' : '');
+  setChip('SUP',  m.supports.length + '/4',    m.supports.length>0    ? 'done-SUP' : '');
+  setChip('RES',  m.resistances.length + '/4', m.resistances.length>0 ? 'done-RES' : '');
+  setChip('BOS',  m.bos.length + '/3',         m.bos.length>0         ? 'done-BOS' : '');
+}
+function setChip(k, val, cls) {
+  var icons = {HIGH:'📈 High:',LOW:'📉 Low:',CURR:'💵 Current:',SUP:'🟢 دعم:',RES:'🔴 مقاومة:',BOS:'🟣 BOS:'};
+  var chip  = document.getElementById('chip-'+k);
+  chip.textContent = icons[k] + ' ' + val;
+  chip.className   = 'mark-chip' + (cls ? ' '+cls : '');
+}
+
+// ─── PRICE CALC ────────────────────────────────────────────────────────────
+function updateDec() {
+  var sel = document.getElementById('inPair');
+  S.dec = parseInt(sel.options[sel.selectedIndex].value);
+}
+function yToPrice(y) {
+  var highP = parseFloat(document.getElementById('inHigh').value);
+  var lowP  = parseFloat(document.getElementById('inLow').value);
+  if (!S.marks.HIGH || !S.marks.LOW || !highP || !lowP) return null;
+  var hY = S.marks.HIGH.y, lY = S.marks.LOW.y;
+  if (hY === lY) return null;
+  var ratio = (y - hY) / (lY - hY);
+  return highP - ratio * (highP - lowP);
+}
+function updateCurrentPrice() {
+  if (!S.marks.CURR) return;
+  var p = yToPrice(S.marks.CURR.y);
+  document.getElementById('calcPrice').textContent = p !== null ? p.toFixed(S.dec) : '—';
+}
+function fmt(n) { return n.toFixed(S.dec); }
+
+// ─── REDRAW ────────────────────────────────────────────────────────────────
+function redraw(resultLines) {
+  if (!S.img) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(S.img,0,0);
+
+  var w = canvas.width;
+  function hLine(y, color, dash, width, label, labelRight) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = width || 1.5;
+    ctx.setLineDash(dash || []);
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    if (label) {
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      var tx = labelRight ? w - 6 : 6;
+      var align = labelRight ? 'right' : 'left';
+      ctx.font = 'bold ' + Math.max(11, canvas.width/60) + 'px monospace';
+      ctx.textAlign = align;
+      // shadow
+      ctx.fillStyle = 'rgba(0,0,0,.6)';
+      ctx.fillRect(labelRight ? w-100 : 0, y-16, 100, 18);
+      ctx.fillStyle = color;
+      ctx.fillText(label, tx, y - 4);
+    }
+    ctx.restore();
+  }
+  function dot(x, y, color, r) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x,y,r||6,0,Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = .9;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = .6;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  var m = S.marks;
+  if (m.HIGH) { hLine(m.HIGH.y, '#ffd700', [6,4], 2, '▲ HIGH', true); dot(m.HIGH.x, m.HIGH.y, '#ffd700'); }
+  if (m.LOW)  { hLine(m.LOW.y,  '#ff6060', [6,4], 2, '▼ LOW',  true); dot(m.LOW.x,  m.LOW.y,  '#ff6060'); }
+  if (m.CURR) { hLine(m.CURR.y, '#00b4ff', [4,3], 2, '● CURR', true); dot(m.CURR.x, m.CURR.y, '#00b4ff'); }
+
+  m.supports.forEach(function(p,i){
+    hLine(p.y, '#00d464', [8,4], 1.5, 'S'+(i+1), false); dot(p.x,p.y,'#00d464',5);
+  });
+  m.resistances.forEach(function(p,i){
+    hLine(p.y, '#ff80cc', [8,4], 1.5, 'R'+(i+1), false); dot(p.x,p.y,'#ff80cc',5);
+  });
+  m.bos.forEach(function(p,i){
+    hLine(p.y, '#c06aff', [5,3], 1.5, 'BOS'+(i+1), false); dot(p.x,p.y,'#c06aff',5);
+  });
+
+  // Draw result lines if provided
+  if (resultLines) {
+    resultLines.forEach(function(rl) {
+      hLine(rl.y, rl.color, rl.dash||[], 2.5, rl.label, true);
     });
-    var d=await r.json();
-    if(d.error)throw new Error(d.error.message);
-    render(d.content[0].text);
-  }catch(e){
-    var eb=document.getElementById('er');
-    eb.textContent='خطأ: '+e.message;
-    eb.style.display='block';
-  }finally{
-    document.getElementById('ld').style.display='none';
-    btn.disabled=false;
   }
 }
 
-function render(text){
-  var html='';
-  text.split('\n').forEach(function(line){
-    if(!line.trim()){html+='<div style="height:5px"></div>';return;}
-    if(line.startsWith('## ')){html+='<h2>'+esc(line.slice(3))+'</h2>';return;}
-    if(line.startsWith('### ')){html+='<h3>'+esc(line.slice(4))+'</h3>';return;}
-    if(line.startsWith('- **')){
-      var m=line.match(/- \*\*(.*?)\*\*[:\s]*(.*)/);
-      if(m){html+='<div class="drow"><span class="dl">'+esc(m[1])+'</span><span class="dv">'+esc(m[2])+'</span></div>';return;}
+// ─── ANALYSIS ENGINE ───────────────────────────────────────────────────────
+function runAnalysis() {
+  var highP = parseFloat(document.getElementById('inHigh').value);
+  var lowP  = parseFloat(document.getElementById('inLow').value);
+  var tf    = document.getElementById('inTF').value;
+  var m     = S.marks;
+
+  if (!m.HIGH || !m.LOW || !m.CURR) {
+    return alert('⚠️ يرجى تحديد الـ High والـ Low والسعر الحالي على الشارت');
+  }
+  if (!highP || !lowP) {
+    return alert('⚠️ يرجى إدخال قيمة الـ High والـ Low الفعلية في الحقول');
+  }
+  if (highP <= lowP) {
+    return alert('⚠️ الـ High يجب أن يكون أكبر من الـ Low');
+  }
+
+  // Prices
+  var currP = yToPrice(m.CURR.y);
+  var supPs = m.supports.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
+  var resPs = m.resistances.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
+  var bosPs = m.bos.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
+
+  var range = highP - lowP;
+  var pos   = (currP - lowP) / range;   // 0=bottom, 1=top
+  var mid   = (highP + lowP) / 2;
+  var fib382 = highP - range * 0.382;
+  var fib500 = highP - range * 0.500;
+  var fib618 = highP - range * 0.618;
+  var fib786 = highP - range * 0.786;
+  var prox   = range * 0.10;
+
+  // Nearest support / resistance from user marks
+  var nearSup = supPs.some(function(p){ return Math.abs(currP - p) < prox; });
+  var nearRes = resPs.some(function(p){ return Math.abs(currP - p) < prox; });
+  var nearHigh = (highP - currP) < prox;
+  var nearLow  = (currP - lowP)  < prox;
+  var nearFib618 = Math.abs(currP - fib618) < prox;
+  var nearFib786 = Math.abs(currP - fib786) < prox;
+  var nearFib382 = Math.abs(currP - fib382) < prox;
+
+  // BOS analysis: are there BOS levels above or below current?
+  var bosAbove = bosPs.filter(function(p){ return p > currP; }).length;
+  var bosBelow = bosPs.filter(function(p){ return p < currP; }).length;
+
+  // ── SCORING ──
+  var sc = {};
+
+  // 1. Price Action (Higher High / Lower Low approximation via position)
+  if (pos > 0.65)       sc['Price Action'] = { v:1,  why:'السعر في النصف العلوي → Higher High محتمل' };
+  else if (pos < 0.35)  sc['Price Action'] = { v:-1, why:'السعر في النصف السفلي → Lower Low محتمل' };
+  else                  sc['Price Action'] = { v:0,  why:'السعر في منتصف النطاق — بلا زخم واضح' };
+
+  // 2. Support & Resistance
+  if      (nearSup && !nearRes)  sc['Support & Resistance'] = { v:1,  why:'السعر على منطقة دعم → فرصة شراء' };
+  else if (nearRes && !nearSup)  sc['Support & Resistance'] = { v:-1, why:'السعر على منطقة مقاومة → فرصة بيع' };
+  else if (nearLow)              sc['Support & Resistance'] = { v:1,  why:'السعر قريب من Low الجلسة → دعم طبيعي' };
+  else if (nearHigh)             sc['Support & Resistance'] = { v:-1, why:'السعر قريب من High الجلسة → مقاومة طبيعية' };
+  else                           sc['Support & Resistance'] = { v:0,  why:'لا توجد مستويات رئيسية قريبة' };
+
+  // 3. Trend
+  var trendV, trendWhy;
+  if      (pos > 0.6) { trendV=1;  trendWhy='الترند صاعد — السعر في الثلث العلوي'; }
+  else if (pos < 0.4) { trendV=-1; trendWhy='الترند هابط — السعر في الثلث السفلي'; }
+  else                { trendV=0;  trendWhy='السوق في تذبذب — لا اتجاه واضح'; }
+  sc['Trend Analysis'] = { v:trendV, why:trendWhy };
+
+  // 4. Fibonacci
+  if      (nearFib618 || nearFib786) {
+    var fDir = trendV >= 0 ? 1 : -1;
+    sc['Fibonacci'] = { v:fDir, why:'السعر على مستوى Fib ' + (nearFib618?'61.8%':'78.6%') + ' — نقطة ارتداد محتملة' };
+  } else if (nearFib382) {
+    sc['Fibonacci'] = { v:trendV, why:'السعر على مستوى Fib 38.2% — تصحيح معتدل' };
+  } else {
+    sc['Fibonacci'] = { v:0, why:'السعر بين مستويات فيبوناتشي — لا إشارة واضحة' };
+  }
+
+  // 5. SMC — Break of Structure
+  if      (bosAbove > bosBelow && bosBelow === 0) sc['SMC (BOS)'] = { v:1,  why:'كسر هيكل صاعد (BOS) → اتجاه شراء' };
+  else if (bosBelow > bosAbove && bosAbove === 0) sc['SMC (BOS)'] = { v:-1, why:'كسر هيكل هابط (BOS) → اتجاه بيع' };
+  else if (bosPs.length === 0) {
+    // infer from position
+    if      (pos > 0.7) sc['SMC (BOS)'] = { v:1,  why:'لا BOS محدد — يستند إلى موقع السعر (أعلى النطاق)' };
+    else if (pos < 0.3) sc['SMC (BOS)'] = { v:-1, why:'لا BOS محدد — يستند إلى موقع السعر (أسفل النطاق)' };
+    else                sc['SMC (BOS)'] = { v:0,  why:'لا BOS محدد ولا مؤشر واضح من الموقع' };
+  } else {
+    sc['SMC (BOS)'] = { v:0, why:'BOS متعارض — إشارات متضاربة' };
+  }
+
+  // 6. ICT — Demand/Supply zones
+  if      (pos < 0.25)             sc['ICT (Zones)'] = { v:1,  why:'السعر في منطقة الطلب (Demand Zone) السفلية' };
+  else if (pos > 0.75)             sc['ICT (Zones)'] = { v:-1, why:'السعر في منطقة العرض (Supply Zone) العلوية' };
+  else if (nearFib618 && pos<0.55) sc['ICT (Zones)'] = { v:1,  why:'OTE محتمل — Optimal Trade Entry عند 61.8%' };
+  else                             sc['ICT (Zones)'] = { v:0,  why:'خارج مناطق ICT الرئيسية' };
+
+  // 7. Candlestick Logic (body position as proxy)
+  if      (pos > 0.55 && nearLow)  sc['Candlestick']= { v:1,  why:'شمعة مرتدة من الأسفل — Hammer محتمل' };
+  else if (pos < 0.45 && nearHigh) sc['Candlestick']= { v:-1, why:'شمعة مرتدة من الأعلى — Shooting Star محتمل' };
+  else if (pos > 0.6)              sc['Candlestick']= { v:1,  why:'السعر يغلق في النصف العلوي — بولليش' };
+  else if (pos < 0.4)              sc['Candlestick']= { v:-1, why:'السعر يغلق في النصف السفلي — بيريش' };
+  else                             sc['Candlestick']= { v:0,  why:'شمعة دوجي أو غير حاسمة' };
+
+  // ── TOTAL ──
+  var keys = Object.keys(sc);
+  var bull=0, bear=0;
+  keys.forEach(function(k){ if(sc[k].v===1) bull++; if(sc[k].v===-1) bear++; });
+  var net = bull - bear;
+  var total = keys.length;
+
+  // ── DECISION ──
+  var dir = null;
+  if      (net >= 4) dir = 'BUY';
+  else if (net <= -4) dir = 'SELL';
+  else if (net === 3 && (nearSup || nearLow || nearFib618||nearFib786)) dir = 'BUY';
+  else if (net === -3 && (nearRes || nearHigh || nearFib618||nearFib786)) dir = 'SELL';
+
+  var strength = Math.round((Math.max(bull,bear) / total) * 10);
+  strength = Math.max(Math.min(strength, 10), 1);
+
+  // ── LEVELS ──
+  var atr  = range * 0.30;
+  var res  = {};
+  if (dir === 'BUY') {
+    res.entry = currP;
+    res.sl    = Math.max(lowP - atr*0.2, currP - atr);
+    res.slDist = currP - res.sl;
+    res.tp1   = currP + res.slDist * 1.5;
+    res.tp2   = currP + res.slDist * 2.5;
+    res.tp3   = currP + res.slDist * 4.0;
+    res.rr1   = (res.slDist > 0) ? (res.tp1-currP)/res.slDist : 0;
+    res.rr2   = (res.slDist > 0) ? (res.tp2-currP)/res.slDist : 0;
+    res.rr3   = (res.slDist > 0) ? (res.tp3-currP)/res.slDist : 0;
+  } else if (dir === 'SELL') {
+    res.entry = currP;
+    res.sl    = Math.min(highP + atr*0.2, currP + atr);
+    res.slDist = res.sl - currP;
+    res.tp1   = currP - res.slDist * 1.5;
+    res.tp2   = currP - res.slDist * 2.5;
+    res.tp3   = currP - res.slDist * 4.0;
+    res.rr1   = (res.slDist > 0) ? (currP-res.tp1)/res.slDist : 0;
+    res.rr2   = (res.slDist > 0) ? (currP-res.tp2)/res.slDist : 0;
+    res.rr3   = (res.slDist > 0) ? (currP-res.tp3)/res.slDist : 0;
+  }
+
+  // ── REASONS ──
+  var reasons = keys.filter(function(k){
+    return (dir==='BUY' && sc[k].v===1) || (dir==='SELL' && sc[k].v===-1);
+  }).map(function(k){ return sc[k].why; });
+
+  var noReasons = [];
+  if (!dir) {
+    if (Math.abs(net) < 3) noReasons.push('المدارس متضاربة — لا يوجد إجماع كافٍ');
+    if (trendV === 0)      noReasons.push('السوق في تذبذب بلا اتجاه واضح');
+    if (!nearSup && !nearRes && !nearLow && !nearHigh) noReasons.push('السعر في منتصف النطاق — لا مستوى رئيسي قريب');
+    if (noReasons.length === 0) noReasons.push('الإشارات غير كافية لصفقة مؤكدة');
+  }
+
+  // ── DRAW ON CANVAS ──
+  if (dir && S.marks.HIGH && S.marks.LOW && S.marks.CURR) {
+    function priceToY(price) {
+      var hY = S.marks.HIGH.y, lY = S.marks.LOW.y;
+      var ratio = (highP - price) / range;
+      return hY + ratio * (lY - hY);
     }
-    if(line.includes('لا توجد صفقة')){html+='<div class="no-t">❌ لا توجد صفقة الآن</div>';return;}
-    if(line.includes('الصفقة المؤكدة')){html+='<div class="yes-t">✅ صفقة مؤكدة</div>';return;}
-    if(line.trim()==='---'){html+='<hr style="border:none;border-top:1px solid rgba(255,255,255,.05);margin:10px 0">';return;}
-    var b=esc(line).replace(/\*\*(.*?)\*\*/g,'<strong style="color:#c0d8e8">$1</strong>');
-    html+='<p class="bl">'+b+'</p>';
-  });
-  var box=document.getElementById('res');
-  box.innerHTML=html;
-  box.style.display='block';
-  box.scrollIntoView({behavior:'smooth',block:'start'});
+    var lines = [];
+    lines.push({ y:priceToY(res.entry), color:'#00b4ff', dash:[],    label:'● ENTRY '  +fmt(res.entry) });
+    lines.push({ y:priceToY(res.sl),    color:'#ff4040', dash:[6,3], label:'✕ SL '     +fmt(res.sl) });
+    lines.push({ y:priceToY(res.tp1),   color:'#00c864', dash:[8,4], label:'▶ TP1 '    +fmt(res.tp1) });
+    lines.push({ y:priceToY(res.tp2),   color:'#00dc82', dash:[8,4], label:'▶ TP2 '    +fmt(res.tp2) });
+    lines.push({ y:priceToY(res.tp3),   color:'#00f0a0', dash:[8,4], label:'▶ TP3 '    +fmt(res.tp3) });
+    redraw(lines);
+  } else {
+    redraw();
+  }
+
+  // ── RENDER RESULT ──
+  renderResult({ dir, strength, sc, res, reasons, noReasons, bull, bear, total, tf, currP });
 }
 
-function esc(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function renderResult(d) {
+  var sec = document.getElementById('resSection');
+  sec.style.display = 'block';
+  sec.innerHTML = '';
+
+  if (!d.dir) {
+    sec.innerHTML = `
+      <div class="no-trade-card">
+        <div class="nt-icon">🚫</div>
+        <div class="nt-title">لا توجد صفقة الآن</div>
+        <div class="nt-reason">${d.noReasons.map(function(r){return '• '+r;}).join('<br>')}</div>
+      </div>
+      ${buildSchools(d.sc)}`;
+    sec.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+
+  var isBuy  = d.dir === 'BUY';
+  var cls    = isBuy ? 'buy' : 'sell';
+  var arrow  = isBuy ? '📈' : '📉';
+  var conf   = Math.round((Math.max(d.bull,d.bear)/d.total)*100);
+  // ring
+  var circ   = 2*Math.PI*24; // r=24
+  var filled = circ * (d.strength/10);
+  var ringColor = isBuy ? '#00d464' : '#ff5050';
+
+  var cancelTxt = isBuy
+    ? 'إلغاء الصفقة إذا أغلق السعر تحت ' + fmt(d.res.sl) + '. احذر إذا انكسر اللو الأصلي.'
+    : 'إلغاء الصفقة إذا أغلق السعر فوق '  + fmt(d.res.sl) + '. احذر إذا انكسر الهاي الأصلي.';
+
+  sec.innerHTML = `
+    <div class="trade-hdr">
+      <div class="th-top ${cls}">
+        <div class="dir-badge ${cls}">${arrow} ${d.dir}</div>
+        <div style="text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">الزوج / الفريم</div>
+          <div style="font-size:15px;font-weight:800">${d.tf}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">السعر: ${fmt(d.currP)}</div>
+        </div>
+        <div class="strength-ring">
+          <svg viewBox="0 0 56 56">
+            <circle class="track" cx="28" cy="28" r="24"/>
+            <circle class="fill ${cls}" cx="28" cy="28" r="24"
+              stroke-dasharray="${filled} ${circ}"
+              stroke-dashoffset="0"/>
+          </svg>
+          <div class="strength-label">
+            <div class="strength-num" style="color:${ringColor}">${d.strength}</div>
+            <div class="strength-sub">/10</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="levels-grid">
+        <div class="lv entry"><div class="lv-name entry">🎯 نقطة الدخول</div><div class="lv-price">${fmt(d.res.entry)}</div><div class="lv-note">السعر الحالي</div></div>
+        <div class="lv sl">  <div class="lv-name sl">  🛑 وقف الخسارة</div><div class="lv-price">${fmt(d.res.sl)}</div><div class="lv-note">${fmt(d.res.slDist)} نقطة خطر</div></div>
+        <div class="lv tp1"><div class="lv-name tp1">🎯 الهدف الأول</div><div class="lv-price">${fmt(d.res.tp1)}</div><div class="lv-note">R:R = 1:${d.res.rr1.toFixed(1)}</div></div>
+        <div class="lv tp2"><div class="lv-name tp2">🎯 الهدف الثاني</div><div class="lv-price">${fmt(d.res.tp2)}</div><div class="lv-note">R:R = 1:${d.res.rr2.toFixed(1)}</div></div>
+        <div class="lv tp3" style="grid-column:span 2">
+          <div class="lv-name tp3">🏆 الهدف الثالث</div>
+          <div class="lv-price">${fmt(d.res.tp3)}</div>
+          <div class="lv-note">R:R = 1:${d.res.rr3.toFixed(1)} — هدف ممتد</div>
+        </div>
+      </div>
+    </div>
+
+    ${buildSchools(d.sc)}
+
+    <div class="reasons-card ${isBuy?'':'sell'}">
+      <div class="reason-title ${isBuy?'':'sell'}">✅ أسباب الدخول</div>
+      ${d.reasons.map(function(r){return '<div class="reason-item '+(isBuy?'':'sell')+'"><span class="r-dot '+(isBuy?'':'sell')+'"></span>'+r+'</div>';}).join('')}
+    </div>
+
+    <div class="cancel-card">
+      <p>⚠️ شروط الإلغاء</p>
+      <p>${cancelTxt}</p>
+    </div>
+  `;
+
+  sec.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function buildSchools(sc) {
+  var rows = '';
+  var icons = {
+    'Price Action':'📊','Support & Resistance':'📏','Trend Analysis':'📐',
+    'Fibonacci':'🌀','SMC (BOS)':'🔷','ICT (Zones)':'🎯','Candlestick':'🕯️'
+  };
+  Object.keys(sc).forEach(function(k) {
+    var v = sc[k].v;
+    var cls = v===1?'bull':v===-1?'bear':'neut';
+    var sig = v===1?'صاعد ▲':v===-1?'هابط ▼':'محايد —';
+    var barW = v===1?100:v===-1?100:30;
+    var barC = v===1?'#00c864':v===-1?'#ff5050':'#2a4a5a';
+    rows += `
+      <div class="sc-row">
+        <span class="sc-name">${icons[k]||'•'} ${k}</span>
+        <div class="sc-bar-wrap"><div class="sc-bar" style="width:${barW}%;background:${barC}"></div></div>
+        <span class="sc-sig ${cls}">${sig}</span>
+      </div>`;
+  });
+  return `<div class="schools-card"><div class="sc-title">📐 تقاطع المدارس (${Object.keys(sc).length} مدارس)</div>${rows}</div>`;
 }
 </script>
 </body>
