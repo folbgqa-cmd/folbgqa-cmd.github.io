@@ -53,12 +53,13 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .rec-card-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .rec-card-date{font-size:10px;color:var(--text2);margin-top:2px;}
 .rec-arrow{color:var(--text2);font-size:20px;flex-shrink:0;}
-.rec-card-acts{border-top:1px solid var(--border);display:flex;flex-wrap:wrap;}
-.rca{flex:1;min-width:60px;padding:11px 6px;background:none;border:none;border-left:1px solid var(--border);color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;}
+.rec-card-acts{border-top:1px solid var(--border);display:flex;overflow:hidden;}
+.rca{flex:1;padding:10px 4px;background:none;border:none;border-left:1px solid var(--border);color:var(--text2);font-family:'Cairo',sans-serif;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;min-width:0;}
 .rca:last-child{border-left:none;}
 .rca:active{background:var(--s4);}
 .rca.pin-on{color:var(--yellow);}
-.rca.r:active{color:var(--red);}
+.rca.r{color:var(--red);}
+.rca.r:active{background:rgba(239,68,68,.15);}
 
 /* ── DETAIL (SHEET) ── */
 .rec-ctrl{background:var(--s2);border-bottom:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
@@ -666,7 +667,7 @@ function setCurUI(c){
 }
 function updRate(){rate=Math.max(1,parseInt(document.getElementById('rateInp').value)||1310);document.getElementById('rateInp2').value=rate;saveAll();renderSheet();updStats();}
 function updRate2(){rate=Math.max(1,parseInt(document.getElementById('rateInp2').value)||1310);document.getElementById('rateInp').value=rate;saveAll();renderSheet();updStats();}
-function fmtP(v){v=parseFloat(v)||0;return currency==='USD'?'$'+(v/rate).toFixed(2):v.toLocaleString('ar-IQ')+' د.ع';}
+function fmtP(v){v=parseFloat(v)||0;if(currency==='USD'){const u=v/rate;return'$'+(Number.isInteger(u)?u:parseFloat(u.toFixed(2)));}return v.toLocaleString('ar-IQ')+' د.ع';}
 
 // ════════════════════════════════
 // UTILS
@@ -740,10 +741,10 @@ function renderRecList(){
         <span class="rec-arrow">›</span>
       </div>
       <div class="rec-card-acts">
-        <button class="rca ${rec.pinned?'pin-on':''}" onclick="togglePin('${rec.id}')">${rec.pinned?'📌 فك':'📍 تثبيت'}</button>
-        <button class="rca" onclick="startRename('${rec.id}')">✏️ تسمية</button>
-        <button class="rca" onclick="openRecord('${rec.id}');setTimeout(openShareModal,400)">📤 مشاركة</button>
-        <button class="rca r" onclick="askDelete('${rec.id}')">🗑 حذف</button>
+        <button class="rca ${rec.pinned?'pin-on':''}" onclick="event.stopPropagation();togglePin('${rec.id}')">${rec.pinned?'📌':'📍'} ${rec.pinned?'فك':'تثبيت'}</button>
+        <button class="rca" onclick="event.stopPropagation();startRename('${rec.id}')">✏️ تسمية</button>
+        <button class="rca" onclick="event.stopPropagation();openRecord('${rec.id}');setTimeout(openShareModal,400)">📤</button>
+        <button class="rca r" onclick="event.stopPropagation();askDelete('${rec.id}')">🗑 حذف</button>
       </div>
     </div>`).join('');
 }
@@ -1297,4 +1298,4 @@ renderRecList();
 updStats();
 </script>
 </body>
-          </html>
+                                                                                                                        </html>
