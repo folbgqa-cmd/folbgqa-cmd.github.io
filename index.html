@@ -2,1050 +2,258 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>InvPro</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <style>
-:root{
-  --bg:#0b0d16;--s1:#12151f;--s2:#181b28;--s3:#1e2235;--s4:#252a40;
-  --border:#2a3050;--acc:#3b82f6;--green:#10b981;--red:#ef4444;
-  --yellow:#f59e0b;--cyan:#22d3ee;
-  --text:#e2e8f0;--text2:#64748b;--text3:#94a3b8;
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:1;}
-.screen.hidden{transform:translateX(-110%);pointer-events:none;}
-.topbar{background:var(--s1);border-bottom:2px solid var(--acc);height:52px;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;}
-.logo{font-weight:900;font-size:16px;background:linear-gradient(135deg,var(--acc),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.topbar-title{font-size:15px;font-weight:900;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.back-btn{background:none;border:none;color:var(--acc);font-size:26px;cursor:pointer;padding:4px 8px 4px 0;line-height:1;flex-shrink:0;}
-.tbtn{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
-.tbtn:active{background:var(--acc);}
-.bottom-nav{background:var(--s1);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
-.bnav{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text2);font-family:'Cairo',sans-serif;font-size:10px;}
-.bnav.on{color:var(--acc);}
-.bnav .bico{font-size:20px;line-height:1;}
-.statsbar{display:flex;flex-shrink:0;background:var(--s1);border-bottom:1px solid var(--border);}
-.stat{flex:1;padding:7px 4px;text-align:center;border-left:1px solid var(--border);}
-.stat:last-child{border-left:none;}
-.sv{font-size:13px;font-weight:900;line-height:1.2;}
-.sl{font-size:9px;color:var(--text2);margin-top:1px;}
 
-/* ── RECORDS LIST ── */
-.rl-hdr{padding:10px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
-.rec-search{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
-.rec-search:focus{border-color:var(--acc);}
-.rl-btns{display:flex;gap:8px;}
-.rlbtn{flex:1;padding:11px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
-.rlbtn.new{background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;}
-.rlbtn.tpl{background:var(--s3);border:1px solid var(--border);color:var(--text2);}
-.rlbtn:active{opacity:.8;}
-.rl-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+header{
+  background:#1e293b;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+}
 
-/* record card */
-.rec-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
-.rec-card.pinned{border-color:rgba(245,158,11,.5);}
-.rec-card-top{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
-.rec-card-top:active{background:var(--s3);}
-.rec-card-ico{font-size:20px;flex-shrink:0;}
-.rec-card-info{flex:1;min-width:0;}
-.rec-card-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rec-card-date{font-size:10px;color:var(--text2);margin-top:2px;}
-.rec-arrow{color:var(--text2);font-size:20px;flex-shrink:0;}
-.rec-card-acts{border-top:1px solid var(--border);display:flex;flex-wrap:wrap;}
-.rca{flex:1;min-width:60px;padding:11px 6px;background:none;border:none;border-left:1px solid var(--border);color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;}
-.rca:last-child{border-left:none;}
-.rca:active{background:var(--s4);}
-.rca.pin-on{color:var(--yellow);}
-.rca.r:active{color:var(--red);}
+.container{
+  padding:15px;
+}
 
-/* ── DETAIL (SHEET) ── */
-.rec-ctrl{background:var(--s2);border-bottom:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
-.rc-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
-.rc-pill{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--s3);}
-.rc-lbl{padding:5px 9px;font-size:11px;color:var(--text3);white-space:nowrap;border-left:1px solid var(--border);}
-.rc-lbl b{color:var(--acc);font-weight:900;}
-.rcb{width:36px;height:36px;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.rcb:active{background:var(--acc);color:#fff;}
-.rcb.minus:active{background:var(--red);}
-.rcsep{width:1px;height:36px;background:var(--border);}
-.cur-box{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;background:var(--s3);overflow:hidden;}
-.cur-btn{padding:6px 10px;background:none;border:none;color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;font-weight:700;}
-.cur-btn.on{background:var(--yellow);color:#000;}
-.cur-btn.usd.on{background:var(--green);color:#fff;}
-.rate-inp{background:transparent;border:none;color:var(--text2);font-size:11px;width:52px;text-align:center;font-family:'Cairo',sans-serif;outline:none;}
-.style-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
-.cpick{position:relative;display:inline-flex;align-items:center;gap:5px;background:var(--s3);border:1px solid var(--border);padding:6px 10px;border-radius:8px;cursor:pointer;}
-.cpick input[type=color]{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;}
-.cdot{width:16px;height:16px;border-radius:4px;border:1px solid var(--border);}
-.cplbl{font-size:11px;color:var(--text2);}
-.fs-wrap{display:flex;align-items:center;gap:5px;}
-.fs-slider{-webkit-appearance:none;width:65px;height:4px;border-radius:2px;background:var(--border);outline:none;}
-.fs-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);}
-.fs-val{font-size:11px;color:var(--acc);font-weight:700;min-width:18px;}
-.clr-btn{background:var(--s3);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;}
-.clr-btn:active{background:var(--red);border-color:var(--red);color:#fff;}
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+}
 
-.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;}
-table.grid{border-collapse:collapse;table-layout:fixed;}
-table.grid th,table.grid td{border:1px solid var(--border);height:34px;padding:0;white-space:nowrap;overflow:hidden;}
-th.rh{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;min-width:28px;width:28px;text-align:center;user-select:none;position:sticky;right:0;z-index:3;}
-th.ch{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;text-align:center;user-select:none;position:sticky;top:0;z-index:2;}
-th.corner{position:sticky;top:0;right:0;z-index:4;background:var(--s2);}
-td.cell{background:var(--s1);color:var(--text);cursor:cell;min-width:95px;width:95px;}
-td.cell.sel{outline:2px solid var(--acc);outline-offset:-1px;z-index:1;}
-td.cell.insel{background:rgba(59,130,246,.1);}
-td.cell input.ci{width:100%;height:100%;border:none;background:rgba(59,130,246,.15);color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:0 7px;outline:none;text-align:inherit;}
-td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center;overflow:hidden;font-size:13px;}
+input,button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  margin-top:10px;
+  box-sizing:border-box;
+}
 
-.sbar{background:var(--s2);border-top:1px solid var(--border);padding:4px 12px;font-size:10px;color:var(--text2);display:flex;gap:10px;align-items:center;flex-shrink:0;}
-.save-ind{font-size:10px;color:var(--green);margin-right:auto;}
-.save-ind.saving{color:var(--yellow);}
+input{
+  background:#334155;
+  color:white;
+}
 
-/* ── SALES ── */
-.sale-form{padding:10px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
-.sf label{font-size:11px;color:var(--text2);font-weight:700;display:block;margin-bottom:4px;}
-.sf select{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
-.qty-row{display:flex;gap:8px;}
-.qty-stepper{background:var(--s3);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;overflow:hidden;min-width:130px;}
-.qbtn{width:44px;height:44px;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.qbtn:active:not(:disabled){background:var(--acc);color:#fff;}
-.qbtn.minus:active:not(:disabled){background:var(--red);}
-.qbtn:disabled{opacity:.3;}
-.qty-track{flex:1;display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--border);border-left:1px solid var(--border);padding:4px 0;}
-.qty-num{font-size:20px;font-weight:900;color:var(--acc);line-height:1;}
-.qty-max{font-size:9px;color:var(--text2);}
-.prod-preview{flex:1;background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;}
-.pp-name{font-size:13px;font-weight:700;margin-bottom:5px;}
-.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-.pp-item{background:var(--s4);border-radius:7px;padding:5px 7px;}
-.pp-item .pv{font-weight:900;font-size:13px;}
-.pp-item .pl{font-size:9px;color:var(--text2);}
-.sell-btn{width:100%;background:linear-gradient(135deg,var(--green),#059669);border:none;color:#fff;padding:13px;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;}
-.sell-btn:active{opacity:.85;}
-.sales-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
-.sc{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px;}
-.sc-ico{width:38px;height:38px;border-radius:9px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-.sc-info{flex:1;min-width:0;}
-.sc-name{font-weight:700;font-size:13px;}
-.sc-sub{font-size:10px;color:var(--text2);margin-top:2px;}
-.sc-tot{font-weight:900;color:var(--green);font-size:13px;white-space:nowrap;text-align:center;}
-.sc-tot small{font-size:9px;display:block;color:var(--text2);font-weight:400;}
-.sc-del{background:none;border:none;color:var(--text2);font-size:20px;padding:6px;cursor:pointer;}
-.sc-del:active{color:var(--red);}
+button{
+  background:#3b82f6;
+  color:white;
+  cursor:pointer;
+  font-weight:bold;
+}
 
-/* ── Sales screen record selector ── */
-.sales-rec-sel{padding:8px 10px;background:var(--s2);border-bottom:1px solid var(--border);flex-shrink:0;}
-.sales-rec-sel select{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;}
+button:hover{
+  opacity:.9;
+}
 
-/* ── CTX ── */
-.ctx{position:fixed;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:5px;z-index:9999;min-width:155px;box-shadow:0 8px 30px rgba(0,0,0,.8);display:none;}
-.ctx.show{display:block;}
-.cxi{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
-.cxi:active{background:var(--acc);color:#fff;}
-.cxi.r:active{background:var(--red);}
-.cxs{height:1px;background:var(--border);margin:4px 0;}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
 
-/* ── MODALS (slide up from bottom) ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:flex-end;}
-.overlay.show{display:flex;}
-.modal{background:var(--s1);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;animation:sup .22s ease;}
-@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-hdr{padding:14px 16px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
-.modal-hdr h3{font-size:15px;font-weight:900;color:var(--cyan);}
-.mclose{background:none;border:none;color:var(--text2);font-size:28px;cursor:pointer;line-height:1;padding:0 3px;}
-.mclose:active{color:var(--red);}
-.modal-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-.field label{font-size:12px;color:var(--text2);font-weight:700;display:block;margin-bottom:5px;}
-.field input{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
-.field input:focus{border-color:var(--acc);}
-.modal-footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
-.save-btn{flex:1;padding:13px;background:linear-gradient(135deg,var(--acc),#2563eb);border:none;color:#fff;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;}
-.save-btn:active{opacity:.85;}
-.cancel-btn{padding:13px 18px;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;cursor:pointer;}
-.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.tpl-card{background:var(--s2);border:2px solid var(--border);border-radius:14px;padding:16px 10px;cursor:pointer;text-align:center;}
-.tpl-card:active{border-color:var(--acc);background:rgba(59,130,246,.08);}
-.tpl-ico{font-size:28px;margin-bottom:7px;}
-.tpl-name{font-size:13px;font-weight:700;}
-.tpl-desc{font-size:10px;color:var(--text2);margin-top:3px;}
+th,td{
+  border:1px solid #334155;
+  padding:10px;
+  text-align:center;
+}
 
-/* ── SHARE MODAL ── */
-.share-preview-wrap{background:var(--s3);border:1px solid var(--border);border-radius:12px;overflow:hidden;touch-action:none;cursor:grab;position:relative;}
-.share-preview-wrap:active{cursor:grabbing;}
-.share-preview-inner{overflow:hidden;width:100%;height:260px;display:flex;align-items:center;justify-content:center;}
-#shareCanvas{display:block;transform-origin:center center;transition:none;}
-.zoom-controls{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px;}
-.zbtn{background:var(--s3);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:8px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Cairo',sans-serif;}
-.zbtn:active{background:var(--acc);color:#fff;}
-.zoom-val{font-size:13px;color:var(--acc);font-weight:700;min-width:40px;text-align:center;}
-.share-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.share-app-btn{padding:14px 10px;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
-.share-app-btn:active{opacity:.8;}
-.share-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;}
-.share-tg{background:linear-gradient(135deg,#2AABEE,#1a8cc5);color:#fff;}
-.share-save{background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;grid-column:span 2;}
-.share-loading{text-align:center;padding:20px;color:var(--text2);font-size:13px;}
+th{
+  background:#334155;
+}
 
-.empty{color:var(--text2);text-align:center;padding:28px;font-size:13px;}
-::-webkit-scrollbar{width:3px;height:3px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.del{
+  background:#ef4444;
+}
+
+.sell{
+  background:#10b981;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.stat{
+  background:#334155;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+}
+
+.stat h3{
+  margin:0;
+  font-size:14px;
+  color:#94a3b8;
+}
+
+.stat p{
+  margin:10px 0 0;
+  font-size:20px;
+  font-weight:bold;
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════
-  SCREEN 1 — RECORDS LIST
-═══════════════════════════ -->
-<div class="screen" id="scList">
-  <div class="topbar">
-    <div class="logo">📊 InvPro</div>
-    <div style="flex:1"></div>
-    <div class="cur-box" style="margin-left:4px">
-      <button class="cur-btn on" id="btnIQD" onclick="setCur('IQD')">🇮🇶</button>
-      <div style="width:1px;height:26px;background:var(--border)"></div>
-      <button class="cur-btn usd" id="btnUSD" onclick="setCur('USD')">🇺🇸</button>
-      <div style="width:1px;height:26px;background:var(--border)"></div>
-      <input class="rate-inp" id="rateInp" type="number" value="1310" min="1" onchange="updRate()">
-    </div>
+<header>
+📊 InvPro
+</header>
+
+<div class="container">
+
+<div class="stats">
+  <div class="stat">
+    <h3>عدد المنتجات</h3>
+    <p id="count">0</p>
   </div>
-  <div class="statsbar">
-    <div class="stat"><div class="sv" style="color:var(--acc)" id="s0">0</div><div class="sl">العدد</div></div>
-    <div class="stat"><div class="sv" style="color:var(--yellow)" id="s1">0</div><div class="sl">الأسعار</div></div>
-    <div class="stat"><div class="sv" style="color:var(--green)" id="s2">0</div><div class="sl">الأرباح</div></div>
-    <div class="stat"><div class="sv" style="color:var(--cyan)" id="s3">0</div><div class="sl">المباع</div></div>
-  </div>
-  <div class="rl-hdr">
-    <input class="rec-search" id="recSearch" placeholder="🔍 بحث في السجلات..." oninput="renderRecList()">
-    <div class="rl-btns">
-      <button class="rlbtn new" onclick="newBlankRecord()">➕ سجل جديد</button>
-      <button class="rlbtn tpl" onclick="openTplModal()">📋 قوالب</button>
-    </div>
-  </div>
-  <div class="rl-body" id="recListBody"></div>
-  <div class="bottom-nav">
-    <button class="bnav on" id="bn1" onclick="goNav('list')"><div class="bico">🗂</div>السجلات</button>
-    <button class="bnav" id="bn2" onclick="goNav('sales')"><div class="bico">💰</div>المبيعات</button>
+
+  <div class="stat">
+    <h3>إجمالي الأرباح</h3>
+    <p id="profit">0</p>
   </div>
 </div>
 
-<!-- ═══════════════════════════
-  SCREEN 2 — RECORD DETAIL
-═══════════════════════════ -->
-<div class="screen hidden" id="scDetail">
-  <div class="topbar">
-    <button class="back-btn" onclick="goBack()">‹</button>
-    <div class="topbar-title" id="detailTitle">السجل</div>
-    <button class="tbtn" onclick="openShareModal()">📤 مشاركة</button>
-    <button class="tbtn" onclick="openRenameModal()">✏️</button>
-  </div>
-  <div class="rec-ctrl">
-    <div class="rc-row">
-      <div class="rc-pill">
-        <button class="rcb minus" onclick="chRows(-1)">−</button>
-        <div class="rcsep"></div>
-        <div class="rc-lbl">صفوف: <b id="rowCount">10</b></div>
-        <div class="rcsep"></div>
-        <button class="rcb" onclick="chRows(1)">+</button>
-      </div>
-      <div class="rc-pill">
-        <button class="rcb minus" onclick="chCols(-1)">−</button>
-        <div class="rcsep"></div>
-        <div class="rc-lbl">أعمدة: <b id="colCount">5</b></div>
-        <div class="rcsep"></div>
-        <button class="rcb" onclick="chCols(1)">+</button>
-      </div>
-      <div class="cur-box">
-        <button class="cur-btn on" id="btnIQD2" onclick="setCur('IQD')">🇮🇶 دينار</button>
-        <div style="width:1px;height:30px;background:var(--border)"></div>
-        <button class="cur-btn usd" id="btnUSD2" onclick="setCur('USD')">🇺🇸 دولار</button>
-        <div style="width:1px;height:30px;background:var(--border)"></div>
-        <input class="rate-inp" id="rateInp2" type="number" value="1310" min="1" onchange="updRate2()">
-      </div>
-    </div>
-    <div class="style-row">
-      <div class="cpick">
-        <span class="cplbl">خلفية</span>
-        <div class="cdot" id="bgDot" style="background:#3b82f6"></div>
-        <input type="color" id="bgPick" value="#3b82f6" oninput="applyBg(this.value)">
-      </div>
-      <div class="cpick">
-        <span class="cplbl">نص</span>
-        <div class="cdot" id="fgDot" style="background:#ffffff"></div>
-        <input type="color" id="fgPick" value="#ffffff" oninput="applyFg(this.value)">
-      </div>
-      <div class="fs-wrap">
-        <span class="cplbl">خط</span>
-        <input type="range" class="fs-slider" id="fsSlider" min="8" max="28" value="13"
-          oninput="applyFs(this.value);document.getElementById('fsVal').textContent=this.value">
-        <span class="fs-val" id="fsVal">13</span>
-      </div>
-      <button class="clr-btn" onclick="clrSel()">🗑</button>
-    </div>
-  </div>
-  <div class="sheet-wrap">
-    <table class="grid" id="grid" oncontextmenu="showCtx(event)"></table>
-  </div>
-  <div class="sbar">
-    <span>الخلية: <b id="stCell" style="color:var(--text)">A1</b></span>
-    <span class="save-ind" id="saveInd">💾 محفوظ</span>
-  </div>
+<div class="card">
+<h2>إضافة منتج</h2>
+
+<input id="name" placeholder="اسم المنتج">
+<input id="price" type="number" placeholder="السعر">
+<input id="qty" type="number" placeholder="الكمية">
+
+<button onclick="addProduct()">
+➕ إضافة
+</button>
 </div>
 
-<!-- ═══════════════════════════
-  SCREEN 3 — SALES
-═══════════════════════════ -->
-<div class="screen hidden" id="scSales">
-  <div class="topbar">
-    <div class="logo">📊 InvPro</div>
-    <div style="flex:1;text-align:center;font-size:13px;color:var(--text2)">المبيعات</div>
-  </div>
-  <div class="statsbar">
-    <div class="stat"><div class="sv" style="color:var(--acc)" id="s0b">0</div><div class="sl">العدد</div></div>
-    <div class="stat"><div class="sv" style="color:var(--yellow)" id="s1b">0</div><div class="sl">الأسعار</div></div>
-    <div class="stat"><div class="sv" style="color:var(--green)" id="s2b">0</div><div class="sl">الأرباح</div></div>
-    <div class="stat"><div class="sv" style="color:var(--cyan)" id="s3b">0</div><div class="sl">المباع</div></div>
-  </div>
-  <!-- Record selector for sales screen -->
-  <div class="sales-rec-sel">
-    <select id="salesRecSelect" onchange="onSalesRecChange()">
-      <option value="">-- اختر السجل --</option>
-    </select>
-  </div>
-  <div class="sale-form">
-    <div class="sf">
-      <label>📦 المنتج</label>
-      <select id="saleSelect" onchange="onProdChange()">
-        <option value="">-- اختر المنتج --</option>
-      </select>
-    </div>
-    <div class="qty-row">
-      <div>
-        <div class="sf" style="margin-bottom:0"><label>📊 الكمية</label></div>
-        <div class="qty-stepper">
-          <button class="qbtn minus" id="qMinus" onclick="chQty(-1)">−</button>
-          <div class="qty-track">
-            <div class="qty-num" id="qval">1</div>
-            <div class="qty-max" id="qmax">من 0</div>
-          </div>
-          <button class="qbtn" id="qPlus" onclick="chQty(1)">+</button>
-        </div>
-      </div>
-      <div class="prod-preview" id="pprev">
-        <div class="empty" style="padding:6px;font-size:12px;">اختر منتجاً</div>
-      </div>
-    </div>
-    <button class="sell-btn" onclick="doSell()">✔ تسجيل البيع</button>
-  </div>
-  <div class="sales-list" id="salesList">
-    <div class="empty">لا توجد مبيعات بعد</div>
-  </div>
-  <div class="bottom-nav">
-    <button class="bnav" id="bn1b" onclick="goNav('list')"><div class="bico">🗂</div>السجلات</button>
-    <button class="bnav on" id="bn2b" onclick="goNav('sales')"><div class="bico">💰</div>المبيعات</button>
-  </div>
+<div class="card">
+<h2>المنتجات</h2>
+
+<table>
+<thead>
+<tr>
+<th>المنتج</th>
+<th>السعر</th>
+<th>الكمية</th>
+<th>الأرباح</th>
+<th>بيع</th>
+<th>حذف</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
 </div>
 
-<!-- CTX -->
-<div class="ctx" id="ctxMenu">
-  <div class="cxi" onclick="cx('addR')">➕ إضافة صف</div>
-  <div class="cxi" onclick="cx('addC')">➕ إضافة عمود</div>
-  <div class="cxs"></div>
-  <div class="cxi r" onclick="cx('delR')">🗑 حذف الصف</div>
-  <div class="cxi r" onclick="cx('delC')">🗑 حذف العمود</div>
-  <div class="cxs"></div>
-  <div class="cxi" onclick="cx('clear')">🧹 مسح الخلية</div>
-  <div class="cxi" onclick="cx('copy')">📋 نسخ</div>
-  <div class="cxi" onclick="cx('paste')">📌 لصق</div>
 </div>
-
-<!-- MODAL: TEMPLATES -->
-<div class="overlay" id="tplModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3>📋 قوالب جاهزة</h3>
-      <button class="mclose" onclick="document.getElementById('tplModal').classList.remove('show')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="tpl-grid" id="tplGrid"></div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: RENAME -->
-<div class="overlay" id="renameModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3>✏️ تسمية السجل</h3>
-      <button class="mclose" onclick="closeRenameModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="field">
-        <label>اسم السجل</label>
-        <input id="renameInput" placeholder="اكتب الاسم هنا..." onkeydown="if(event.key==='Enter')saveRename()">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="cancel-btn" onclick="closeRenameModal()">إلغاء</button>
-      <button class="save-btn" onclick="saveRename()">💾 حفظ</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: CONFIRM DELETE -->
-<div class="overlay" id="confirmModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3>🗑 تأكيد الحذف</h3>
-      <button class="mclose" onclick="closeConfirmModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <p id="confirmText" style="font-size:14px;color:var(--text3);text-align:center;padding:10px 0;line-height:1.7;"></p>
-    </div>
-    <div class="modal-footer">
-      <button class="cancel-btn" onclick="closeConfirmModal()">إلغاء</button>
-      <button class="save-btn" id="confirmOkBtn" style="background:linear-gradient(135deg,var(--red),#b91c1c)">🗑 حذف نهائياً</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: SHARE -->
-<div class="overlay" id="shareModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3>📤 مشاركة الجدول كصورة</h3>
-      <button class="mclose" onclick="closeShareModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div id="shareLoading" class="share-loading">⏳ جاري تحضير الصورة...</div>
-      <div id="shareContent" style="display:none;flex-direction:column;gap:12px;">
-        <div class="share-preview-wrap">
-          <div class="share-preview-inner" id="sharePreviewInner">
-            <canvas id="shareCanvas"></canvas>
-          </div>
-        </div>
-        <div class="zoom-controls">
-          <button class="zbtn" onclick="zoomShare(-0.1)">−</button>
-          <span class="zoom-val" id="zoomVal">100%</span>
-          <button class="zbtn" onclick="zoomShare(0.1)">+</button>
-          <button class="zbtn" onclick="resetZoom()" style="font-size:12px;width:auto;padding:0 8px;">↺</button>
-        </div>
-        <div class="share-btns">
-          <button class="share-app-btn share-wa" onclick="shareVia('whatsapp')">
-            <span style="font-size:20px;">📱</span> واتساب
-          </button>
-          <button class="share-app-btn share-tg" onclick="shareVia('telegram')">
-            <span style="font-size:20px;">✈️</span> تلغرام
-          </button>
-          <button class="share-app-btn share-save" onclick="saveShareImg()">
-            <span style="font-size:18px;">💾</span> حفظ الصورة
-          </button>
-        </div>
-        <p style="font-size:10px;color:var(--text2);text-align:center;line-height:1.6;">
-          💡 احفظ الصورة أولاً ثم أرسلها عبر واتساب أو تلغرام
-        </p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Hidden table for screenshot -->
-<div id="screenshotTarget" style="position:fixed;left:-9999px;top:-9999px;z-index:-1;background:#0b0d16;padding:16px;font-family:'Cairo',sans-serif;direction:rtl;min-width:400px;"></div>
 
 <script>
-// ════════════════════════════════
-// TEMPLATES
-// ════════════════════════════════
-const TEMPLATES=[
-  {ico:'🛒',name:'مخزون منتجات',desc:'أسعار وكميات وأرباح',build(){
-    const d={},st={},hdr={bg:'#1e3a5f',fg:'#60a5fa',fw:700,fs:13,ta:'center'};
-    ['اسم المنتج','السعر','الكمية','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['منتج A','15000','50','0','إلكترونيات'],['منتج B','8000','30','0','ملابس'],['منتج C','20000','20','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:5,data:d,styles:st};
-  }},
-  {ico:'🧾',name:'فاتورة بيع',desc:'أصناف مع الإجمالي',build(){
-    const d={},st={},hdr={bg:'#14532d',fg:'#86efac',fw:700,fs:13,ta:'center'};
-    ['الصنف','الكمية','سعر الوحدة','الإجمالي','ملاحظات'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['صنف 1','1','5000','=C2*B2',''],['صنف 2','2','3000','=C3*B3',''],['صنف 3','1','10000','=C4*B4','']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    d['5_2']='المجموع';d['5_3']='=D2+D3+D4';st['5_3']={fg:'#10b981',fw:900};
-    return{rows:10,cols:5,data:d,styles:st};
-  }},
-  {ico:'📦',name:'طلبيات الموردين',desc:'تتبع الطلبيات',build(){
-    const d={},st={},hdr={bg:'#3b0764',fg:'#d8b4fe',fw:700,fs:13,ta:'center'};
-    ['المورد','الصنف','الكمية','السعر','الحالة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['مورد A','منتج 1','100','50000','قيد التنفيذ'],['مورد B','منتج 2','50','80000','مكتمل']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:5,data:d,styles:st};
-  }},
-  {ico:'💰',name:'ميزانية شهرية',desc:'إيرادات ومصروفات',build(){
-    const d={},st={},hdr={bg:'#7c2d12',fg:'#fdba74',fw:700,fs:13,ta:'center'};
-    ['البند','النوع','المبلغ','الشهر','ملاحظات'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['مبيعات','إيراد','500000','يناير',''],['إيجار','مصروف','150000','يناير',''],['رواتب','مصروف','200000','يناير','']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:5,data:d,styles:st};
-  }},
-  {ico:'👥',name:'سجل الموظفين',desc:'بيانات وراتب كل موظف',build(){
-    const d={},st={},hdr={bg:'#1e3a5f',fg:'#93c5fd',fw:700,fs:13,ta:'center'};
-    ['الاسم','الوظيفة','الراتب','تاريخ التعيين','الحالة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['أحمد محمد','مدير مبيعات','800000','2023-01-15','نشط'],['سارة علي','محاسبة','650000','2023-03-20','نشط']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:5,data:d,styles:st};
-  }},
-  {ico:'📋',name:'جدول فارغ',desc:'ابدأ من الصفر',build(){return{rows:10,cols:5,data:{},styles:{}};}}
-];
+let products = JSON.parse(localStorage.getItem('products') || '[]');
 
-// ════════════════════════════════
-// STATE
-// ════════════════════════════════
-const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-let records={};
-let activeRecId=null;
-let recIdCounter=1;
-let sel={r:0,c:0},sA={r:0,c:0},sB={r:0,c:0};
-let drag=false,editing=false,clip=null,ctxC={r:0,c:0};
-// sales is now per-record: salesMap[recId] = []
-let salesMap={};
-let sid=1;
-let currency='IQD',rate=1310;
-let curScreen='list';
-let saveTimer=null;
-let qty=1;
-let renamingId=null;
-let pendingDeleteId=null;
-// sales screen active record
-let salesActiveRecId=null;
-// share state
-let shareZoom=1;
-let shareImgDataUrl=null;
-
-// ════════════════════════════════
-// PERSIST
-// ════════════════════════════════
-function saveAll(){
-  clearTimeout(saveTimer);
-  const ind=document.getElementById('saveInd');
-  if(ind){ind.textContent='💾 يتم الحفظ...';ind.className='save-ind saving';}
-  saveTimer=setTimeout(()=>{
-    try{
-      localStorage.setItem('ip4_rec',JSON.stringify(records));
-      localStorage.setItem('ip4_salesmap',JSON.stringify(salesMap));
-      localStorage.setItem('ip4_meta',JSON.stringify({activeRecId,sid,recIdCounter,currency,rate,salesActiveRecId}));
-      if(ind){ind.textContent='💾 محفوظ';ind.className='save-ind';}
-    }catch(e){if(ind){ind.textContent='⚠️ فشل الحفظ';ind.className='save-ind saving';}}
-  },700);
-}
-function loadAll(){
-  try{
-    const r=localStorage.getItem('ip4_rec');
-    const sm=localStorage.getItem('ip4_salesmap');
-    const m=localStorage.getItem('ip4_meta');
-    if(r)records=JSON.parse(r);
-    if(sm)salesMap=JSON.parse(sm);
-    if(m){const md=JSON.parse(m);activeRecId=md.activeRecId||null;sid=md.sid||1;recIdCounter=md.recIdCounter||1;currency=md.currency||'IQD';rate=md.rate||1310;salesActiveRecId=md.salesActiveRecId||null;}
-    return true;
-  }catch(e){return false;}
+function save(){
+  localStorage.setItem('products', JSON.stringify(products));
 }
 
-// ════════════════════════════════
-// INIT
-// ════════════════════════════════
-function initDefault(){
-  records={};activeRecId=null;recIdCounter=1;
-  records['rec1']={id:'rec1',name:'مخزون افتراضي',pinned:true,createdAt:new Date().toLocaleString('ar-IQ'),sheet:TEMPLATES[0].build()};
-  recIdCounter=2;salesMap={};
-}
-const loaded=loadAll();
-if(!loaded||Object.keys(records).length===0)initDefault();
-if(activeRecId&&!records[activeRecId])activeRecId=null;
+function render(){
+  const tbody = document.getElementById('tbody');
 
-// sync rate inputs
-document.getElementById('rateInp').value=rate;
-document.getElementById('rateInp2').value=rate;
-setCurUI(currency);
+  tbody.innerHTML = '';
 
-// ════════════════════════════════
-// CURRENCY
-// ════════════════════════════════
-function setCur(c){currency=c;setCurUI(c);saveAll();renderSheet();updStats();}
-function setCurUI(c){
-  ['btnIQD','btnIQD2'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('on',c==='IQD');});
-  ['btnUSD','btnUSD2'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('on',c==='USD');});
-}
-function updRate(){rate=Math.max(1,parseInt(document.getElementById('rateInp').value)||1310);document.getElementById('rateInp2').value=rate;saveAll();renderSheet();updStats();}
-function updRate2(){rate=Math.max(1,parseInt(document.getElementById('rateInp2').value)||1310);document.getElementById('rateInp').value=rate;saveAll();renderSheet();updStats();}
-function fmtP(v){v=parseFloat(v)||0;return currency==='USD'?'$'+(v/rate).toFixed(2):v.toLocaleString('ar-IQ')+' د.ع';}
+  let totalProfit = 0;
 
-// ════════════════════════════════
-// UTILS
-// ════════════════════════════════
-const ck=(r,c)=>`${r}_${c}`;
-const cn=c=>COLS[c]||'?';
-const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function gs(rid){const id=rid||activeRecId;return id&&records[id]?records[id].sheet:null;}
+  products.forEach((p,index)=>{
 
-function evalF(val,r,c,vis=new Set(),rid){
-  if(!val||!String(val).startsWith('='))return val;
-  const key=`${rid||activeRecId}_${r}_${c}`;
-  if(vis.has(key))return '#REF';vis.add(key);
-  let ex=String(val).slice(1).toUpperCase();
-  ex=ex.replace(/SUM\(([A-Z]+\d+):([A-Z]+\d+)\)/g,(_,a,b)=>{
-    const[ac,ar]=pr(a),[bc,br]=pr(b);let sm=0;
-    for(let rr=Math.min(ar,br);rr<=Math.max(ar,br);rr++)
-      for(let cc=Math.min(ac,bc);cc<=Math.max(ac,bc);cc++)sm+=parseFloat(gcv(rr,cc,vis,rid))||0;
-    return sm;
+    totalProfit += p.profit;
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.price}</td>
+        <td>${p.qty}</td>
+        <td>${p.profit}</td>
+
+        <td>
+          <button class="sell" onclick="sell(${index})">
+            بيع
+          </button>
+        </td>
+
+        <td>
+          <button class="del" onclick="removeItem(${index})">
+            حذف
+          </button>
+        </td>
+      </tr>
+    `;
   });
-  ex=ex.replace(/([A-Z]+)(\d+)/g,(_,col,row)=>{
-    const ci=COLS.indexOf(col),ri=parseInt(row)-1;
-    return(ci<0||ri<0)?0:(parseFloat(gcv(ri,ci,vis,rid))||0);
-  });
-  try{return String(Function('"use strict";return('+ex+')')())}catch{return '#ERR';}
-}
-function pr(ref){const m=ref.match(/([A-Z]+)(\d+)/);return[COLS.indexOf(m[1]),parseInt(m[2])-1];}
-function gcv(r,c,vis,rid){
-  const s=gs(rid);if(!s)return'';
-  const v=s.data[ck(r,c)]||'';
-  return String(v).startsWith('=')?evalF(v,r,c,vis||new Set(),rid):v;
+
+  document.getElementById('count').textContent = products.length;
+  document.getElementById('profit').textContent = totalProfit;
 }
 
-// ════════════════════════════════
-// SCREENS
-// ════════════════════════════════
-function showScreen(name){
-  const map={list:'scList',detail:'scDetail',sales:'scSales'};
-  Object.entries(map).forEach(([k,id])=>{
-    document.getElementById(id).classList.toggle('hidden',k!==name);
-  });
-  curScreen=name;
-}
-function goBack(){showScreen('list');renderRecList();updStats();}
-function goNav(t){
-  if(t==='list'){showScreen('list');renderRecList();updStats();}
-  else{showScreen('sales');popSalesRecSel();updStats();}
-}
+function addProduct(){
 
-// ════════════════════════════════
-// RECORDS LIST
-// ════════════════════════════════
-function renderRecList(){
-  const el=document.getElementById('recListBody');
-  const q=(document.getElementById('recSearch')?.value||'').toLowerCase().trim();
-  let list=Object.values(records);
-  if(q)list=list.filter(r=>(r.name||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
-  if(!list.length){
-    el.innerHTML=`<div class="empty">${q?'لا توجد نتائج':'لا يوجد سجلات — اضغط "سجل جديد"'}</div>`;
-    return;
-  }
-  el.innerHTML=list.map(rec=>`
-    <div class="rec-card${rec.pinned?' pinned':''}">
-      <div class="rec-card-top" onclick="openRecord('${rec.id}')">
-        <span class="rec-card-ico">${rec.pinned?'📌':'📄'}</span>
-        <div class="rec-card-info">
-          <div class="rec-card-name">${esc(rec.name)}</div>
-          <div class="rec-card-date">📅 ${rec.createdAt}</div>
-        </div>
-        <span class="rec-arrow">›</span>
-      </div>
-      <div class="rec-card-acts">
-        <button class="rca ${rec.pinned?'pin-on':''}" onclick="togglePin('${rec.id}')">${rec.pinned?'📌 فك':'📍 تثبيت'}</button>
-        <button class="rca" onclick="startRename('${rec.id}')">✏️ تسمية</button>
-        <button class="rca" onclick="openRecord('${rec.id}');setTimeout(openShareModal,400)">📤 مشاركة</button>
-        <button class="rca r" onclick="askDelete('${rec.id}')">🗑 حذف</button>
-      </div>
-    </div>`).join('');
-}
+  const name = document.getElementById('name').value;
+  const price = parseFloat(document.getElementById('price').value);
+  const qty = parseInt(document.getElementById('qty').value);
 
-// ════════════════════════════════
-// RECORD OPEN / MANAGE
-// ════════════════════════════════
-function openRecord(id){
-  activeRecId=id;
-  sel={r:0,c:0};sA={r:0,c:0};sB={r:0,c:0};
-  const rec=records[id];
-  document.getElementById('detailTitle').textContent=rec?.name||'السجل';
-  const s=rec.sheet;
-  document.getElementById('rowCount').textContent=s.rows;
-  document.getElementById('colCount').textContent=s.cols;
-  document.getElementById('rateInp2').value=rate;
-  setCurUI(currency);
-  showScreen('detail');
-  renderSheet();
-  updStats();
-  saveAll();
-}
-function newBlankRecord(){
-  const id='rec'+recIdCounter++;
-  records[id]={id,name:'سجل جديد '+recIdCounter,pinned:false,createdAt:new Date().toLocaleString('ar-IQ'),sheet:{rows:10,cols:5,data:{},styles:{}}};
-  saveAll();openRecord(id);
-}
-function useTpl(i){
-  const t=TEMPLATES[i];
-  const id='rec'+recIdCounter++;
-  records[id]={id,name:t.name,pinned:false,createdAt:new Date().toLocaleString('ar-IQ'),sheet:t.build()};
-  saveAll();
-  document.getElementById('tplModal').classList.remove('show');
-  openRecord(id);
-}
-function togglePin(id){
-  if(!records[id])return;
-  records[id].pinned=!records[id].pinned;
-  saveAll();renderRecList();
-}
-
-// DELETE
-function askDelete(id){
-  pendingDeleteId=id;
-  document.getElementById('confirmText').textContent=`هل تريد حذف السجل "${records[id]?.name||id}" نهائياً؟ لا يمكن التراجع.`;
-  document.getElementById('confirmOkBtn').onclick=doDelete;
-  document.getElementById('confirmModal').classList.add('show');
-}
-function doDelete(){
-  if(!pendingDeleteId)return;
-  const id=pendingDeleteId;
-  delete records[id];
-  delete salesMap[id];
-  if(activeRecId===id)activeRecId=Object.keys(records)[0]||null;
-  if(salesActiveRecId===id)salesActiveRecId=null;
-  pendingDeleteId=null;
-  document.getElementById('confirmModal').classList.remove('show');
-  saveAll();
-  renderRecList();
-}
-function closeConfirmModal(){
-  pendingDeleteId=null;
-  document.getElementById('confirmModal').classList.remove('show');
-}
-
-// RENAME
-function startRename(id){
-  renamingId=id;
-  document.getElementById('renameInput').value=records[id]?.name||'';
-  document.getElementById('renameModal').classList.add('show');
-  setTimeout(()=>document.getElementById('renameInput').focus(),250);
-}
-function openRenameModal(){if(activeRecId)startRename(activeRecId);}
-function closeRenameModal(){document.getElementById('renameModal').classList.remove('show');renamingId=null;}
-function saveRename(){
-  if(!renamingId)return;
-  const v=document.getElementById('renameInput').value.trim();
-  if(v&&records[renamingId]){
-    records[renamingId].name=v;
-    const dt=document.getElementById('detailTitle');if(dt)dt.textContent=v;
-  }
-  saveAll();renderRecList();closeRenameModal();
-}
-
-// TEMPLATES MODAL
-function openTplModal(){
-  document.getElementById('tplGrid').innerHTML=TEMPLATES.map((t,i)=>`
-    <div class="tpl-card" onclick="useTpl(${i})">
-      <div class="tpl-ico">${t.ico}</div>
-      <div class="tpl-name">${t.name}</div>
-      <div class="tpl-desc">${t.desc}</div>
-    </div>`).join('');
-  document.getElementById('tplModal').classList.add('show');
-}
-
-// ════════════════════════════════
-// SHEET RENDER
-// ════════════════════════════════
-function renderSheet(){
-  const s=gs();if(!s)return;
-  const g=document.getElementById('grid');if(!g)return;
-  document.getElementById('rowCount').textContent=s.rows;
-  document.getElementById('colCount').textContent=s.cols;
-  let h=`<colgroup><col style="width:28px">`;
-  for(let c=0;c<s.cols;c++)h+=`<col style="width:${s.styles['cw_'+c]||95}px">`;
-  h+=`</colgroup><thead><tr><th class="ch corner"></th>`;
-  for(let c=0;c<s.cols;c++)h+=`<th class="ch">${cn(c)}</th>`;
-  h+=`</tr></thead><tbody>`;
-  for(let r=0;r<s.rows;r++){
-    h+=`<tr><th class="rh">${r+1}</th>`;
-    for(let c=0;c<s.cols;c++){
-      const k=ck(r,c),st=s.styles[k]||{};
-      let style=`text-align:${st.ta||'right'};font-size:${st.fs||13}px;`;
-      if(st.bg)style+=`background:${st.bg};`;
-      if(st.fg)style+=`color:${st.fg};`;
-      if(st.fw)style+=`font-weight:${st.fw};`;
-      const isSel=r===sel.r&&c===sel.c,inSel2=inS(r,c);
-      let v=gcv(r,c);
-      if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
-      h+=`<td class="cell${isSel?' sel':''}${inSel2&&!isSel?' insel':''}" id="c_${r}_${c}" style="${style}"
-        onclick="cClk(event,${r},${c})" ondblclick="stEdit(${r},${c})"
-        onmousedown="cMD(event,${r},${c})" onmousemove="cMM(event,${r},${c})" onmouseup="cMU()"
-      ><div class="cd">${esc(v)}</div></td>`;
-    }
-    h+=`</tr>`;
-  }
-  g.innerHTML=h+'</tbody>';
-  updSB();updStats();
-}
-function inS(r,c){
-  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
-  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
-  return r>=r1&&r<=r2&&c>=c1&&c<=c2;
-}
-
-// ════════════════════════════════
-// STATS
-// ════════════════════════════════
-function updStats(){
-  // Use salesActiveRecId for sales screen, activeRecId for detail
-  const rid=curScreen==='sales'?salesActiveRecId:activeRecId;
-  const s=gs(rid);
-  let tQ=0,tP=0,tPr=0;
-  if(s)for(let r=1;r<s.rows;r++){
-    if(!gcv(r,0,null,rid))continue;
-    const q=parseFloat(gcv(r,2,null,rid))||0;
-    tQ+=q;tP+=(parseFloat(gcv(r,1,null,rid))||0)*q;tPr+=parseFloat(gcv(r,3,null,rid))||0;
-  }
-  const salesArr=rid?salesMap[rid]||[]:[];
-  const sold=salesArr.reduce((a,b)=>a+b.total,0);
-  ['','b'].forEach(suf=>{
-    const vals=[tQ.toLocaleString('ar-IQ'),fmtP(tP),fmtP(tPr),fmtP(sold)];
-    [0,1,2,3].forEach(i=>{const el=document.getElementById(`s${i}${suf}`);if(el)el.textContent=vals[i];});
-  });
-}
-
-// ════════════════════════════════
-// ROW / COL
-// ════════════════════════════════
-function chRows(d){const s=gs();if(!s||d<0&&s.rows<=1)return;s.rows=Math.max(1,s.rows+d);saveAll();renderSheet();}
-function chCols(d){const s=gs();if(!s||d<0&&s.cols<=1)return;s.cols=Math.max(1,s.cols+d);saveAll();renderSheet();}
-
-// ════════════════════════════════
-// CELLS
-// ════════════════════════════════
-function cClk(e,r,c){if(e.shiftKey){sB={r,c};renderSheet();return;}stopE();sel={r,c};sA={r,c};sB={r,c};renderSheet();}
-function cMD(e,r,c){if(e.button!==0)return;drag=true;sA={r,c};sB={r,c};}
-function cMM(e,r,c){if(!drag)return;sB={r,c};sel={r,c};renderSheet();}
-function cMU(){drag=false;}
-function stEdit(r,c){
-  editing=true;
-  const el=document.getElementById(`c_${r}_${c}`);if(!el)return;
-  const raw=gs()?.data[ck(r,c)]||'';
-  el.innerHTML=`<input class="ci" id="ci" value="${esc(raw)}" onblur="comE(${r},${c})" onkeydown="edK(event,${r},${c})">`;
-  const inp=document.getElementById('ci');inp.focus();inp.select();
-}
-function comE(r,c){
-  editing=false;
-  const i=document.getElementById('ci');if(!i)return;
-  const s=gs();if(!s)return;
-  const old=s.data[ck(r,c)]||'',nv=i.value;
-  if(old!==nv){s.data[ck(r,c)]=nv;saveAll();}
-  renderSheet();
-}
-function edK(e,r,c){
-  if(e.key==='Enter'){comE(r,c);sel={r:r+1,c};renderSheet();}
-  else if(e.key==='Tab'){e.preventDefault();comE(r,c);sel={r,c:c+1};renderSheet();}
-  else if(e.key==='Escape'){editing=false;renderSheet();}
-}
-function stopE(){
-  if(!editing)return;
-  const i=document.getElementById('ci');
-  if(i){const p=i.closest('td');if(p){const m=p.id.match(/c_(\d+)_(\d+)/);if(m)comE(+m[1],+m[2]);}}
-  editing=false;
-}
-document.addEventListener('keydown',e=>{
-  if(editing||curScreen!=='detail')return;
-  const s=gs();if(!s)return;
-  const mv={ArrowDown:[1,0],ArrowUp:[-1,0],ArrowLeft:[0,1],ArrowRight:[0,-1]};
-  if(mv[e.key]){
-    e.preventDefault();const[dr,dc]=mv[e.key];
-    sel.r=Math.max(0,Math.min(s.rows-1,sel.r+dr));
-    sel.c=Math.max(0,Math.min(s.cols-1,sel.c+dc));
-    sA=sB={...sel};renderSheet();
-  }
-  else if((e.key==='Delete'||e.key==='Backspace')&&!editing)clrSel();
-  else if(e.key==='Enter')stEdit(sel.r,sel.c);
-  else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey)stEdit(sel.r,sel.c);
-  if((e.ctrlKey||e.metaKey)&&e.key==='c'){clip=gs()?.data[ck(sel.r,sel.c)]||'';}
-  if((e.ctrlKey||e.metaKey)&&e.key==='v'&&clip!==null){const s2=gs();if(s2){s2.data[ck(sel.r,sel.c)]=clip;saveAll();renderSheet();}}
-});
-
-// ════════════════════════════════
-// STYLE
-// ════════════════════════════════
-function applyStyle(key,fn){
-  const s=gs();if(!s)return;
-  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
-  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
-  for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){
-    const k=ck(r,c);if(!s.styles[k])s.styles[k]={};s.styles[k][key]=fn();
-  }saveAll();renderSheet();
-}
-function applyBg(v){document.getElementById('bgDot').style.background=v;applyStyle('bg',()=>v);}
-function applyFg(v){document.getElementById('fgDot').style.background=v;applyStyle('fg',()=>v);}
-function applyFs(v){applyStyle('fs',()=>parseInt(v));}
-function clrSel(){
-  const s=gs();if(!s)return;
-  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
-  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
-  for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)delete s.data[ck(r,c)];
-  saveAll();renderSheet();
-}
-function updSB(){const el=document.getElementById('stCell');if(el)el.textContent=`${cn(sel.c)}${sel.r+1}`;}
-
-// ════════════════════════════════
-// CTX MENU
-// ════════════════════════════════
-function showCtx(e){
-  e.preventDefault();
-  const td=e.target.closest('td');
-  const m2=td?.id?.match(/c_(\d+)_(\d+)/);
-  if(m2)ctxC={r:+m2[1],c:+m2[2]};
-  const mn=document.getElementById('ctxMenu');
-  mn.style.top=Math.min(e.clientY,window.innerHeight-210)+'px';
-  const rp=window.innerWidth-e.clientX;
-  mn.style.right=rp+'px';mn.style.left='auto';
-  mn.classList.add('show');
-}
-document.addEventListener('click',e=>{if(!e.target.closest('#ctxMenu'))document.getElementById('ctxMenu').classList.remove('show');});
-function cx(a){
-  const s=gs();if(!s)return;
-  if(a==='addR')s.rows++;
-  else if(a==='addC')s.cols++;
-  else if(a==='delR'){chRows(-1);return;}
-  else if(a==='delC'){chCols(-1);return;}
-  else if(a==='clear')delete s.data[ck(ctxC.r,ctxC.c)];
-  else if(a==='copy')clip=gcv(ctxC.r,ctxC.c);
-  else if(a==='paste'&&clip!==null)s.data[ck(ctxC.r,ctxC.c)]=clip;
-  saveAll();renderSheet();
-}
-
-// ════════════════════════════════
-// SALES — per record
-// ════════════════════════════════
-function getSales(rid){
-  if(!rid)return[];
-  if(!salesMap[rid])salesMap[rid]=[];
-  return salesMap[rid];
-}
-
-// Populate record selector on sales screen
-function popSalesRecSel(){
-  const el=document.getElementById('salesRecSelect');if(!el)return;
-  const prev=salesActiveRecId;
-  el.innerHTML='<option value="">-- اختر السجل --</option>';
-  Object.values(records).forEach(r=>{
-    const o=document.createElement('option');
-    o.value=r.id;o.textContent=r.name;
-    el.appendChild(o);
-  });
-  // restore or use active
-  if(prev&&records[prev])el.value=prev;
-  else if(activeRecId&&records[activeRecId])el.value=activeRecId;
-  salesActiveRecId=el.value||null;
-  onSalesRecChange();
-}
-
-function onSalesRecChange(){
-  const el=document.getElementById('salesRecSelect');
-  salesActiveRecId=el?.value||null;
-  qty=1;
-  document.getElementById('saleSelect').value='';
-  popSel();renderSales();updStats();
-  saveAll();
-}
-
-function getProds(rid){
-  const r=rid||salesActiveRecId;
-  const s=gs(r);if(!s)return[];
-  const p=[];
-  for(let row=1;row<s.rows;row++){
-    const name=gcv(row,0,null,r);if(!name)continue;
-    const avail=parseFloat(gcv(row,2,null,r))||0;if(avail<=0)continue;
-    p.push({r:row,name,price:parseFloat(gcv(row,1,null,r))||0,qty:avail,profit:parseFloat(gcv(row,3,null,r))||0});
-  }return p;
-}
-function popSel(){
-  const el=document.getElementById('saleSelect');if(!el)return;
-  const pv=el.value;
-  el.innerHTML='<option value="">-- اختر المنتج --</option>';
-  getProds().forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${p.name} (متاح: ${p.qty})`;el.appendChild(o);});
-  if(pv)el.value=pv;onProdChange();
-}
-function getSelProd(){const v=document.getElementById('saleSelect')?.value;if(v==='')return null;return getProds()[+v]||null;}
-function onProdChange(){
-  const p=getSelProd();const maxQ=p?p.qty:1;
-  qty=Math.max(1,Math.min(qty,maxQ));
-  document.getElementById('qval').textContent=qty;
-  document.getElementById('qmax').textContent=`من ${maxQ}`;
-  document.getElementById('qMinus').disabled=qty<=1;
-  document.getElementById('qPlus').disabled=!p||qty>=maxQ;
-  const pv=document.getElementById('pprev');
-  if(!p){pv.innerHTML='<div class="empty" style="padding:6px;font-size:12px;">اختر منتجاً</div>';return;}
-  pv.innerHTML=`<div class="pp-name">${esc(p.name)}</div>
-    <div class="pp-grid">
-      <div class="pp-item"><div class="pv" style="color:var(--yellow)">${fmtP(p.price)}</div><div class="pl">السعر</div></div>
-      <div class="pp-item"><div class="pv" style="color:var(--cyan)">${p.qty}</div><div class="pl">المتاح</div></div>
-      <div class="pp-item" style="grid-column:span 2;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3)">
-        <div class="pv" style="color:var(--acc)">${fmtP(qty*p.price)}</div><div class="pl">الإجمالي (${qty})</div>
-      </div>
-    </div>`;
-}
-function chQty(d){const p=getSelProd();qty=Math.max(1,Math.min(p?p.qty:1,qty+d));onProdChange();}
-function doSell(){
-  const p=getSelProd();if(!p){alert('اختر منتجاً أولاً');return;}
-  const rid=salesActiveRecId;
-  const s=gs(rid);if(!s){alert('اختر سجلاً أولاً');return;}
-  const total=qty*p.price;
-  s.data[ck(p.r,2)]=String(p.qty-qty);
-  s.data[ck(p.r,3)]=String((p.profit+total).toFixed(2));
-  if(!salesMap[rid])salesMap[rid]=[];
-  salesMap[rid].unshift({id:sid++,name:p.name,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
-  saveAll();qty=1;document.getElementById('saleSelect').value='';
-  popSel();renderSales();updStats();
-}
-function renderSales(){
-  function renderSales(){
-  const el=document.getElementById('salesList');
-  const rid=salesActiveRecId;
-  const arr=rid ? (salesMap[rid] || []) : [];
-
-  if(!rid){
-    el.innerHTML='<div class="empty">اختر سجل أولاً</div>';
+  if(!name || !price || !qty){
+    alert('املأ جميع الحقول');
     return;
   }
 
-  if(!arr.length){
-    el.innerHTML='<div class="empty">لا توجد مبيعات بعد</div>';
+  products.push({
+    name,
+    price,
+    qty,
+    profit:0
+  });
+
+  save();
+  render();
+
+  document.getElementById('name').value='';
+  document.getElementById('price').value='';
+  document.getElementById('qty').value='';
+}
+
+function sell(index){
+
+  if(products[index].qty <= 0){
+    alert('الكمية منتهية');
     return;
   }
 
-  el.innerHTML=arr.map(s=>`
-    <div class="sc">
-      <div class="sc-ico">🛒</div>
+  products[index].qty -= 1;
+  products[index].profit += products[index].price;
 
-      <div class="sc-info">
-        <div class="sc-name">${esc(s.name)}</div>
-        <div class="sc-sub">
-          ${s.date} • الكمية: ${s.qty}
-        </div>
-      </div>
-
-      <div class="sc-tot">
-        ${fmtP(s.total)}
-        <small>${fmtP(s.price)} × ${s.qty}</small>
-      </div>
-
-      <button class="sc-del" onclick="delSale(${s.id})">🗑</button>
-    </div>
-  `).join('');
+  save();
+  render();
 }
 
-function delSale(id){
-  if(!salesActiveRecId)return;
+function removeItem(index){
 
-  salesMap[salesActiveRecId] =
-    (salesMap[salesActiveRecId] || []).filter(x => x.id !== id);
-
-  saveAll();
-  renderSales();
-  updStats();
+  if(confirm('حذف المنتج؟')){
+    products.splice(index,1);
+    save();
+    render();
+  }
 }
 
-renderRecList();
-popSel();
-renderSales();
-updStats();
+render();
+</script>
+
+</body>
+</html>
