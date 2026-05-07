@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=0.5">
 <title>InvPro</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -189,6 +189,34 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
 .share-loading{text-align:center;padding:20px;color:var(--text2);font-size:13px;}
 
 .empty{color:var(--text2);text-align:center;padding:28px;font-size:13px;}
+/* ── RESPONSIVE ── */
+@media(min-width:768px){
+  html,body{font-size:16px;}
+  .topbar{height:60px;padding:0 20px;}
+  .logo{font-size:20px;}
+  .topbar-title{font-size:18px;}
+  .stat{padding:10px 8px;}
+  .sv{font-size:16px;}
+  .sl{font-size:11px;}
+  td.cell{min-width:130px;width:130px;}
+  .rlbtn{font-size:15px;padding:13px;}
+  .rec-card-name{font-size:16px;}
+  .modal{max-width:600px;margin:0 auto;border-radius:20px;}
+}
+@media(min-width:1200px){
+  html,body{font-size:18px;}
+  .topbar{height:64px;padding:0 32px;}
+  td.cell{min-width:160px;width:160px;}
+  .stat{padding:12px 10px;}
+  .sv{font-size:18px;}
+}
+@media(min-width:2560px){
+  html,body{font-size:22px;}
+  .topbar{height:80px;}
+  td.cell{min-width:200px;width:200px;}
+  th.rh{min-width:40px;width:40px;}
+  table.grid th,table.grid td{height:48px;}
+}
 /* ── THEME ── */
 .theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .theme-card{border-radius:14px;padding:14px 8px;cursor:pointer;text-align:center;border:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;}
@@ -1133,17 +1161,26 @@ function buildShareCanvas(){
     document.getElementById('shareLoading').textContent='⚠️ لا يوجد بيانات';
     return;
   }
-  // ensure font loaded
   document.fonts.ready.then(()=>_drawCanvas(s));
 }
 function _drawCanvas(s){
-  const cellW=110,cellH=34,rowHdrW=30,colHdrH=28;
-  const statsH=50; // height for stats bar
-  const W=rowHdrW+s.cols*cellW;
-  const H=statsH+colHdrH+s.rows*cellH;
+  // 4K scale: base size × scale factor
+  const SCALE=4; // 4x = 4K quality
+  const cellW=140,cellH=44,rowHdrW=38,colHdrH=34;
+  const statsH=60;
+  const baseW=rowHdrW+s.cols*cellW;
+  const baseH=statsH+colHdrH+s.rows*cellH;
+  const W=baseW*SCALE;
+  const H=baseH*SCALE;
   const canvas=document.getElementById('shareCanvas');
-  canvas.width=W;canvas.height=H;
+  canvas.width=W;
+  canvas.height=H;
+  canvas.style.width=baseW+'px';
+  canvas.style.height=baseH+'px';
   const ctx=canvas.getContext('2d');
+  ctx.scale(SCALE,SCALE);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
   // get computed colors
   const bg=getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()||'#0b0d16';
   const s2=getComputedStyle(document.documentElement).getPropertyValue('--s2').trim()||'#181b28';
@@ -1155,79 +1192,75 @@ function _drawCanvas(s){
   const borderClr=getComputedStyle(document.documentElement).getPropertyValue('--border').trim()||'#2a3050';
   // background
   ctx.fillStyle=bg;
-  ctx.fillRect(0,0,W,H);
+  ctx.fillRect(0,0,baseW,baseH);
   // STATS BAR
   ctx.fillStyle=s2;
-  ctx.fillRect(0,0,W,statsH);
-  ctx.strokeStyle=acc;ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(0,statsH);ctx.lineTo(W,statsH);ctx.stroke();
+  ctx.fillRect(0,0,baseW,statsH);
+  ctx.strokeStyle=acc;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,statsH);ctx.lineTo(baseW,statsH);ctx.stroke();
   const d0=document.getElementById('ds0')?.textContent||'0';
   const d1=document.getElementById('ds1')?.textContent||'0';
   const d2=document.getElementById('ds2')?.textContent||'0';
   const stats=[{v:d0,l:'العدد الكلي',c:acc},{v:d1,l:'إجمالي الأسعار',c:yellow},{v:d2,l:'إجمالي الأرباح',c:green}];
-  const sw=W/3;
+  const sw=baseW/3;
   stats.forEach((st,i)=>{
     const x=i*sw;
     if(i>0){ctx.strokeStyle=borderClr;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,4);ctx.lineTo(x,statsH-4);ctx.stroke();}
-    ctx.fillStyle=st.c;ctx.font='bold 13px Cairo,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle=st.c;ctx.font='bold 16px Cairo,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(st.v,x+sw/2,statsH*0.38);
-    ctx.fillStyle=text2;ctx.font='9px Cairo,sans-serif';
+    ctx.fillStyle=text2;ctx.font='11px Cairo,sans-serif';
     ctx.fillText(st.l,x+sw/2,statsH*0.72);
   });
-  // offset table drawing by statsH — RTL: col 0 on RIGHT side
+  // RTL drawing — all coords in base size (SCALE handles 4K)
   const offY=statsH;
-  // row number header on LEFT in canvas = RIGHT in RTL view
-  const rHdrX=W-rowHdrW; // row header on right side (RTL)
-  // col headers — reversed: col 0 = rightmost
+  const rHdrX=baseW-rowHdrW;
+  // col headers
   ctx.fillStyle=s2;
-  ctx.fillRect(0,offY,W,colHdrH);
+  ctx.fillRect(0,offY,baseW,colHdrH);
   ctx.fillStyle=text2;
-  ctx.font='bold 11px Cairo,sans-serif';
+  ctx.font='bold 13px Cairo,sans-serif';
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   for(let c=0;c<s.cols;c++){
-    // RTL: col 0 rightmost, so x = W - rowHdrW - (c+1)*cellW
-    const cx2=W-rowHdrW-(c+1)*cellW;
+    const cx2=baseW-rowHdrW-(c+1)*cellW;
     ctx.fillText(cn(c),cx2+cellW/2,offY+colHdrH/2);
   }
-  // row headers on RIGHT
+  // row headers
   ctx.fillStyle=s2;
-  ctx.fillRect(rHdrX,offY,rowHdrW,H-offY);
+  ctx.fillRect(rHdrX,offY,rowHdrW,baseH-offY);
   for(let r=0;r<s.rows;r++){
     ctx.fillStyle=text2;
-    ctx.font='bold 11px Cairo,sans-serif';
+    ctx.font='bold 13px Cairo,sans-serif';
     ctx.textAlign='center';
     ctx.fillText(r+1,rHdrX+rowHdrW/2,offY+colHdrH+r*cellH+cellH/2);
   }
-  // cells — RTL order
+  // cells — RTL
   const s1clr=getComputedStyle(document.documentElement).getPropertyValue('--s1').trim()||'#12151f';
   for(let r=0;r<s.rows;r++){
     for(let c=0;c<s.cols;c++){
       const k=ck(r,c),st=s.styles[k]||{};
-      // RTL: col 0 on right
-      const x=W-rowHdrW-(c+1)*cellW;
+      const x=baseW-rowHdrW-(c+1)*cellW;
       const y=offY+colHdrH+r*cellH;
       ctx.fillStyle=st.bg||s1clr;
       ctx.fillRect(x,y,cellW,cellH);
       ctx.strokeStyle=borderClr;
-      ctx.lineWidth=1;
+      ctx.lineWidth=0.5;
       ctx.strokeRect(x+.5,y+.5,cellW-1,cellH-1);
       let v=gcv(r,c);
       if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
       ctx.fillStyle=st.fg||textClr;
-      ctx.font=`${st.fw?'bold ':''} ${st.fs||13}px Cairo,sans-serif`;
-      // RTL text align: default right, center stays center, left becomes right
+      ctx.font=`${st.fw?'bold ':''} ${st.fs||14}px Cairo,sans-serif`;
       const align=st.ta==='center'?'center':'right';
       ctx.textAlign=align;
-      const tx=align==='center'?x+cellW/2:x+cellW-6;
-      ctx.fillText(String(v||'').substring(0,18),tx,y+cellH/2);
+      const tx=align==='center'?x+cellW/2:x+cellW-8;
+      ctx.fillText(String(v||'').substring(0,20),tx,y+cellH/2);
     }
   }
   ctx.strokeStyle=borderClr;
-  ctx.lineWidth=1;
-  ctx.strokeRect(.5,.5,W-1,H-1);
+  ctx.lineWidth=0.5;
+  ctx.strokeRect(.5,.5,baseW-1,baseH-1);
 
-  shareImgDataUrl=canvas.toDataURL('image/png');
+  shareImgDataUrl=canvas.toDataURL('image/png',1.0);
   applyZoom();
   document.getElementById('shareLoading').style.display='none';
   document.getElementById('shareContent').style.display='flex';
