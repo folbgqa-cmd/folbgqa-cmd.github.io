@@ -1005,4 +1005,132 @@ function renderSales(){
       <div class="sc-ico">🛒</div>
       <div class="sc-info">
         <div class="sc-name">${esc(s.name)}</div>
-        <div class="sc-sub">الكمية: ${s.qt
+        <div class="sc-sub">الكمية: ${s.qty} × ${fmtP(s.price)} | ${s.date}</div>
+      </div>
+      <div class="sc-tot">${fmtP(s.total)}<small>الإجمالي</small></div>
+      <button class="sc-del" onclick="delSale(${s.id})">🗑</button>
+    </div>`).join('');
+}
+
+function delSale(id){
+  if(!salesActiveRecId)return;
+  const arr=salesMap[salesActiveRecId];
+  if(!arr)return;
+  const idx=arr.findIndex(s=>s.id===id);
+  if(idx<0)return;
+  salesMap[salesActiveRecId].splice(idx,1);
+  saveAll();renderSales();updStats();
+}
+
+// ════════════════════════════════
+// SHARE / CANVAS
+// ════════════════════════════════
+function openShareModal(){
+  document.getElementById('shareModal').classList.add('show');
+  document.getElementById('shareLoading').style.display='block';
+  document.getElementById('shareContent').style.display='none';
+  shareZoom=1;
+  setTimeout(buildShareCanvas,200);
+}
+function closeShareModal(){
+  document.getElementById('shareModal').classList.remove('show');
+  shareImgDataUrl=null;
+}
+function buildShareCanvas(){
+  const s=gs();
+  if(!s){
+    document.getElementById('shareLoading').textContent='⚠️ لا يوجد بيانات';
+    return;
+  }
+  const cellW=110,cellH=34,rowHdrW=30,colHdrH=28;
+  const W=rowHdrW+s.cols*cellW;
+  const H=colHdrH+s.rows*cellH;
+  const canvas=document.getElementById('shareCanvas');
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  // background
+  ctx.fillStyle='#0b0d16';
+  ctx.fillRect(0,0,W,H);
+  // col headers
+  ctx.fillStyle='#181b28';
+  ctx.fillRect(0,0,W,colHdrH);
+  ctx.fillStyle='#64748b';
+  ctx.font='bold 11px Cairo,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  for(let c=0;c<s.cols;c++){
+    ctx.fillText(cn(c),rowHdrW+c*cellW+cellW/2,colHdrH/2);
+  }
+  // row headers
+  ctx.fillStyle='#181b28';
+  ctx.fillRect(0,0,rowHdrW,H);
+  for(let r=0;r<s.rows;r++){
+    ctx.fillStyle='#64748b';
+    ctx.font='bold 11px Cairo,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText(r+1,rowHdrW/2,colHdrH+r*cellH+cellH/2);
+  }
+  // cells
+  for(let r=0;r<s.rows;r++){
+    for(let c=0;c<s.cols;c++){
+      const k=ck(r,c),st=s.styles[k]||{};
+      const x=rowHdrW+c*cellW,y=colHdrH+r*cellH;
+      ctx.fillStyle=st.bg||'#12151f';
+      ctx.fillRect(x,y,cellW,cellH);
+      // border
+      ctx.strokeStyle='#2a3050';
+      ctx.lineWidth=1;
+      ctx.strokeRect(x+.5,y+.5,cellW-1,cellH-1);
+      // text
+      let v=gcv(r,c);
+      if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      ctx.fillStyle=st.fg||'#e2e8f0';
+      ctx.font=`${st.fw?'bold ':''} ${st.fs||13}px Cairo,sans-serif`;
+      ctx.textAlign=st.ta==='center'?'center':st.ta==='left'?'left':'right';
+      const tx=st.ta==='center'?x+cellW/2:st.ta==='left'?x+6:x+cellW-6;
+      ctx.fillText(String(v||'').substring(0,16),tx,y+cellH/2);
+    }
+  }
+  // grid border overlay
+  ctx.strokeStyle='#2a3050';
+  ctx.lineWidth=1;
+  ctx.strokeRect(.5,.5,W-1,H-1);
+
+  shareImgDataUrl=canvas.toDataURL('image/png');
+  applyZoom();
+  document.getElementById('shareLoading').style.display='none';
+  document.getElementById('shareContent').style.display='flex';
+}
+
+function applyZoom(){
+  const canvas=document.getElementById('shareCanvas');
+  canvas.style.transform=`scale(${shareZoom})`;
+  document.getElementById('zoomVal').textContent=Math.round(shareZoom*100)+'%';
+}
+function zoomShare(d){shareZoom=Math.max(0.2,Math.min(3,shareZoom+d));applyZoom();}
+function resetZoom(){shareZoom=1;applyZoom();}
+
+function saveShareImg(){
+  if(!shareImgDataUrl)return;
+  const a=document.createElement('a');
+  a.href=shareImgDataUrl;
+  a.download=`invpro_${activeRecId||'table'}.png`;
+  a.click();
+}
+function shareVia(app){
+  if(!shareImgDataUrl){alert('انتظر تحضير الصورة');return;}
+  saveShareImg();
+  setTimeout(()=>{
+    if(app==='whatsapp')window.open('https://wa.me/','_blank');
+    else if(app==='telegram')window.open('https://t.me/','_blank');
+  },400);
+}
+
+// ════════════════════════════════
+// STARTUP
+// ════════════════════════════════
+renderRecList();
+updStats();
+</script>
+</body>
+  </html>
