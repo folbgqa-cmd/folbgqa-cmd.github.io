@@ -998,4 +998,54 @@ function doSell(){
   popSel();renderSales();updStats();
 }
 function renderSales(){
-  const el=document.getElementById('salesList')
+  function renderSales(){
+  const el=document.getElementById('salesList');
+  const rid=salesActiveRecId;
+  const arr=rid ? (salesMap[rid] || []) : [];
+
+  if(!rid){
+    el.innerHTML='<div class="empty">اختر سجل أولاً</div>';
+    return;
+  }
+
+  if(!arr.length){
+    el.innerHTML='<div class="empty">لا توجد مبيعات بعد</div>';
+    return;
+  }
+
+  el.innerHTML=arr.map(s=>`
+    <div class="sc">
+      <div class="sc-ico">🛒</div>
+
+      <div class="sc-info">
+        <div class="sc-name">${esc(s.name)}</div>
+        <div class="sc-sub">
+          ${s.date} • الكمية: ${s.qty}
+        </div>
+      </div>
+
+      <div class="sc-tot">
+        ${fmtP(s.total)}
+        <small>${fmtP(s.price)} × ${s.qty}</small>
+      </div>
+
+      <button class="sc-del" onclick="delSale(${s.id})">🗑</button>
+    </div>
+  `).join('');
+}
+
+function delSale(id){
+  if(!salesActiveRecId)return;
+
+  salesMap[salesActiveRecId] =
+    (salesMap[salesActiveRecId] || []).filter(x => x.id !== id);
+
+  saveAll();
+  renderSales();
+  updStats();
+}
+
+renderRecList();
+popSel();
+renderSales();
+updStats();
