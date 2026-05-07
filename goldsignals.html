@@ -2,719 +2,1007 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>محلل الشارت الذكي</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>InvPro</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap');
-*{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --g1:#00d4aa;--g2:#0095ff;
-  --bg:#060b12;--card:rgba(0,14,28,.7);
-  --border:rgba(0,212,170,.15);--muted:#3a6a7a;--text:#dde8f0;--dim:#1a3a4a;
+  --bg:#0b0d16;--s1:#12151f;--s2:#181b28;--s3:#1e2235;--s4:#252a40;
+  --border:#2a3050;--acc:#3b82f6;--green:#10b981;--red:#ef4444;
+  --yellow:#f59e0b;--cyan:#22d3ee;
+  --text:#e2e8f0;--text2:#64748b;--text3:#94a3b8;
 }
-body{background:var(--bg);color:var(--text);font-family:'Tajawal',sans-serif;direction:rtl;min-height:100vh}
-.app{min-height:100vh;background:radial-gradient(ellipse at 20% 5%,#091525,var(--bg));padding:10px}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .22s cubic-bezier(.4,0,.2,1);z-index:1;}
+.screen.hidden{transform:translateX(-110%);pointer-events:none;}
+.topbar{background:var(--s1);border-bottom:2px solid var(--acc);height:52px;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;}
+.logo{font-weight:900;font-size:16px;background:linear-gradient(135deg,var(--acc),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.topbar-title{font-size:15px;font-weight:900;flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.back-btn{background:none;border:none;color:var(--acc);font-size:26px;cursor:pointer;padding:4px 8px 4px 0;line-height:1;flex-shrink:0;}
+.tbtn{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.tbtn:active{background:var(--acc);}
+.bottom-nav{background:var(--s1);border-top:1px solid var(--border);display:flex;flex-shrink:0;}
+.bnav{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;color:var(--text2);font-family:'Cairo',sans-serif;font-size:10px;}
+.bnav.on{color:var(--acc);}
+.bnav .bico{font-size:20px;line-height:1;}
+.statsbar{display:flex;flex-shrink:0;background:var(--s1);border-bottom:1px solid var(--border);}
+.stat{flex:1;padding:7px 4px;text-align:center;border-left:1px solid var(--border);}
+.stat:last-child{border-left:none;}
+.sv{font-size:13px;font-weight:900;line-height:1.2;}
+.sl{font-size:9px;color:var(--text2);margin-top:1px;}
 
-/* HEADER */
-.hdr{text-align:center;padding:16px 0 10px}
-.logo{width:46px;height:46px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 20px rgba(0,212,170,.3);margin-bottom:7px}
-.hdr h1{font-size:clamp(20px,5vw,30px);font-weight:800;background:linear-gradient(135deg,var(--g1),var(--g2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hdr p{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+/* ── RECORDS LIST ── */
+.rl-hdr{padding:10px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.rec-search{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
+.rec-search:focus{border-color:var(--acc);}
+.rl-btns{display:flex;gap:8px;}
+.rlbtn{flex:1;padding:11px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+.rlbtn.new{background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;}
+.rlbtn.tpl{background:var(--s3);border:1px solid var(--border);color:var(--text2);}
+.rlbtn:active{opacity:.8;}
+.rl-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
 
-.wrap{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:11px}
-.warn{background:rgba(255,175,0,.05);border:1px solid rgba(255,175,0,.12);border-radius:9px;padding:7px 13px;font-size:11px;color:#5a4a20;text-align:center}
+/* record card */
+.rec-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.rec-card.pinned{border-color:rgba(245,158,11,.5);}
+.rec-card-top{padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.rec-card-top:active{background:var(--s3);}
+.rec-card-ico{font-size:20px;flex-shrink:0;}
+.rec-card-info{flex:1;min-width:0;}
+.rec-card-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rec-card-date{font-size:10px;color:var(--text2);margin-top:2px;}
+.rec-arrow{color:var(--text2);font-size:20px;flex-shrink:0;}
+.rec-card-acts{border-top:1px solid var(--border);display:flex;flex-wrap:wrap;}
+.rca{flex:1;min-width:60px;padding:11px 6px;background:none;border:none;border-left:1px solid var(--border);color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap;}
+.rca:last-child{border-left:none;}
+.rca:active{background:var(--s4);}
+.rca.pin-on{color:var(--yellow);}
+.rca.r:active{color:var(--red);}
 
-/* CARD */
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px}
-.card-title{font-size:13px;font-weight:700;color:var(--g1);margin-bottom:11px;display:flex;align-items:center;gap:7px}
+/* ── DETAIL (SHEET) ── */
+.rec-ctrl{background:var(--s2);border-bottom:1px solid var(--border);padding:8px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+.rc-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.rc-pill{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--s3);}
+.rc-lbl{padding:5px 9px;font-size:11px;color:var(--text3);white-space:nowrap;border-left:1px solid var(--border);}
+.rc-lbl b{color:var(--acc);font-weight:900;}
+.rcb{width:36px;height:36px;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.rcb:active{background:var(--acc);color:#fff;}
+.rcb.minus:active{background:var(--red);}
+.rcsep{width:1px;height:36px;background:var(--border);}
+.cur-box{display:flex;align-items:center;border:1px solid var(--border);border-radius:10px;background:var(--s3);overflow:hidden;}
+.cur-btn{padding:6px 10px;background:none;border:none;color:var(--text2);font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;font-weight:700;}
+.cur-btn.on{background:var(--yellow);color:#000;}
+.cur-btn.usd.on{background:var(--green);color:#fff;}
+.rate-inp{background:transparent;border:none;color:var(--text2);font-size:11px;width:52px;text-align:center;font-family:'Cairo',sans-serif;outline:none;}
+.style-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.cpick{position:relative;display:inline-flex;align-items:center;gap:5px;background:var(--s3);border:1px solid var(--border);padding:6px 10px;border-radius:8px;cursor:pointer;}
+.cpick input[type=color]{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;}
+.cdot{width:16px;height:16px;border-radius:4px;border:1px solid var(--border);}
+.cplbl{font-size:11px;color:var(--text2);}
+.fs-wrap{display:flex;align-items:center;gap:5px;}
+.fs-slider{-webkit-appearance:none;width:65px;height:4px;border-radius:2px;background:var(--border);outline:none;}
+.fs-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);}
+.fs-val{font-size:11px;color:var(--acc);font-weight:700;min-width:18px;}
+.clr-btn{background:var(--s3);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;}
+.clr-btn:active{background:var(--red);border-color:var(--red);color:#fff;}
 
-/* UPLOAD */
-.upload-zone{border:2px dashed rgba(0,212,170,.25);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
-.upload-zone:hover{border-color:rgba(0,212,170,.55);background:rgba(0,20,40,.4)}
-.upload-zone input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-.upload-zone p{font-size:15px;font-weight:700;color:#c0d0e0;margin-top:8px}
-.upload-zone span{font-size:12px;color:var(--muted);margin-top:4px;display:block}
+.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;}
+table.grid{border-collapse:collapse;table-layout:fixed;}
+table.grid th,table.grid td{border:1px solid var(--border);height:34px;padding:0;white-space:nowrap;overflow:hidden;}
+th.rh{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;min-width:28px;width:28px;text-align:center;user-select:none;position:sticky;right:0;z-index:3;}
+th.ch{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;text-align:center;user-select:none;position:sticky;top:0;z-index:2;}
+th.corner{position:sticky;top:0;right:0;z-index:4;background:var(--s2);}
+td.cell{background:var(--s1);color:var(--text);cursor:cell;min-width:95px;width:95px;}
+td.cell.sel{outline:2px solid var(--acc);outline-offset:-1px;z-index:1;}
+td.cell.insel{background:rgba(59,130,246,.1);}
+td.cell input.ci{width:100%;height:100%;border:none;background:rgba(59,130,246,.15);color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:0 7px;outline:none;text-align:inherit;}
+td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center;overflow:hidden;font-size:13px;}
 
-/* CANVAS WRAPPER */
-.canvas-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#04090e;display:none;touch-action:none}
-#mainCanvas{display:block;width:100%;cursor:crosshair}
+.sbar{background:var(--s2);border-top:1px solid var(--border);padding:4px 12px;font-size:10px;color:var(--text2);display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.save-ind{font-size:10px;color:var(--green);margin-right:auto;}
+.save-ind.saving{color:var(--yellow);}
 
-/* TOOLBAR */
-.toolbar{display:flex;flex-wrap:wrap;gap:7px;padding:10px 0 4px}
-.mode-btn{padding:8px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:rgba(0,12,25,.7);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;transition:all .2s;flex:1;min-width:80px;text-align:center;white-space:nowrap}
-.mode-btn:hover{border-color:rgba(255,255,255,.2);color:#aaa}
-.mode-btn.active-HIGH {background:rgba(255,220,0,.12);border-color:rgba(255,220,0,.4);color:#ffd700}
-.mode-btn.active-LOW  {background:rgba(255,80,80,.12);border-color:rgba(255,80,80,.4);color:#ff6060}
-.mode-btn.active-CURR {background:rgba(0,180,255,.12);border-color:rgba(0,180,255,.4);color:#00b4ff}
-.mode-btn.active-SUP  {background:rgba(0,212,100,.12);border-color:rgba(0,212,100,.4);color:#00d464}
-.mode-btn.active-RES  {background:rgba(255,100,200,.12);border-color:rgba(255,100,200,.4);color:#ff80cc}
-.mode-btn.active-BOS  {background:rgba(180,100,255,.12);border-color:rgba(180,100,255,.4);color:#c06aff}
+/* ── SALES ── */
+.sale-form{padding:10px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.sf label{font-size:11px;color:var(--text2);font-weight:700;display:block;margin-bottom:4px;}
+.sf select{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
+.qty-row{display:flex;gap:8px;}
+.qty-stepper{background:var(--s3);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;overflow:hidden;min-width:130px;}
+.qbtn{width:44px;height:44px;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.qbtn:active:not(:disabled){background:var(--acc);color:#fff;}
+.qbtn.minus:active:not(:disabled){background:var(--red);}
+.qbtn:disabled{opacity:.3;}
+.qty-track{flex:1;display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--border);border-left:1px solid var(--border);padding:4px 0;}
+.qty-num{font-size:20px;font-weight:900;color:var(--acc);line-height:1;}
+.qty-max{font-size:9px;color:var(--text2);}
+.prod-preview{flex:1;background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;}
+.pp-name{font-size:13px;font-weight:700;margin-bottom:5px;}
+.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.pp-item{background:var(--s4);border-radius:7px;padding:5px 7px;}
+.pp-item .pv{font-weight:900;font-size:13px;}
+.pp-item .pl{font-size:9px;color:var(--text2);}
+.sell-btn{width:100%;background:linear-gradient(135deg,var(--green),#059669);border:none;color:#fff;padding:13px;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;}
+.sell-btn:active{opacity:.85;}
+.sales-list{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.sc{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px;}
+.sc-ico{width:38px;height:38px;border-radius:9px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.sc-info{flex:1;min-width:0;}
+.sc-name{font-weight:700;font-size:13px;}
+.sc-sub{font-size:10px;color:var(--text2);margin-top:2px;}
+.sc-tot{font-weight:900;color:var(--green);font-size:13px;white-space:nowrap;text-align:center;}
+.sc-tot small{font-size:9px;display:block;color:var(--text2);font-weight:400;}
+.sc-del{background:none;border:none;color:var(--text2);font-size:20px;padding:6px;cursor:pointer;}
+.sc-del:active{color:var(--red);}
 
-/* LEGEND */
-.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
-.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* ── Sales screen record selector ── */
+.sales-rec-sel{padding:8px 10px;background:var(--s2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.sales-rec-sel select{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;}
 
-/* INPUTS ROW */
-.irow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
-.field label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px}
-.field input,.field select{width:100%;background:rgba(0,8,20,.8);border:1px solid rgba(0,212,170,.18);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Tajawal',sans-serif;outline:none;direction:ltr;text-align:center}
-.field input:focus,.field select:focus{border-color:rgba(0,212,170,.5)}
+/* ── CTX ── */
+.ctx{position:fixed;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:5px;z-index:9999;min-width:155px;box-shadow:0 8px 30px rgba(0,0,0,.8);display:none;}
+.ctx.show{display:block;}
+.cxi{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;}
+.cxi:active{background:var(--acc);color:#fff;}
+.cxi.r:active{background:var(--red);}
+.cxs{height:1px;background:var(--border);margin:4px 0;}
 
-.hint-box{background:rgba(0,212,170,.04);border:1px solid rgba(0,212,170,.1);border-radius:9px;padding:10px 13px;font-size:12px;color:var(--muted);line-height:1.8;margin-top:6px}
-.hint-box strong{color:#00b890;display:block;margin-bottom:4px}
+/* ── MODALS (slide up from bottom) ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:flex-end;}
+.overlay.show{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;animation:sup .22s ease;}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-hdr{padding:14px 16px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.modal-hdr h3{font-size:15px;font-weight:900;color:var(--cyan);}
+.mclose{background:none;border:none;color:var(--text2);font-size:28px;cursor:pointer;line-height:1;padding:0 3px;}
+.mclose:active{color:var(--red);}
+.modal-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.field label{font-size:12px;color:var(--text2);font-weight:700;display:block;margin-bottom:5px;}
+.field input{width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-family:'Cairo',sans-serif;font-size:14px;outline:none;}
+.field input:focus{border-color:var(--acc);}
+.modal-footer{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0;}
+.save-btn{flex:1;padding:13px;background:linear-gradient(135deg,var(--acc),#2563eb);border:none;color:#fff;border-radius:12px;font-family:'Cairo',sans-serif;font-size:15px;font-weight:900;cursor:pointer;}
+.save-btn:active{opacity:.85;}
+.cancel-btn{padding:13px 18px;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;cursor:pointer;}
+.tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.tpl-card{background:var(--s2);border:2px solid var(--border);border-radius:14px;padding:16px 10px;cursor:pointer;text-align:center;}
+.tpl-card:active{border-color:var(--acc);background:rgba(59,130,246,.08);}
+.tpl-ico{font-size:28px;margin-bottom:7px;}
+.tpl-name{font-size:13px;font-weight:700;}
+.tpl-desc{font-size:10px;color:var(--text2);margin-top:3px;}
 
-/* MARKS STATUS */
-.marks-status{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
-.mark-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#2a4a5a}
-.mark-chip.done-HIGH{background:rgba(255,220,0,.1);border-color:rgba(255,220,0,.3);color:#ffd700}
-.mark-chip.done-LOW {background:rgba(255,80,80,.1);border-color:rgba(255,80,80,.3);color:#ff6060}
-.mark-chip.done-CURR{background:rgba(0,180,255,.1);border-color:rgba(0,180,255,.3);color:#00b4ff}
-.mark-chip.done-SUP {background:rgba(0,212,100,.1);border-color:rgba(0,212,100,.3);color:#00d464}
-.mark-chip.done-RES {background:rgba(255,100,200,.1);border-color:rgba(255,100,200,.3);color:#ff80cc}
+/* ── SHARE MODAL ── */
+.share-preview-wrap{background:var(--s3);border:1px solid var(--border);border-radius:12px;overflow:hidden;touch-action:none;cursor:grab;position:relative;}
+.share-preview-wrap:active{cursor:grabbing;}
+.share-preview-inner{overflow:hidden;width:100%;height:260px;display:flex;align-items:center;justify-content:center;}
+#shareCanvas{display:block;transform-origin:center center;transition:none;}
+.zoom-controls{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:8px;}
+.zbtn{background:var(--s3);border:1px solid var(--border);color:var(--text);width:38px;height:38px;border-radius:8px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Cairo',sans-serif;}
+.zbtn:active{background:var(--acc);color:#fff;}
+.zoom-val{font-size:13px;color:var(--acc);font-weight:700;min-width:40px;text-align:center;}
+.share-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.share-app-btn{padding:14px 10px;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;}
+.share-app-btn:active{opacity:.8;}
+.share-wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;}
+.share-tg{background:linear-gradient(135deg,#2AABEE,#1a8cc5);color:#fff;}
+.share-save{background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;grid-column:span 2;}
+.share-loading{text-align:center;padding:20px;color:var(--text2);font-size:13px;}
 
-/* ANALYZE */
-.abtn{width:100%;padding:15px;background:linear-gradient(135deg,var(--g1),var(--g2));border:none;border-radius:13px;color:#000;font-size:16px;font-weight:800;font-family:'Tajawal',sans-serif;cursor:pointer;box-shadow:0 5px 20px rgba(0,212,170,.2);transition:all .2s}
-.abtn:hover{transform:translateY(-2px);box-shadow:0 9px 28px rgba(0,212,170,.32)}
-.abtn:disabled{background:linear-gradient(135deg,#1a3333,#1a2835);color:#1e4050;cursor:not-allowed;transform:none;box-shadow:none}
-.clrbtn{width:100%;padding:10px;background:rgba(255,60,60,.08);border:1px solid rgba(255,60,60,.2);border-radius:10px;color:#ff6060;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;cursor:pointer;transition:all .2s;margin-top:7px}
-
-/* RESULT SECTION */
-.res-section{display:none}
-
-/* NO TRADE */
-.no-trade-card{background:rgba(255,55,55,.07);border:2px solid rgba(255,55,55,.22);border-radius:14px;padding:20px;text-align:center}
-.nt-icon{font-size:42px;margin-bottom:8px}
-.nt-title{font-size:21px;font-weight:800;color:#ff6060;margin-bottom:7px}
-.nt-reason{font-size:13px;color:#884444;line-height:1.85}
-
-/* TRADE HEADER */
-.trade-hdr{border-radius:14px;overflow:hidden}
-.th-top{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.th-top.buy{background:rgba(0,200,80,.1);border:2px solid rgba(0,200,80,.28);border-radius:14px 14px 0 0}
-.th-top.sell{background:rgba(255,60,60,.1);border:2px solid rgba(255,60,60,.28);border-radius:14px 14px 0 0}
-.dir-badge{font-size:26px;font-weight:800;display:flex;align-items:center;gap:7px}
-.dir-badge.buy{color:#00d464}.dir-badge.sell{color:#ff5050}
-.strength-ring{width:64px;height:64px;position:relative;flex-shrink:0}
-.strength-ring svg{width:64px;height:64px;transform:rotate(-90deg)}
-.strength-ring .track{fill:none;stroke:rgba(255,255,255,.06);stroke-width:5}
-.strength-ring .fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .6s}
-.strength-ring .fill.buy{stroke:#00d464}.strength-ring .fill.sell{stroke:#ff5050}
-.strength-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.strength-num{font-size:17px;font-weight:800;line-height:1}
-.strength-sub{font-size:9px;color:var(--muted);margin-top:2px}
-
-/* LEVELS GRID */
-.levels-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;background:rgba(0,8,20,.6);border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px}
-.lv{background:rgba(0,12,28,.7);border-radius:9px;padding:10px 12px;border:1px solid rgba(255,255,255,.05)}
-.lv.entry{border-color:rgba(100,150,255,.2)}.lv.sl{border-color:rgba(255,80,80,.2)}
-.lv.tp1{border-color:rgba(0,180,80,.2)}.lv.tp2{border-color:rgba(0,210,100,.2)}.lv.tp3{border-color:rgba(0,240,130,.2)}
-.lv-name{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
-.lv-name.entry{color:#8aaeff}.lv-name.sl{color:#ff7070}
-.lv-name.tp1{color:#00c864}.lv-name.tp2{color:#00dc82}.lv-name.tp3{color:#00f0a0}
-.lv-price{font-size:19px;font-weight:800;font-family:monospace}
-.lv-note{font-size:10px;color:var(--dim);margin-top:2px}
-
-/* SCHOOLS */
-.schools-card{background:rgba(0,10,22,.6);border:1px solid var(--border);border-radius:12px;padding:13px}
-.sc-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:9px}
-.sc-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03)}
-.sc-row:last-child{border:none}
-.sc-name{font-size:13px;font-weight:600;color:#7a9aaa;display:flex;align-items:center;gap:6px}
-.sc-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;margin:0 10px}
-.sc-bar{height:5px;border-radius:3px}
-.sc-sig{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap}
-.sc-sig.bull{background:rgba(0,200,80,.1);color:#00c864;border:1px solid rgba(0,200,80,.2)}
-.sc-sig.bear{background:rgba(255,60,60,.1);color:#ff5050;border:1px solid rgba(255,60,60,.2)}
-.sc-sig.neut{background:rgba(255,255,255,.04);color:#3a6a7a;border:1px solid rgba(255,255,255,.07)}
-
-/* REASONS */
-.reasons-card{background:rgba(0,100,60,.04);border:1px solid rgba(0,200,100,.1);border-radius:12px;padding:13px}
-.reasons-card.sell{background:rgba(100,0,0,.04);border-color:rgba(200,50,50,.1)}
-.reason-title{font-size:12px;font-weight:700;color:#009a60;margin-bottom:8px}
-.reason-title.sell{color:#cc4040}
-.reason-item{display:flex;align-items:flex-start;gap:8px;margin:5px 0;font-size:12px;color:#5a9a7a;line-height:1.7}
-.reason-item.sell{color:#9a5050}
-.r-dot{width:6px;height:6px;border-radius:50%;background:var(--g1);flex-shrink:0;margin-top:6px}
-.r-dot.sell{background:#ff5050}
-
-/* CANCEL */
-.cancel-card{background:rgba(255,150,0,.04);border:1px solid rgba(255,150,0,.13);border-radius:12px;padding:12px 15px}
-.cancel-card p:first-child{font-size:12px;font-weight:700;color:#cc8800;margin-bottom:5px}
-.cancel-card p:last-child{font-size:12px;color:#7a5820;line-height:1.8}
-
-/* FOOTER */
-.ft{text-align:center;padding:16px;color:#0e2030;font-size:10px;line-height:1.8}
+.empty{color:var(--text2);text-align:center;padding:28px;font-size:13px;}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 </style>
 </head>
 <body>
-<div class="app">
-<div class="hdr">
-  <div class="logo">📊</div>
-  <h1>محلل الشارت الذكي</h1>
-  <p>No API • No Server • 100% Local</p>
+
+<!-- ═══════════════════════════
+  SCREEN 1 — RECORDS LIST
+═══════════════════════════ -->
+<div class="screen" id="scList">
+  <div class="topbar">
+    <div class="logo">📊 InvPro</div>
+    <div style="flex:1"></div>
+    <div class="cur-box" style="margin-left:4px">
+      <button class="cur-btn on" id="btnIQD" onclick="setCur('IQD')">🇮🇶</button>
+      <div style="width:1px;height:26px;background:var(--border)"></div>
+      <button class="cur-btn usd" id="btnUSD" onclick="setCur('USD')">🇺🇸</button>
+      <div style="width:1px;height:26px;background:var(--border)"></div>
+      <input class="rate-inp" id="rateInp" type="number" value="1310" min="1" onchange="updRate()">
+    </div>
+  </div>
+  <div class="statsbar">
+    <div class="stat"><div class="sv" style="color:var(--acc)" id="s0">0</div><div class="sl">العدد</div></div>
+    <div class="stat"><div class="sv" style="color:var(--yellow)" id="s1">0</div><div class="sl">الأسعار</div></div>
+    <div class="stat"><div class="sv" style="color:var(--green)" id="s2">0</div><div class="sl">الأرباح</div></div>
+    <div class="stat"><div class="sv" style="color:var(--cyan)" id="s3">0</div><div class="sl">المباع</div></div>
+  </div>
+  <div class="rl-hdr">
+    <input class="rec-search" id="recSearch" placeholder="🔍 بحث في السجلات..." oninput="renderRecList()">
+    <div class="rl-btns">
+      <button class="rlbtn new" onclick="newBlankRecord()">➕ سجل جديد</button>
+      <button class="rlbtn tpl" onclick="openTplModal()">📋 قوالب</button>
+    </div>
+  </div>
+  <div class="rl-body" id="recListBody"></div>
+  <div class="bottom-nav">
+    <button class="bnav on" id="bn1" onclick="goNav('list')"><div class="bico">🗂</div>السجلات</button>
+    <button class="bnav" id="bn2" onclick="goNav('sales')"><div class="bico">💰</div>المبيعات</button>
+  </div>
 </div>
 
-<div class="wrap">
-<div class="warn">⚠️ لأغراض تعليمية — إدارة رأس المال مسؤوليتك الشخصية</div>
-
-<!-- STEP 1: UPLOAD -->
-<div class="card" id="step1">
-  <div class="card-title">📁 الخطوة 1 — ارفع صورة الشارت</div>
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" accept="image/*" id="fileIn" onchange="loadImage(this)">
-    <div style="font-size:44px">🖼️</div>
-    <p>اضغط لرفع صورة الشارت</p>
-    <span>PNG • JPG • WEBP • من المعرض أو الكمبيوتر</span>
+<!-- ═══════════════════════════
+  SCREEN 2 — RECORD DETAIL
+═══════════════════════════ -->
+<div class="screen hidden" id="scDetail">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">‹</button>
+    <div class="topbar-title" id="detailTitle">السجل</div>
+    <button class="tbtn" onclick="openShareModal()">📤 مشاركة</button>
+    <button class="tbtn" onclick="openRenameModal()">✏️</button>
+  </div>
+  <div class="rec-ctrl">
+    <div class="rc-row">
+      <div class="rc-pill">
+        <button class="rcb minus" onclick="chRows(-1)">−</button>
+        <div class="rcsep"></div>
+        <div class="rc-lbl">صفوف: <b id="rowCount">10</b></div>
+        <div class="rcsep"></div>
+        <button class="rcb" onclick="chRows(1)">+</button>
+      </div>
+      <div class="rc-pill">
+        <button class="rcb minus" onclick="chCols(-1)">−</button>
+        <div class="rcsep"></div>
+        <div class="rc-lbl">أعمدة: <b id="colCount">5</b></div>
+        <div class="rcsep"></div>
+        <button class="rcb" onclick="chCols(1)">+</button>
+      </div>
+      <div class="cur-box">
+        <button class="cur-btn on" id="btnIQD2" onclick="setCur('IQD')">🇮🇶 دينار</button>
+        <div style="width:1px;height:30px;background:var(--border)"></div>
+        <button class="cur-btn usd" id="btnUSD2" onclick="setCur('USD')">🇺🇸 دولار</button>
+        <div style="width:1px;height:30px;background:var(--border)"></div>
+        <input class="rate-inp" id="rateInp2" type="number" value="1310" min="1" onchange="updRate2()">
+      </div>
+    </div>
+    <div class="style-row">
+      <div class="cpick">
+        <span class="cplbl">خلفية</span>
+        <div class="cdot" id="bgDot" style="background:#3b82f6"></div>
+        <input type="color" id="bgPick" value="#3b82f6" oninput="applyBg(this.value)">
+      </div>
+      <div class="cpick">
+        <span class="cplbl">نص</span>
+        <div class="cdot" id="fgDot" style="background:#ffffff"></div>
+        <input type="color" id="fgPick" value="#ffffff" oninput="applyFg(this.value)">
+      </div>
+      <div class="fs-wrap">
+        <span class="cplbl">خط</span>
+        <input type="range" class="fs-slider" id="fsSlider" min="8" max="28" value="13"
+          oninput="applyFs(this.value);document.getElementById('fsVal').textContent=this.value">
+        <span class="fs-val" id="fsVal">13</span>
+      </div>
+      <button class="clr-btn" onclick="clrSel()">🗑</button>
+    </div>
+  </div>
+  <div class="sheet-wrap">
+    <table class="grid" id="grid" oncontextmenu="showCtx(event)"></table>
+  </div>
+  <div class="sbar">
+    <span>الخلية: <b id="stCell" style="color:var(--text)">A1</b></span>
+    <span class="save-ind" id="saveInd">💾 محفوظ</span>
   </div>
 </div>
 
-<!-- STEP 2: MARK + CANVAS -->
-<div class="card" id="step2" style="display:none">
-  <div class="card-title">✏️ الخطوة 2 — حدد النقاط على الشارت</div>
-
-  <div class="hint-box">
-    <strong>📌 كيف تستخدم الأداة:</strong>
-    اختر نوع النقطة من الأزرار أدناه ← ثم اضغط على المكان المناسب في الشارت.<br>
-    <span style="color:#ffd700">■</span> High = أعلى نقطة في الشمعة &nbsp;
-    <span style="color:#ff6060">■</span> Low = أدنى نقطة &nbsp;
-    <span style="color:#00b4ff">■</span> Current = السعر الحالي
+<!-- ═══════════════════════════
+  SCREEN 3 — SALES
+═══════════════════════════ -->
+<div class="screen hidden" id="scSales">
+  <div class="topbar">
+    <div class="logo">📊 InvPro</div>
+    <div style="flex:1;text-align:center;font-size:13px;color:var(--text2)">المبيعات</div>
   </div>
-
-  <!-- TOOLBAR -->
-  <div class="toolbar">
-    <button class="mode-btn active-HIGH" id="btn-HIGH" onclick="setMode('HIGH')">📈 High</button>
-    <button class="mode-btn" id="btn-LOW"  onclick="setMode('LOW')">📉 Low</button>
-    <button class="mode-btn" id="btn-CURR" onclick="setMode('CURR')">💵 السعر الحالي</button>
-    <button class="mode-btn" id="btn-SUP"  onclick="setMode('SUP')">🟢 دعم</button>
-    <button class="mode-btn" id="btn-RES"  onclick="setMode('RES')">🔴 مقاومة</button>
-    <button class="mode-btn" id="btn-BOS"  onclick="setMode('BOS')">🟣 BOS</button>
+  <div class="statsbar">
+    <div class="stat"><div class="sv" style="color:var(--acc)" id="s0b">0</div><div class="sl">العدد</div></div>
+    <div class="stat"><div class="sv" style="color:var(--yellow)" id="s1b">0</div><div class="sl">الأسعار</div></div>
+    <div class="stat"><div class="sv" style="color:var(--green)" id="s2b">0</div><div class="sl">الأرباح</div></div>
+    <div class="stat"><div class="sv" style="color:var(--cyan)" id="s3b">0</div><div class="sl">المباع</div></div>
   </div>
-
-  <div class="marks-status" id="marksStatus">
-    <span class="mark-chip" id="chip-HIGH">📈 High: —</span>
-    <span class="mark-chip" id="chip-LOW">📉 Low: —</span>
-    <span class="mark-chip" id="chip-CURR">💵 Current: —</span>
-    <span class="mark-chip" id="chip-SUP">🟢 دعم: 0</span>
-    <span class="mark-chip" id="chip-RES">🔴 مقاومة: 0</span>
-    <span class="mark-chip" id="chip-BOS">🟣 BOS: 0</span>
+  <div class="sales-rec-sel">
+    <select id="salesRecSelect" onchange="onSalesRecChange()">
+      <option value="">-- اختر السجل --</option>
+    </select>
   </div>
-
-  <!-- CANVAS -->
-  <div class="canvas-wrap" id="canvasWrap" style="display:block;margin-top:10px">
-    <canvas id="mainCanvas"></canvas>
-  </div>
-
-  <!-- PRICE INPUTS -->
-  <div class="irow" style="margin-top:12px">
-    <div class="field">
-      <label>سعر الـ High (القيمة الفعلية)</label>
-      <input type="number" id="inHigh" placeholder="3340.00" step="0.01" oninput="updateCurrentPrice()">
-    </div>
-    <div class="field">
-      <label>سعر الـ Low (القيمة الفعلية)</label>
-      <input type="number" id="inLow"  placeholder="3300.00" step="0.01" oninput="updateCurrentPrice()">
-    </div>
-    <div class="field">
-      <label>الزوج</label>
-      <select id="inPair" onchange="updateDec()">
-        <option value="2">XAUUSD (ذهب)</option>
-        <option value="5">EURUSD</option>
-        <option value="5">GBPUSD</option>
-        <option value="3">USDJPY</option>
-        <option value="0">BTCUSD</option>
-        <option value="1">NASDAQ</option>
+  <div class="sale-form">
+    <div class="sf">
+      <label>📦 المنتج</label>
+      <select id="saleSelect" onchange="onProdChange()">
+        <option value="">-- اختر المنتج --</option>
       </select>
     </div>
-    <div class="field">
-      <label>الفريم</label>
-      <select id="inTF">
-        <option>M1</option><option>M5</option><option selected>M15</option>
-        <option>M30</option><option>H1</option><option>H4</option><option>D1</option>
-      </select>
+    <div class="qty-row">
+      <div>
+        <div class="sf" style="margin-bottom:0"><label>📊 الكمية</label></div>
+        <div class="qty-stepper">
+          <button class="qbtn minus" id="qMinus" onclick="chQty(-1)">−</button>
+          <div class="qty-track">
+            <div class="qty-num" id="qval">1</div>
+            <div class="qty-max" id="qmax">من 0</div>
+          </div>
+          <button class="qbtn" id="qPlus" onclick="chQty(1)">+</button>
+        </div>
+      </div>
+      <div class="prod-preview" id="pprev">
+        <div class="empty" style="padding:6px;font-size:12px;">اختر منتجاً</div>
+      </div>
+    </div>
+    <button class="sell-btn" onclick="doSell()">✔ تسجيل البيع</button>
+  </div>
+  <div class="sales-list" id="salesList">
+    <div class="empty">لا توجد مبيعات بعد</div>
+  </div>
+  <div class="bottom-nav">
+    <button class="bnav" id="bn1b" onclick="goNav('list')"><div class="bico">🗂</div>السجلات</button>
+    <button class="bnav on" id="bn2b" onclick="goNav('sales')"><div class="bico">💰</div>المبيعات</button>
+  </div>
+</div>
+
+<!-- CTX -->
+<div class="ctx" id="ctxMenu">
+  <div class="cxi" onclick="cx('addR')">➕ إضافة صف</div>
+  <div class="cxi" onclick="cx('addC')">➕ إضافة عمود</div>
+  <div class="cxs"></div>
+  <div class="cxi r" onclick="cx('delR')">🗑 حذف الصف</div>
+  <div class="cxi r" onclick="cx('delC')">🗑 حذف العمود</div>
+  <div class="cxs"></div>
+  <div class="cxi" onclick="cx('clear')">🧹 مسح الخلية</div>
+  <div class="cxi" onclick="cx('copy')">📋 نسخ</div>
+  <div class="cxi" onclick="cx('paste')">📌 لصق</div>
+</div>
+
+<!-- MODAL: TEMPLATES -->
+<div class="overlay" id="tplModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>📋 قوالب جاهزة</h3>
+      <button class="mclose" onclick="document.getElementById('tplModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tpl-grid" id="tplGrid"></div>
     </div>
   </div>
-  <div style="margin-top:8px;font-size:12px;color:var(--muted)">
-    السعر المحسوب: <strong id="calcPrice" style="color:var(--g1)">— (حدد الـ High والـ Low أولاً)</strong>
+</div>
+
+<!-- MODAL: RENAME -->
+<div class="overlay" id="renameModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>✏️ تسمية السجل</h3>
+      <button class="mclose" onclick="closeRenameModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>اسم السجل</label>
+        <input id="renameInput" placeholder="اكتب الاسم هنا..." onkeydown="if(event.key==='Enter')saveRename()">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" onclick="closeRenameModal()">إلغاء</button>
+      <button class="save-btn" onclick="saveRename()">💾 حفظ</button>
+    </div>
   </div>
-
-  <div style="height:10px"></div>
-  <button class="abtn" id="analyzeBtn" onclick="runAnalysis()">🔍 حلل الشارت</button>
-  <button class="clrbtn" onclick="clearAll()">🗑️ مسح جميع النقاط</button>
 </div>
 
-<!-- RESULT -->
-<div class="res-section" id="resSection"></div>
-
-<div class="ft">محلل الشارت الذكي • يعمل 100% بدون إنترنت بعد التحميل • بدون AI</div>
+<!-- MODAL: CONFIRM DELETE -->
+<div class="overlay" id="confirmModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>🗑 تأكيد الحذف</h3>
+      <button class="mclose" onclick="closeConfirmModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmText" style="font-size:14px;color:var(--text3);text-align:center;padding:10px 0;line-height:1.7;"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="cancel-btn" onclick="closeConfirmModal()">إلغاء</button>
+      <button class="save-btn" id="confirmOkBtn" style="background:linear-gradient(135deg,var(--red),#b91c1c)">🗑 حذف نهائياً</button>
+    </div>
+  </div>
 </div>
+
+<!-- MODAL: SHARE -->
+<div class="overlay" id="shareModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>📤 مشاركة الجدول كصورة</h3>
+      <button class="mclose" onclick="closeShareModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="shareLoading" class="share-loading">⏳ جاري تحضير الصورة...</div>
+      <div id="shareContent" style="display:none;flex-direction:column;gap:12px;">
+        <div class="share-preview-wrap">
+          <div class="share-preview-inner" id="sharePreviewInner">
+            <canvas id="shareCanvas"></canvas>
+          </div>
+        </div>
+        <div class="zoom-controls">
+          <button class="zbtn" onclick="zoomShare(-0.1)">−</button>
+          <span class="zoom-val" id="zoomVal">100%</span>
+          <button class="zbtn" onclick="zoomShare(0.1)">+</button>
+          <button class="zbtn" onclick="resetZoom()" style="font-size:12px;width:auto;padding:0 8px;">↺</button>
+        </div>
+        <div class="share-btns">
+          <button class="share-app-btn share-wa" onclick="shareVia('whatsapp')">
+            <span style="font-size:20px;">📱</span> واتساب
+          </button>
+          <button class="share-app-btn share-tg" onclick="shareVia('telegram')">
+            <span style="font-size:20px;">✈️</span> تلغرام
+          </button>
+          <button class="share-app-btn share-save" onclick="saveShareImg()">
+            <span style="font-size:18px;">💾</span> حفظ الصورة
+          </button>
+        </div>
+        <p style="font-size:10px;color:var(--text2);text-align:center;line-height:1.6;">
+          💡 احفظ الصورة أولاً ثم أرسلها عبر واتساب أو تلغرام
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-// ─── STATE ────────────────────────────────────────────────────────────────
-var S = {
-  mode: 'HIGH',
-  marks: { HIGH:null, LOW:null, CURR:null, supports:[], resistances:[], bos:[] },
-  img: null,
-  dec: 2
-};
-var canvas = document.getElementById('mainCanvas');
-var ctx    = canvas.getContext('2d');
+// ════════════════════════════════
+// TEMPLATES
+// ════════════════════════════════
+const TEMPLATES=[
+  {ico:'🛒',name:'مخزون منتجات',desc:'أسعار وكميات وأرباح',build(){
+    const d={},st={},hdr={bg:'#1e3a5f',fg:'#60a5fa',fw:700,fs:13,ta:'center'};
+    ['اسم المنتج','السعر','الكمية','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['منتج A','15000','50','0','إلكترونيات'],['منتج B','8000','30','0','ملابس'],['منتج C','20000','20','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:5,data:d,styles:st};
+  }},
+  {ico:'🧾',name:'فاتورة بيع',desc:'أصناف مع الإجمالي',build(){
+    const d={},st={},hdr={bg:'#14532d',fg:'#86efac',fw:700,fs:13,ta:'center'};
+    ['الصنف','الكمية','سعر الوحدة','الإجمالي','ملاحظات'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['صنف 1','1','5000','=C2*B2',''],['صنف 2','2','3000','=C3*B3',''],['صنف 3','1','10000','=C4*B4','']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    d['5_2']='المجموع';d['5_3']='=D2+D3+D4';st['5_3']={fg:'#10b981',fw:900};
+    return{rows:10,cols:5,data:d,styles:st};
+  }},
+  {ico:'📦',name:'طلبيات الموردين',desc:'تتبع الطلبيات',build(){
+    const d={},st={},hdr={bg:'#3b0764',fg:'#d8b4fe',fw:700,fs:13,ta:'center'};
+    ['المورد','الصنف','الكمية','السعر','الحالة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['مورد A','منتج 1','100','50000','قيد التنفيذ'],['مورد B','منتج 2','50','80000','مكتمل']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:5,data:d,styles:st};
+  }},
+  {ico:'💰',name:'ميزانية شهرية',desc:'إيرادات ومصروفات',build(){
+    const d={},st={},hdr={bg:'#7c2d12',fg:'#fdba74',fw:700,fs:13,ta:'center'};
+    ['البند','النوع','المبلغ','الشهر','ملاحظات'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['مبيعات','إيراد','500000','يناير',''],['إيجار','مصروف','150000','يناير',''],['رواتب','مصروف','200000','يناير','']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:5,data:d,styles:st};
+  }},
+  {ico:'👥',name:'سجل الموظفين',desc:'بيانات وراتب كل موظف',build(){
+    const d={},st={},hdr={bg:'#1e3a5f',fg:'#93c5fd',fw:700,fs:13,ta:'center'};
+    ['الاسم','الوظيفة','الراتب','تاريخ التعيين','الحالة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['أحمد محمد','مدير مبيعات','800000','2023-01-15','نشط'],['سارة علي','محاسبة','650000','2023-03-20','نشط']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:5,data:d,styles:st};
+  }},
+  {ico:'📋',name:'جدول فارغ',desc:'ابدأ من الصفر',build(){return{rows:10,cols:5,data:{},styles:{}};}}
+];
 
-// ─── IMAGE LOAD ────────────────────────────────────────────────────────────
-function loadImage(inp) {
-  var f = inp.files[0]; if(!f) return;
-  var r = new FileReader();
-  r.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      S.img = img;
-      canvas.width  = img.width;
-      canvas.height = img.height;
-      // Constrain display to container
-      var maxW = document.getElementById('canvasWrap').clientWidth || window.innerWidth - 40;
-      canvas.style.width  = '100%';
-      canvas.style.height = 'auto';
-      redraw();
-      document.getElementById('step1').style.display = 'none';
-      document.getElementById('step2').style.display = 'block';
-    };
-    img.src = e.target.result;
-  };
-  r.readAsDataURL(f);
+// ════════════════════════════════
+// STATE
+// ════════════════════════════════
+const COLS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+let records={};
+let activeRecId=null;
+let recIdCounter=1;
+let sel={r:0,c:0},sA={r:0,c:0},sB={r:0,c:0};
+let drag=false,editing=false,clip=null,ctxC={r:0,c:0};
+let salesMap={};
+let sid=1;
+let currency='IQD',rate=1310;
+let curScreen='list';
+let saveTimer=null;
+let qty=1;
+let renamingId=null;
+let pendingDeleteId=null;
+let salesActiveRecId=null;
+let shareZoom=1;
+let shareImgDataUrl=null;
+
+// ════════════════════════════════
+// PERSIST
+// ════════════════════════════════
+function saveAll(){
+  clearTimeout(saveTimer);
+  const ind=document.getElementById('saveInd');
+  if(ind){ind.textContent='💾 يتم الحفظ...';ind.className='save-ind saving';}
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem('ip4_rec',JSON.stringify(records));
+      localStorage.setItem('ip4_salesmap',JSON.stringify(salesMap));
+      localStorage.setItem('ip4_meta',JSON.stringify({activeRecId,sid,recIdCounter,currency,rate,salesActiveRecId}));
+      if(ind){ind.textContent='💾 محفوظ';ind.className='save-ind';}
+    }catch(e){if(ind){ind.textContent='⚠️ فشل الحفظ';ind.className='save-ind saving';}}
+  },700);
+}
+function loadAll(){
+  try{
+    const r=localStorage.getItem('ip4_rec');
+    const sm=localStorage.getItem('ip4_salesmap');
+    const m=localStorage.getItem('ip4_meta');
+    if(r)records=JSON.parse(r);
+    if(sm)salesMap=JSON.parse(sm);
+    if(m){const md=JSON.parse(m);activeRecId=md.activeRecId||null;sid=md.sid||1;recIdCounter=md.recIdCounter||1;currency=md.currency||'IQD';rate=md.rate||1310;salesActiveRecId=md.salesActiveRecId||null;}
+    return true;
+  }catch(e){return false;}
 }
 
-// ─── MODE ──────────────────────────────────────────────────────────────────
-function setMode(m) {
-  S.mode = m;
-  ['HIGH','LOW','CURR','SUP','RES','BOS'].forEach(function(k) {
-    var btn = document.getElementById('btn-'+k);
-    btn.className = 'mode-btn' + (k===m ? ' active-'+k : '');
+// ════════════════════════════════
+// INIT
+// ════════════════════════════════
+function initDefault(){
+  records={};activeRecId=null;recIdCounter=1;
+  records['rec1']={id:'rec1',name:'مخزون افتراضي',pinned:true,createdAt:new Date().toLocaleString('ar-IQ'),sheet:TEMPLATES[0].build()};
+  recIdCounter=2;salesMap={};
+}
+const loaded=loadAll();
+if(!loaded||Object.keys(records).length===0)initDefault();
+if(activeRecId&&!records[activeRecId])activeRecId=null;
+
+document.getElementById('rateInp').value=rate;
+document.getElementById('rateInp2').value=rate;
+setCurUI(currency);
+
+// ════════════════════════════════
+// CURRENCY
+// ════════════════════════════════
+function setCur(c){currency=c;setCurUI(c);saveAll();renderSheet();updStats();}
+function setCurUI(c){
+  ['btnIQD','btnIQD2'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('on',c==='IQD');});
+  ['btnUSD','btnUSD2'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.toggle('on',c==='USD');});
+}
+function updRate(){rate=Math.max(1,parseInt(document.getElementById('rateInp').value)||1310);document.getElementById('rateInp2').value=rate;saveAll();renderSheet();updStats();}
+function updRate2(){rate=Math.max(1,parseInt(document.getElementById('rateInp2').value)||1310);document.getElementById('rateInp').value=rate;saveAll();renderSheet();updStats();}
+function fmtP(v){v=parseFloat(v)||0;return currency==='USD'?'$'+(v/rate).toFixed(2):v.toLocaleString('ar-IQ')+' د.ع';}
+
+// ════════════════════════════════
+// UTILS
+// ════════════════════════════════
+const ck=(r,c)=>`${r}_${c}`;
+const cn=c=>COLS[c]||'?';
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function gs(rid){const id=rid||activeRecId;return id&&records[id]?records[id].sheet:null;}
+
+function evalF(val,r,c,vis=new Set(),rid){
+  if(!val||!String(val).startsWith('='))return val;
+  const key=`${rid||activeRecId}_${r}_${c}`;
+  if(vis.has(key))return '#REF';vis.add(key);
+  let ex=String(val).slice(1).toUpperCase();
+  ex=ex.replace(/SUM\(([A-Z]+\d+):([A-Z]+\d+)\)/g,(_,a,b)=>{
+    const[ac,ar]=pr(a),[bc,br]=pr(b);let sm=0;
+    for(let rr=Math.min(ar,br);rr<=Math.max(ar,br);rr++)
+      for(let cc=Math.min(ac,bc);cc<=Math.max(ac,bc);cc++)sm+=parseFloat(gcv(rr,cc,vis,rid))||0;
+    return sm;
   });
-}
-
-// ─── CANVAS EVENTS ─────────────────────────────────────────────────────────
-function getPos(e) {
-  var rect = canvas.getBoundingClientRect();
-  var sx = canvas.width  / rect.width;
-  var sy = canvas.height / rect.height;
-  var cx = e.touches ? e.touches[0].clientX : e.clientX;
-  var cy = e.touches ? e.touches[0].clientY : e.clientY;
-  return { x: (cx - rect.left)*sx, y: (cy - rect.top)*sy };
-}
-
-canvas.addEventListener('click',      onCanvasEvent);
-canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onCanvasEvent(e); }, {passive:false});
-
-function onCanvasEvent(e) {
-  var p = getPos(e);
-  var m = S.mode;
-  if      (m === 'HIGH') { S.marks.HIGH = p; }
-  else if (m === 'LOW')  { S.marks.LOW  = p; }
-  else if (m === 'CURR') { S.marks.CURR = p; }
-  else if (m === 'SUP')  { if(S.marks.supports.length < 4) S.marks.supports.push(p); }
-  else if (m === 'RES')  { if(S.marks.resistances.length < 4) S.marks.resistances.push(p); }
-  else if (m === 'BOS')  { if(S.marks.bos.length < 3) S.marks.bos.push(p); }
-  updateChips();
-  updateCurrentPrice();
-  redraw();
-}
-
-function clearAll() {
-  S.marks = { HIGH:null, LOW:null, CURR:null, supports:[], resistances:[], bos:[] };
-  updateChips();
-  document.getElementById('calcPrice').textContent = '—';
-  document.getElementById('resSection').style.display = 'none';
-  redraw();
-}
-
-// ─── CHIPS UPDATE ──────────────────────────────────────────────────────────
-function updateChips() {
-  var m = S.marks;
-  setChip('HIGH', m.HIGH ? '✅' : '—', m.HIGH ? 'done-HIGH' : '');
-  setChip('LOW',  m.LOW  ? '✅' : '—', m.LOW  ? 'done-LOW'  : '');
-  setChip('CURR', m.CURR ? '✅' : '—', m.CURR ? 'done-CURR' : '');
-  setChip('SUP',  m.supports.length + '/4',    m.supports.length>0    ? 'done-SUP' : '');
-  setChip('RES',  m.resistances.length + '/4', m.resistances.length>0 ? 'done-RES' : '');
-  setChip('BOS',  m.bos.length + '/3',         m.bos.length>0         ? 'done-BOS' : '');
-}
-function setChip(k, val, cls) {
-  var icons = {HIGH:'📈 High:',LOW:'📉 Low:',CURR:'💵 Current:',SUP:'🟢 دعم:',RES:'🔴 مقاومة:',BOS:'🟣 BOS:'};
-  var chip  = document.getElementById('chip-'+k);
-  chip.textContent = icons[k] + ' ' + val;
-  chip.className   = 'mark-chip' + (cls ? ' '+cls : '');
-}
-
-// ─── PRICE CALC ────────────────────────────────────────────────────────────
-function updateDec() {
-  var sel = document.getElementById('inPair');
-  S.dec = parseInt(sel.options[sel.selectedIndex].value);
-}
-function yToPrice(y) {
-  var highP = parseFloat(document.getElementById('inHigh').value);
-  var lowP  = parseFloat(document.getElementById('inLow').value);
-  if (!S.marks.HIGH || !S.marks.LOW || !highP || !lowP) return null;
-  var hY = S.marks.HIGH.y, lY = S.marks.LOW.y;
-  if (hY === lY) return null;
-  var ratio = (y - hY) / (lY - hY);
-  return highP - ratio * (highP - lowP);
-}
-function updateCurrentPrice() {
-  if (!S.marks.CURR) return;
-  var p = yToPrice(S.marks.CURR.y);
-  document.getElementById('calcPrice').textContent = p !== null ? p.toFixed(S.dec) : '—';
-}
-function fmt(n) { return n.toFixed(S.dec); }
-
-// ─── REDRAW ────────────────────────────────────────────────────────────────
-function redraw(resultLines) {
-  if (!S.img) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.drawImage(S.img,0,0);
-
-  var w = canvas.width;
-  function hLine(y, color, dash, width, label, labelRight) {
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = width || 1.5;
-    ctx.setLineDash(dash || []);
-    ctx.globalAlpha = 0.85;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
-    if (label) {
-      ctx.globalAlpha = 1;
-      ctx.setLineDash([]);
-      var tx = labelRight ? w - 6 : 6;
-      var align = labelRight ? 'right' : 'left';
-      ctx.font = 'bold ' + Math.max(11, canvas.width/60) + 'px monospace';
-      ctx.textAlign = align;
-      // shadow
-      ctx.fillStyle = 'rgba(0,0,0,.6)';
-      ctx.fillRect(labelRight ? w-100 : 0, y-16, 100, 18);
-      ctx.fillStyle = color;
-      ctx.fillText(label, tx, y - 4);
-    }
-    ctx.restore();
-  }
-  function dot(x, y, color, r) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x,y,r||6,0,Math.PI*2);
-    ctx.fillStyle = color;
-    ctx.globalAlpha = .9;
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = .6;
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  var m = S.marks;
-  if (m.HIGH) { hLine(m.HIGH.y, '#ffd700', [6,4], 2, '▲ HIGH', true); dot(m.HIGH.x, m.HIGH.y, '#ffd700'); }
-  if (m.LOW)  { hLine(m.LOW.y,  '#ff6060', [6,4], 2, '▼ LOW',  true); dot(m.LOW.x,  m.LOW.y,  '#ff6060'); }
-  if (m.CURR) { hLine(m.CURR.y, '#00b4ff', [4,3], 2, '● CURR', true); dot(m.CURR.x, m.CURR.y, '#00b4ff'); }
-
-  m.supports.forEach(function(p,i){
-    hLine(p.y, '#00d464', [8,4], 1.5, 'S'+(i+1), false); dot(p.x,p.y,'#00d464',5);
+  ex=ex.replace(/([A-Z]+)(\d+)/g,(_,col,row)=>{
+    const ci=COLS.indexOf(col),ri=parseInt(row)-1;
+    return(ci<0||ri<0)?0:(parseFloat(gcv(ri,ci,vis,rid))||0);
   });
-  m.resistances.forEach(function(p,i){
-    hLine(p.y, '#ff80cc', [8,4], 1.5, 'R'+(i+1), false); dot(p.x,p.y,'#ff80cc',5);
-  });
-  m.bos.forEach(function(p,i){
-    hLine(p.y, '#c06aff', [5,3], 1.5, 'BOS'+(i+1), false); dot(p.x,p.y,'#c06aff',5);
-  });
-
-  // Draw result lines if provided
-  if (resultLines) {
-    resultLines.forEach(function(rl) {
-      hLine(rl.y, rl.color, rl.dash||[], 2.5, rl.label, true);
-    });
-  }
+  try{return String(Function('"use strict";return('+ex+')')())}catch{return '#ERR';}
+}
+function pr(ref){const m=ref.match(/([A-Z]+)(\d+)/);return[COLS.indexOf(m[1]),parseInt(m[2])-1];}
+function gcv(r,c,vis,rid){
+  const s=gs(rid);if(!s)return'';
+  const v=s.data[ck(r,c)]||'';
+  return String(v).startsWith('=')?evalF(v,r,c,vis||new Set(),rid):v;
 }
 
-// ─── ANALYSIS ENGINE ───────────────────────────────────────────────────────
-function runAnalysis() {
-  var highP = parseFloat(document.getElementById('inHigh').value);
-  var lowP  = parseFloat(document.getElementById('inLow').value);
-  var tf    = document.getElementById('inTF').value;
-  var m     = S.marks;
-
-  if (!m.HIGH || !m.LOW || !m.CURR) {
-    return alert('⚠️ يرجى تحديد الـ High والـ Low والسعر الحالي على الشارت');
-  }
-  if (!highP || !lowP) {
-    return alert('⚠️ يرجى إدخال قيمة الـ High والـ Low الفعلية في الحقول');
-  }
-  if (highP <= lowP) {
-    return alert('⚠️ الـ High يجب أن يكون أكبر من الـ Low');
-  }
-
-  // Prices
-  var currP = yToPrice(m.CURR.y);
-  var supPs = m.supports.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
-  var resPs = m.resistances.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
-  var bosPs = m.bos.map(function(p){ return yToPrice(p.y); }).filter(Boolean);
-
-  var range = highP - lowP;
-  var pos   = (currP - lowP) / range;   // 0=bottom, 1=top
-  var mid   = (highP + lowP) / 2;
-  var fib382 = highP - range * 0.382;
-  var fib500 = highP - range * 0.500;
-  var fib618 = highP - range * 0.618;
-  var fib786 = highP - range * 0.786;
-  var prox   = range * 0.10;
-
-  // Nearest support / resistance from user marks
-  var nearSup = supPs.some(function(p){ return Math.abs(currP - p) < prox; });
-  var nearRes = resPs.some(function(p){ return Math.abs(currP - p) < prox; });
-  var nearHigh = (highP - currP) < prox;
-  var nearLow  = (currP - lowP)  < prox;
-  var nearFib618 = Math.abs(currP - fib618) < prox;
-  var nearFib786 = Math.abs(currP - fib786) < prox;
-  var nearFib382 = Math.abs(currP - fib382) < prox;
-
-  // BOS analysis: are there BOS levels above or below current?
-  var bosAbove = bosPs.filter(function(p){ return p > currP; }).length;
-  var bosBelow = bosPs.filter(function(p){ return p < currP; }).length;
-
-  // ── SCORING ──
-  var sc = {};
-
-  // 1. Price Action (Higher High / Lower Low approximation via position)
-  if (pos > 0.65)       sc['Price Action'] = { v:1,  why:'السعر في النصف العلوي → Higher High محتمل' };
-  else if (pos < 0.35)  sc['Price Action'] = { v:-1, why:'السعر في النصف السفلي → Lower Low محتمل' };
-  else                  sc['Price Action'] = { v:0,  why:'السعر في منتصف النطاق — بلا زخم واضح' };
-
-  // 2. Support & Resistance
-  if      (nearSup && !nearRes)  sc['Support & Resistance'] = { v:1,  why:'السعر على منطقة دعم → فرصة شراء' };
-  else if (nearRes && !nearSup)  sc['Support & Resistance'] = { v:-1, why:'السعر على منطقة مقاومة → فرصة بيع' };
-  else if (nearLow)              sc['Support & Resistance'] = { v:1,  why:'السعر قريب من Low الجلسة → دعم طبيعي' };
-  else if (nearHigh)             sc['Support & Resistance'] = { v:-1, why:'السعر قريب من High الجلسة → مقاومة طبيعية' };
-  else                           sc['Support & Resistance'] = { v:0,  why:'لا توجد مستويات رئيسية قريبة' };
-
-  // 3. Trend
-  var trendV, trendWhy;
-  if      (pos > 0.6) { trendV=1;  trendWhy='الترند صاعد — السعر في الثلث العلوي'; }
-  else if (pos < 0.4) { trendV=-1; trendWhy='الترند هابط — السعر في الثلث السفلي'; }
-  else                { trendV=0;  trendWhy='السوق في تذبذب — لا اتجاه واضح'; }
-  sc['Trend Analysis'] = { v:trendV, why:trendWhy };
-
-  // 4. Fibonacci
-  if      (nearFib618 || nearFib786) {
-    var fDir = trendV >= 0 ? 1 : -1;
-    sc['Fibonacci'] = { v:fDir, why:'السعر على مستوى Fib ' + (nearFib618?'61.8%':'78.6%') + ' — نقطة ارتداد محتملة' };
-  } else if (nearFib382) {
-    sc['Fibonacci'] = { v:trendV, why:'السعر على مستوى Fib 38.2% — تصحيح معتدل' };
-  } else {
-    sc['Fibonacci'] = { v:0, why:'السعر بين مستويات فيبوناتشي — لا إشارة واضحة' };
-  }
-
-  // 5. SMC — Break of Structure
-  if      (bosAbove > bosBelow && bosBelow === 0) sc['SMC (BOS)'] = { v:1,  why:'كسر هيكل صاعد (BOS) → اتجاه شراء' };
-  else if (bosBelow > bosAbove && bosAbove === 0) sc['SMC (BOS)'] = { v:-1, why:'كسر هيكل هابط (BOS) → اتجاه بيع' };
-  else if (bosPs.length === 0) {
-    // infer from position
-    if      (pos > 0.7) sc['SMC (BOS)'] = { v:1,  why:'لا BOS محدد — يستند إلى موقع السعر (أعلى النطاق)' };
-    else if (pos < 0.3) sc['SMC (BOS)'] = { v:-1, why:'لا BOS محدد — يستند إلى موقع السعر (أسفل النطاق)' };
-    else                sc['SMC (BOS)'] = { v:0,  why:'لا BOS محدد ولا مؤشر واضح من الموقع' };
-  } else {
-    sc['SMC (BOS)'] = { v:0, why:'BOS متعارض — إشارات متضاربة' };
-  }
-
-  // 6. ICT — Demand/Supply zones
-  if      (pos < 0.25)             sc['ICT (Zones)'] = { v:1,  why:'السعر في منطقة الطلب (Demand Zone) السفلية' };
-  else if (pos > 0.75)             sc['ICT (Zones)'] = { v:-1, why:'السعر في منطقة العرض (Supply Zone) العلوية' };
-  else if (nearFib618 && pos<0.55) sc['ICT (Zones)'] = { v:1,  why:'OTE محتمل — Optimal Trade Entry عند 61.8%' };
-  else                             sc['ICT (Zones)'] = { v:0,  why:'خارج مناطق ICT الرئيسية' };
-
-  // 7. Candlestick Logic (body position as proxy)
-  if      (pos > 0.55 && nearLow)  sc['Candlestick']= { v:1,  why:'شمعة مرتدة من الأسفل — Hammer محتمل' };
-  else if (pos < 0.45 && nearHigh) sc['Candlestick']= { v:-1, why:'شمعة مرتدة من الأعلى — Shooting Star محتمل' };
-  else if (pos > 0.6)              sc['Candlestick']= { v:1,  why:'السعر يغلق في النصف العلوي — بولليش' };
-  else if (pos < 0.4)              sc['Candlestick']= { v:-1, why:'السعر يغلق في النصف السفلي — بيريش' };
-  else                             sc['Candlestick']= { v:0,  why:'شمعة دوجي أو غير حاسمة' };
-
-  // ── TOTAL ──
-  var keys = Object.keys(sc);
-  var bull=0, bear=0;
-  keys.forEach(function(k){ if(sc[k].v===1) bull++; if(sc[k].v===-1) bear++; });
-  var net = bull - bear;
-  var total = keys.length;
-
-  // ── DECISION ──
-  var dir = null;
-  if      (net >= 4) dir = 'BUY';
-  else if (net <= -4) dir = 'SELL';
-  else if (net === 3 && (nearSup || nearLow || nearFib618||nearFib786)) dir = 'BUY';
-  else if (net === -3 && (nearRes || nearHigh || nearFib618||nearFib786)) dir = 'SELL';
-
-  var strength = Math.round((Math.max(bull,bear) / total) * 10);
-  strength = Math.max(Math.min(strength, 10), 1);
-
-  // ── LEVELS ──
-  var atr  = range * 0.30;
-  var res  = {};
-  if (dir === 'BUY') {
-    res.entry = currP;
-    res.sl    = Math.max(lowP - atr*0.2, currP - atr);
-    res.slDist = currP - res.sl;
-    res.tp1   = currP + res.slDist * 1.5;
-    res.tp2   = currP + res.slDist * 2.5;
-    res.tp3   = currP + res.slDist * 4.0;
-    res.rr1   = (res.slDist > 0) ? (res.tp1-currP)/res.slDist : 0;
-    res.rr2   = (res.slDist > 0) ? (res.tp2-currP)/res.slDist : 0;
-    res.rr3   = (res.slDist > 0) ? (res.tp3-currP)/res.slDist : 0;
-  } else if (dir === 'SELL') {
-    res.entry = currP;
-    res.sl    = Math.min(highP + atr*0.2, currP + atr);
-    res.slDist = res.sl - currP;
-    res.tp1   = currP - res.slDist * 1.5;
-    res.tp2   = currP - res.slDist * 2.5;
-    res.tp3   = currP - res.slDist * 4.0;
-    res.rr1   = (res.slDist > 0) ? (currP-res.tp1)/res.slDist : 0;
-    res.rr2   = (res.slDist > 0) ? (currP-res.tp2)/res.slDist : 0;
-    res.rr3   = (res.slDist > 0) ? (currP-res.tp3)/res.slDist : 0;
-  }
-
-  // ── REASONS ──
-  var reasons = keys.filter(function(k){
-    return (dir==='BUY' && sc[k].v===1) || (dir==='SELL' && sc[k].v===-1);
-  }).map(function(k){ return sc[k].why; });
-
-  var noReasons = [];
-  if (!dir) {
-    if (Math.abs(net) < 3) noReasons.push('المدارس متضاربة — لا يوجد إجماع كافٍ');
-    if (trendV === 0)      noReasons.push('السوق في تذبذب بلا اتجاه واضح');
-    if (!nearSup && !nearRes && !nearLow && !nearHigh) noReasons.push('السعر في منتصف النطاق — لا مستوى رئيسي قريب');
-    if (noReasons.length === 0) noReasons.push('الإشارات غير كافية لصفقة مؤكدة');
-  }
-
-  // ── DRAW ON CANVAS ──
-  if (dir && S.marks.HIGH && S.marks.LOW && S.marks.CURR) {
-    function priceToY(price) {
-      var hY = S.marks.HIGH.y, lY = S.marks.LOW.y;
-      var ratio = (highP - price) / range;
-      return hY + ratio * (lY - hY);
-    }
-    var lines = [];
-    lines.push({ y:priceToY(res.entry), color:'#00b4ff', dash:[],    label:'● ENTRY '  +fmt(res.entry) });
-    lines.push({ y:priceToY(res.sl),    color:'#ff4040', dash:[6,3], label:'✕ SL '     +fmt(res.sl) });
-    lines.push({ y:priceToY(res.tp1),   color:'#00c864', dash:[8,4], label:'▶ TP1 '    +fmt(res.tp1) });
-    lines.push({ y:priceToY(res.tp2),   color:'#00dc82', dash:[8,4], label:'▶ TP2 '    +fmt(res.tp2) });
-    lines.push({ y:priceToY(res.tp3),   color:'#00f0a0', dash:[8,4], label:'▶ TP3 '    +fmt(res.tp3) });
-    redraw(lines);
-  } else {
-    redraw();
-  }
-
-  // ── RENDER RESULT ──
-  renderResult({ dir, strength, sc, res, reasons, noReasons, bull, bear, total, tf, currP });
+// ════════════════════════════════
+// SCREENS
+// ════════════════════════════════
+function showScreen(name){
+  const map={list:'scList',detail:'scDetail',sales:'scSales'};
+  Object.entries(map).forEach(([k,id])=>{
+    document.getElementById(id).classList.toggle('hidden',k!==name);
+  });
+  curScreen=name;
+}
+function goBack(){showScreen('list');renderRecList();updStats();}
+function goNav(t){
+  if(t==='list'){showScreen('list');renderRecList();updStats();}
+  else{showScreen('sales');popSalesRecSel();updStats();}
 }
 
-// ─── RENDER ────────────────────────────────────────────────────────────────
-function renderResult(d) {
-  var sec = document.getElementById('resSection');
-  sec.style.display = 'block';
-  sec.innerHTML = '';
-
-  if (!d.dir) {
-    sec.innerHTML = `
-      <div class="no-trade-card">
-        <div class="nt-icon">🚫</div>
-        <div class="nt-title">لا توجد صفقة الآن</div>
-        <div class="nt-reason">${d.noReasons.map(function(r){return '• '+r;}).join('<br>')}</div>
-      </div>
-      ${buildSchools(d.sc)}`;
-    sec.scrollIntoView({behavior:'smooth',block:'start'});
+// ════════════════════════════════
+// RECORDS LIST
+// ════════════════════════════════
+function renderRecList(){
+  const el=document.getElementById('recListBody');
+  const q=(document.getElementById('recSearch')?.value||'').toLowerCase().trim();
+  let list=Object.values(records);
+  if(q)list=list.filter(r=>(r.name||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0));
+  if(!list.length){
+    el.innerHTML=`<div class="empty">${q?'لا توجد نتائج':'لا يوجد سجلات — اضغط "سجل جديد"'}</div>`;
     return;
   }
-
-  var isBuy  = d.dir === 'BUY';
-  var cls    = isBuy ? 'buy' : 'sell';
-  var arrow  = isBuy ? '📈' : '📉';
-  var conf   = Math.round((Math.max(d.bull,d.bear)/d.total)*100);
-  // ring
-  var circ   = 2*Math.PI*24; // r=24
-  var filled = circ * (d.strength/10);
-  var ringColor = isBuy ? '#00d464' : '#ff5050';
-
-  var cancelTxt = isBuy
-    ? 'إلغاء الصفقة إذا أغلق السعر تحت ' + fmt(d.res.sl) + '. احذر إذا انكسر اللو الأصلي.'
-    : 'إلغاء الصفقة إذا أغلق السعر فوق '  + fmt(d.res.sl) + '. احذر إذا انكسر الهاي الأصلي.';
-
-  sec.innerHTML = `
-    <div class="trade-hdr">
-      <div class="th-top ${cls}">
-        <div class="dir-badge ${cls}">${arrow} ${d.dir}</div>
-        <div style="text-align:center">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">الزوج / الفريم</div>
-          <div style="font-size:15px;font-weight:800">${d.tf}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">السعر: ${fmt(d.currP)}</div>
+  el.innerHTML=list.map(rec=>`
+    <div class="rec-card${rec.pinned?' pinned':''}">
+      <div class="rec-card-top" onclick="openRecord('${rec.id}')">
+        <span class="rec-card-ico">${rec.pinned?'📌':'📄'}</span>
+        <div class="rec-card-info">
+          <div class="rec-card-name">${esc(rec.name)}</div>
+          <div class="rec-card-date">📅 ${rec.createdAt}</div>
         </div>
-        <div class="strength-ring">
-          <svg viewBox="0 0 56 56">
-            <circle class="track" cx="28" cy="28" r="24"/>
-            <circle class="fill ${cls}" cx="28" cy="28" r="24"
-              stroke-dasharray="${filled} ${circ}"
-              stroke-dashoffset="0"/>
-          </svg>
-          <div class="strength-label">
-            <div class="strength-num" style="color:${ringColor}">${d.strength}</div>
-            <div class="strength-sub">/10</div>
-          </div>
-        </div>
+        <span class="rec-arrow">›</span>
       </div>
-
-      <div class="levels-grid">
-        <div class="lv entry"><div class="lv-name entry">🎯 نقطة الدخول</div><div class="lv-price">${fmt(d.res.entry)}</div><div class="lv-note">السعر الحالي</div></div>
-        <div class="lv sl">  <div class="lv-name sl">  🛑 وقف الخسارة</div><div class="lv-price">${fmt(d.res.sl)}</div><div class="lv-note">${fmt(d.res.slDist)} نقطة خطر</div></div>
-        <div class="lv tp1"><div class="lv-name tp1">🎯 الهدف الأول</div><div class="lv-price">${fmt(d.res.tp1)}</div><div class="lv-note">R:R = 1:${d.res.rr1.toFixed(1)}</div></div>
-        <div class="lv tp2"><div class="lv-name tp2">🎯 الهدف الثاني</div><div class="lv-price">${fmt(d.res.tp2)}</div><div class="lv-note">R:R = 1:${d.res.rr2.toFixed(1)}</div></div>
-        <div class="lv tp3" style="grid-column:span 2">
-          <div class="lv-name tp3">🏆 الهدف الثالث</div>
-          <div class="lv-price">${fmt(d.res.tp3)}</div>
-          <div class="lv-note">R:R = 1:${d.res.rr3.toFixed(1)} — هدف ممتد</div>
-        </div>
+      <div class="rec-card-acts">
+        <button class="rca ${rec.pinned?'pin-on':''}" onclick="togglePin('${rec.id}')">${rec.pinned?'📌 فك':'📍 تثبيت'}</button>
+        <button class="rca" onclick="startRename('${rec.id}')">✏️ تسمية</button>
+        <button class="rca" onclick="openRecord('${rec.id}');setTimeout(openShareModal,400)">📤 مشاركة</button>
+        <button class="rca r" onclick="askDelete('${rec.id}')">🗑 حذف</button>
       </div>
-    </div>
-
-    ${buildSchools(d.sc)}
-
-    <div class="reasons-card ${isBuy?'':'sell'}">
-      <div class="reason-title ${isBuy?'':'sell'}">✅ أسباب الدخول</div>
-      ${d.reasons.map(function(r){return '<div class="reason-item '+(isBuy?'':'sell')+'"><span class="r-dot '+(isBuy?'':'sell')+'"></span>'+r+'</div>';}).join('')}
-    </div>
-
-    <div class="cancel-card">
-      <p>⚠️ شروط الإلغاء</p>
-      <p>${cancelTxt}</p>
-    </div>
-  `;
-
-  sec.scrollIntoView({behavior:'smooth',block:'start'});
+    </div>`).join('');
 }
 
-function buildSchools(sc) {
-  var rows = '';
-  var icons = {
-    'Price Action':'📊','Support & Resistance':'📏','Trend Analysis':'📐',
-    'Fibonacci':'🌀','SMC (BOS)':'🔷','ICT (Zones)':'🎯','Candlestick':'🕯️'
-  };
-  Object.keys(sc).forEach(function(k) {
-    var v = sc[k].v;
-    var cls = v===1?'bull':v===-1?'bear':'neut';
-    var sig = v===1?'صاعد ▲':v===-1?'هابط ▼':'محايد —';
-    var barW = v===1?100:v===-1?100:30;
-    var barC = v===1?'#00c864':v===-1?'#ff5050':'#2a4a5a';
-    rows += `
-      <div class="sc-row">
-        <span class="sc-name">${icons[k]||'•'} ${k}</span>
-        <div class="sc-bar-wrap"><div class="sc-bar" style="width:${barW}%;background:${barC}"></div></div>
-        <span class="sc-sig ${cls}">${sig}</span>
-      </div>`;
+// ════════════════════════════════
+// RECORD OPEN / MANAGE
+// ════════════════════════════════
+function openRecord(id){
+  activeRecId=id;
+  sel={r:0,c:0};sA={r:0,c:0};sB={r:0,c:0};
+  const rec=records[id];
+  document.getElementById('detailTitle').textContent=rec?.name||'السجل';
+  const s=rec.sheet;
+  document.getElementById('rowCount').textContent=s.rows;
+  document.getElementById('colCount').textContent=s.cols;
+  document.getElementById('rateInp2').value=rate;
+  setCurUI(currency);
+  showScreen('detail');
+  renderSheet();
+  updStats();
+  saveAll();
+}
+function newBlankRecord(){
+  const id='rec'+recIdCounter++;
+  records[id]={id,name:'سجل جديد '+recIdCounter,pinned:false,createdAt:new Date().toLocaleString('ar-IQ'),sheet:{rows:10,cols:5,data:{},styles:{}}};
+  saveAll();openRecord(id);
+}
+function useTpl(i){
+  const t=TEMPLATES[i];
+  const id='rec'+recIdCounter++;
+  records[id]={id,name:t.name,pinned:false,createdAt:new Date().toLocaleString('ar-IQ'),sheet:t.build()};
+  saveAll();
+  document.getElementById('tplModal').classList.remove('show');
+  openRecord(id);
+}
+function togglePin(id){
+  if(!records[id])return;
+  records[id].pinned=!records[id].pinned;
+  saveAll();renderRecList();
+}
+
+// DELETE
+function askDelete(id){
+  pendingDeleteId=id;
+  document.getElementById('confirmText').textContent=`هل تريد حذف السجل "${records[id]?.name||id}" نهائياً؟ لا يمكن التراجع.`;
+  document.getElementById('confirmOkBtn').onclick=doDelete;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function doDelete(){
+  if(!pendingDeleteId)return;
+  const id=pendingDeleteId;
+  delete records[id];
+  delete salesMap[id];
+  if(activeRecId===id)activeRecId=Object.keys(records)[0]||null;
+  if(salesActiveRecId===id)salesActiveRecId=null;
+  pendingDeleteId=null;
+  document.getElementById('confirmModal').classList.remove('show');
+  saveAll();
+  renderRecList();
+}
+function closeConfirmModal(){
+  pendingDeleteId=null;
+  document.getElementById('confirmModal').classList.remove('show');
+}
+
+// RENAME
+function startRename(id){
+  renamingId=id;
+  document.getElementById('renameInput').value=records[id]?.name||'';
+  document.getElementById('renameModal').classList.add('show');
+  setTimeout(()=>document.getElementById('renameInput').focus(),250);
+}
+function openRenameModal(){if(activeRecId)startRename(activeRecId);}
+function closeRenameModal(){document.getElementById('renameModal').classList.remove('show');renamingId=null;}
+function saveRename(){
+  if(!renamingId)return;
+  const v=document.getElementById('renameInput').value.trim();
+  if(v&&records[renamingId]){
+    records[renamingId].name=v;
+    const dt=document.getElementById('detailTitle');if(dt)dt.textContent=v;
+  }
+  saveAll();renderRecList();closeRenameModal();
+}
+
+// TEMPLATES MODAL
+function openTplModal(){
+  document.getElementById('tplGrid').innerHTML=TEMPLATES.map((t,i)=>`
+    <div class="tpl-card" onclick="useTpl(${i})">
+      <div class="tpl-ico">${t.ico}</div>
+      <div class="tpl-name">${t.name}</div>
+      <div class="tpl-desc">${t.desc}</div>
+    </div>`).join('');
+  document.getElementById('tplModal').classList.add('show');
+}
+
+// ════════════════════════════════
+// SHEET RENDER
+// ════════════════════════════════
+function renderSheet(){
+  const s=gs();if(!s)return;
+  const g=document.getElementById('grid');if(!g)return;
+  document.getElementById('rowCount').textContent=s.rows;
+  document.getElementById('colCount').textContent=s.cols;
+  let h=`<colgroup><col style="width:28px">`;
+  for(let c=0;c<s.cols;c++)h+=`<col style="width:${s.styles['cw_'+c]||95}px">`;
+  h+=`</colgroup><thead><tr><th class="ch corner"></th>`;
+  for(let c=0;c<s.cols;c++)h+=`<th class="ch">${cn(c)}</th>`;
+  h+=`</tr></thead><tbody>`;
+  for(let r=0;r<s.rows;r++){
+    h+=`<tr><th class="rh">${r+1}</th>`;
+    for(let c=0;c<s.cols;c++){
+      const k=ck(r,c),st=s.styles[k]||{};
+      let style=`text-align:${st.ta||'right'};font-size:${st.fs||13}px;`;
+      if(st.bg)style+=`background:${st.bg};`;
+      if(st.fg)style+=`color:${st.fg};`;
+      if(st.fw)style+=`font-weight:${st.fw};`;
+      const isSel=r===sel.r&&c===sel.c,inSel2=inS(r,c);
+      let v=gcv(r,c);
+      if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      h+=`<td class="cell${isSel?' sel':''}${inSel2&&!isSel?' insel':''}" id="c_${r}_${c}" style="${style}"
+        onclick="cClk(event,${r},${c})" ondblclick="stEdit(${r},${c})"
+        onmousedown="cMD(event,${r},${c})" onmousemove="cMM(event,${r},${c})" onmouseup="cMU()"
+      ><div class="cd">${esc(v)}</div></td>`;
+    }
+    h+=`</tr>`;
+  }
+  g.innerHTML=h+'</tbody>';
+  updSB();updStats();
+}
+function inS(r,c){
+  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
+  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
+  return r>=r1&&r<=r2&&c>=c1&&c<=c2;
+}
+
+// ════════════════════════════════
+// STATS
+// ════════════════════════════════
+function updStats(){
+  const rid=curScreen==='sales'?salesActiveRecId:activeRecId;
+  const s=gs(rid);
+  let tQ=0,tP=0,tPr=0;
+  if(s)for(let r=1;r<s.rows;r++){
+    if(!gcv(r,0,null,rid))continue;
+    const q=parseFloat(gcv(r,2,null,rid))||0;
+    tQ+=q;tP+=(parseFloat(gcv(r,1,null,rid))||0)*q;tPr+=parseFloat(gcv(r,3,null,rid))||0;
+  }
+  const salesArr=rid?salesMap[rid]||[]:[];
+  const sold=salesArr.reduce((a,b)=>a+b.total,0);
+  ['','b'].forEach(suf=>{
+    const vals=[tQ.toLocaleString('ar-IQ'),fmtP(tP),fmtP(tPr),fmtP(sold)];
+    [0,1,2,3].forEach(i=>{const el=document.getElementById(`s${i}${suf}`);if(el)el.textContent=vals[i];});
   });
-  return `<div class="schools-card"><div class="sc-title">📐 تقاطع المدارس (${Object.keys(sc).length} مدارس)</div>${rows}</div>`;
 }
-</script>
-</body>
-</html>
+
+// ════════════════════════════════
+// ROW / COL
+// ════════════════════════════════
+function chRows(d){const s=gs();if(!s||d<0&&s.rows<=1)return;s.rows=Math.max(1,s.rows+d);saveAll();renderSheet();}
+function chCols(d){const s=gs();if(!s||d<0&&s.cols<=1)return;s.cols=Math.max(1,s.cols+d);saveAll();renderSheet();}
+
+// ════════════════════════════════
+// CELLS
+// ════════════════════════════════
+function cClk(e,r,c){if(e.shiftKey){sB={r,c};renderSheet();return;}stopE();sel={r,c};sA={r,c};sB={r,c};renderSheet();}
+function cMD(e,r,c){if(e.button!==0)return;drag=true;sA={r,c};sB={r,c};}
+function cMM(e,r,c){if(!drag)return;sB={r,c};sel={r,c};renderSheet();}
+function cMU(){drag=false;}
+function stEdit(r,c){
+  editing=true;
+  const el=document.getElementById(`c_${r}_${c}`);if(!el)return;
+  const raw=gs()?.data[ck(r,c)]||'';
+  el.innerHTML=`<input class="ci" id="ci" value="${esc(raw)}" onblur="comE(${r},${c})" onkeydown="edK(event,${r},${c})">`;
+  const inp=document.getElementById('ci');inp.focus();inp.select();
+}
+function comE(r,c){
+  editing=false;
+  const i=document.getElementById('ci');if(!i)return;
+  const s=gs();if(!s)return;
+  const old=s.data[ck(r,c)]||'',nv=i.value;
+  if(old!==nv){s.data[ck(r,c)]=nv;saveAll();}
+  renderSheet();
+}
+function edK(e,r,c){
+  if(e.key==='Enter'){comE(r,c);sel={r:r+1,c};renderSheet();}
+  else if(e.key==='Tab'){e.preventDefault();comE(r,c);sel={r,c:c+1};renderSheet();}
+  else if(e.key==='Escape'){editing=false;renderSheet();}
+}
+function stopE(){
+  if(!editing)return;
+  const i=document.getElementById('ci');
+  if(i){const p=i.closest('td');if(p){const m=p.id.match(/c_(\d+)_(\d+)/);if(m)comE(+m[1],+m[2]);}}
+  editing=false;
+}
+document.addEventListener('keydown',e=>{
+  if(editing||curScreen!=='detail')return;
+  const s=gs();if(!s)return;
+  const mv={ArrowDown:[1,0],ArrowUp:[-1,0],ArrowLeft:[0,1],ArrowRight:[0,-1]};
+  if(mv[e.key]){
+    e.preventDefault();const[dr,dc]=mv[e.key];
+    sel.r=Math.max(0,Math.min(s.rows-1,sel.r+dr));
+    sel.c=Math.max(0,Math.min(s.cols-1,sel.c+dc));
+    sA=sB={...sel};renderSheet();
+  }
+  else if((e.key==='Delete'||e.key==='Backspace')&&!editing)clrSel();
+  else if(e.key==='Enter')stEdit(sel.r,sel.c);
+  else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey)stEdit(sel.r,sel.c);
+  if((e.ctrlKey||e.metaKey)&&e.key==='c'){clip=gs()?.data[ck(sel.r,sel.c)]||'';}
+  if((e.ctrlKey||e.metaKey)&&e.key==='v'&&clip!==null){const s2=gs();if(s2){s2.data[ck(sel.r,sel.c)]=clip;saveAll();renderSheet();}}
+});
+
+// ════════════════════════════════
+// STYLE
+// ════════════════════════════════
+function applyStyle(key,fn){
+  const s=gs();if(!s)return;
+  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
+  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
+  for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){
+    const k=ck(r,c);if(!s.styles[k])s.styles[k]={};s.styles[k][key]=fn();
+  }saveAll();renderSheet();
+}
+function applyBg(v){document.getElementById('bgDot').style.background=v;applyStyle('bg',()=>v);}
+function applyFg(v){document.getElementById('fgDot').style.background=v;applyStyle('fg',()=>v);}
+function applyFs(v){applyStyle('fs',()=>parseInt(v));}
+function clrSel(){
+  const s=gs();if(!s)return;
+  const r1=Math.min(sA.r,sB.r),r2=Math.max(sA.r,sB.r);
+  const c1=Math.min(sA.c,sB.c),c2=Math.max(sA.c,sB.c);
+  for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)delete s.data[ck(r,c)];
+  saveAll();renderSheet();
+}
+function updSB(){const el=document.getElementById('stCell');if(el)el.textContent=`${cn(sel.c)}${sel.r+1}`;}
+
+// ════════════════════════════════
+// CTX MENU
+// ════════════════════════════════
+function showCtx(e){
+  e.preventDefault();
+  const td=e.target.closest('td');
+  const m2=td?.id?.match(/c_(\d+)_(\d+)/);
+  if(m2)ctxC={r:+m2[1],c:+m2[2]};
+  const mn=document.getElementById('ctxMenu');
+  mn.style.top=Math.min(e.clientY,window.innerHeight-210)+'px';
+  const rp=window.innerWidth-e.clientX;
+  mn.style.right=rp+'px';mn.style.left='auto';
+  mn.classList.add('show');
+}
+document.addEventListener('click',e=>{if(!e.target.closest('#ctxMenu'))document.getElementById('ctxMenu').classList.remove('show');});
+function cx(a){
+  const s=gs();if(!s)return;
+  if(a==='addR')s.rows++;
+  else if(a==='addC')s.cols++;
+  else if(a==='delR'){chRows(-1);return;}
+  else if(a==='delC'){chCols(-1);return;}
+  else if(a==='clear')delete s.data[ck(ctxC.r,ctxC.c)];
+  else if(a==='copy')clip=gcv(ctxC.r,ctxC.c);
+  else if(a==='paste'&&clip!==null)s.data[ck(ctxC.r,ctxC.c)]=clip;
+  saveAll();renderSheet();
+}
+
+// ════════════════════════════════
+// SALES — per record
+// ════════════════════════════════
+function getSales(rid){
+  if(!rid)return[];
+  if(!salesMap[rid])salesMap[rid]=[];
+  return salesMap[rid];
+}
+
+function popSalesRecSel(){
+  const el=document.getElementById('salesRecSelect');if(!el)return;
+  const prev=salesActiveRecId;
+  el.innerHTML='<option value="">-- اختر السجل --</option>';
+  Object.values(records).forEach(r=>{
+    const o=document.createElement('option');
+    o.value=r.id;o.textContent=r.name;
+    el.appendChild(o);
+  });
+  if(prev&&records[prev])el.value=prev;
+  else if(activeRecId&&records[activeRecId])el.value=activeRecId;
+  salesActiveRecId=el.value||null;
+  onSalesRecChange();
+}
+
+function onSalesRecChange(){
+  const el=document.getElementById('salesRecSelect');
+  salesActiveRecId=el?.value||null;
+  qty=1;
+  document.getElementById('saleSelect').value='';
+  popSel();renderSales();updStats();
+  saveAll();
+}
+
+function getProds(rid){
+  const r=rid||salesActiveRecId;
+  const s=gs(r);if(!s)return[];
+  const p=[];
+  for(let row=1;row<s.rows;row++){
+    const name=gcv(row,0,null,r);if(!name)continue;
+    const avail=parseFloat(gcv(row,2,null,r))||0;if(avail<=0)continue;
+    p.push({r:row,name,price:parseFloat(gcv(row,1,null,r))||0,qty:avail,profit:parseFloat(gcv(row,3,null,r))||0});
+  }return p;
+}
+function popSel(){
+  const el=document.getElementById('saleSelect');if(!el)return;
+  const pv=el.value;
+  el.innerHTML='<option value="">-- اختر المنتج --</option>';
+  getProds().forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${p.name} (متاح: ${p.qty})`;el.appendChild(o);});
+  if(pv)el.value=pv;onProdChange();
+}
+function getSelProd(){const v=document.getElementById('saleSelect')?.value;if(v==='')return null;return getProds()[+v]||null;}
+function onProdChange(){
+  const p=getSelProd();const maxQ=p?p.qty:1;
+  qty=Math.max(1,Math.min(qty,maxQ));
+  document.getElementById('qval').textContent=qty;
+  document.getElementById('qmax').textContent=`من ${maxQ}`;
+  document.getElementById('qMinus').disabled=qty<=1;
+  document.getElementById('qPlus').disabled=!p||qty>=maxQ;
+  const pv=document.getElementById('pprev');
+  if(!p){pv.innerHTML='<div class="empty" style="padding:6px;font-size:12px;">اختر منتجاً</div>';return;}
+  pv.innerHTML=`<div class="pp-name">${esc(p.name)}</div>
+    <div class="pp-grid">
+      <div class="pp-item"><div class="pv" style="color:var(--yellow)">${fmtP(p.price)}</div><div class="pl">السعر</div></div>
+      <div class="pp-item"><div class="pv" style="color:var(--cyan)">${p.qty}</div><div class="pl">المتاح</div></div>
+      <div class="pp-item" style="grid-column:span 2;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3)">
+        <div class="pv" style="color:var(--acc)">${fmtP(qty*p.price)}</div><div class="pl">الإجمالي (${qty})</div>
+      </div>
+    </div>`;
+}
+function chQty(d){const p=getSelProd();qty=Math.max(1,Math.min(p?p.qty:1,qty+d));onProdChange();}
+function doSell(){
+  const p=getSelProd();if(!p){alert('اختر منتجاً أولاً');return;}
+  const rid=salesActiveRecId;
+  const s=gs(rid);if(!s){alert('اختر سجلاً أولاً');return;}
+  const total=qty*p.price;
+  s.data[ck(p.r,2)]=String(p.qty-qty);
+  s.data[ck(p.r,3)]=String((p.profit+total).toFixed(2));
+  if(!salesMap[rid])salesMap[rid]=[];
+  salesMap[rid].unshift({id:sid++,name:p.name,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
+  saveAll();qty=1;document.getElementById('saleSelect').value='';
+  popSel();renderSales();updStats();
+}
+
+// ════════════════════════════════
+// RENDER SALES LIST  ← هذا هو الجزء الناقص الذي كان يسبب المشكلة
+// ════════════════════════════════
+function renderSales(){
+  const el=document.getElementById('salesList');if(!el)return;
+  if(!salesActiveRecId){
+    el.innerHTML='<div class="empty">اختر سجلاً لعرض مبيعاته</div>';
+    return;
+  }
+  const sales=getSales(salesActiveRecId);
+  if(!sales.length){
+    el.innerHTML='<div class="empty">لا توجد مبيعات لهذا السجل</div>';
+    return;
+  }
+  el.innerHTML=sales.map(s=>`
+    <div class="sc">
+      <div class="sc-ico">🛒</div>
+      <div class="sc-info">
+        <div class="sc-name">${esc(s.name)}</div>
+        <div class="sc-sub">الكمية: ${s.qt
