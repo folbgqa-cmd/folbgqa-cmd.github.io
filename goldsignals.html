@@ -334,14 +334,14 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     <div class="stat"><div class="sv" style="color:var(--green)" id="ds2">0</div><div class="sl">إجمالي الأرباح</div></div>
   </div>
   <div class="datebar" id="detailDateBar" style="direction:ltr;justify-content:center;">
-    <span class="datebar-item"><span class="datebar-val" id="dbYear">-</span><span class="datebar-lbl"> السنة</span></span>
-    <span class="datebar-sep">|</span>
-    <span class="datebar-item"><span class="datebar-val" id="dbMonthName">-</span></span>
-    <span class="datebar-sep">|</span>
-    <span class="datebar-item"><span class="datebar-lbl">الشهر </span><span class="datebar-val" id="dbMonthNum">-</span></span>
-    <span class="datebar-sep">|</span>
-    <span class="datebar-item"><span class="datebar-lbl">اليوم </span><span class="datebar-val" id="dbDate">-</span></span>
-    <span class="datebar-sep">|</span>
+    <span class="datebar-item"><span class="datebar-val" id="dbYear" style="color:var(--text);font-weight:900">-</span><span style="color:var(--text);font-size:11px"> السنة</span></span>
+    <span class="datebar-sep" style="color:var(--text)">|</span>
+    <span class="datebar-item"><span class="datebar-val" id="dbMonthName" style="color:var(--text);font-weight:900">-</span></span>
+    <span class="datebar-sep" style="color:var(--text)">|</span>
+    <span class="datebar-item"><span style="color:var(--text);font-size:11px">الشهر </span><span class="datebar-val" id="dbMonthNum" style="color:var(--text);font-weight:900">-</span></span>
+    <span class="datebar-sep" style="color:var(--text)">|</span>
+    <span class="datebar-item"><span style="color:var(--text);font-size:11px">اليوم </span><span class="datebar-val" id="dbDate" style="color:var(--text);font-weight:900">-</span></span>
+    <span class="datebar-sep" style="color:var(--text)">|</span>
     <span class="datebar-item"><span class="datebar-val" id="dbWday" style="color:var(--acc);font-weight:900">-</span></span>
   </div>
   <div class="sheet-wrap">
@@ -1231,7 +1231,7 @@ function _drawCanvas(s){
     ctx.fillText(st.l,x+sw/2,statsH*0.72);
   });
   // DATE BAR in canvas
-  const now=new Date();
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Baghdad'}));
   const WDAYS2=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const MONTHS2=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
   // Draw date parts separately left-to-right to avoid bidi issues
@@ -1254,14 +1254,14 @@ function _drawCanvas(s){
   const sep=' | ';
   const parts=[
     {t:String(now.getFullYear()),c:textClr},
-    {t:' السنة',c:text2},
-    {t:sep,c:text2},
+    {t:' السنة',c:textClr},
+    {t:sep,c:textClr},
     {t:MONTHS2[now.getMonth()],c:textClr},
-    {t:sep,c:text2},
-    {t:'الشهر ',c:text2},{t:String(now.getMonth()+1),c:textClr},
-    {t:sep,c:text2},
-    {t:'اليوم ',c:text2},{t:String(now.getDate()),c:textClr},
-    {t:sep,c:text2},
+    {t:sep,c:textClr},
+    {t:'الشهر ',c:textClr},{t:String(now.getMonth()+1),c:textClr},
+    {t:sep,c:textClr},
+    {t:'اليوم ',c:textClr},{t:String(now.getDate()),c:textClr},
+    {t:sep,c:textClr},
     {t:WDAYS2[now.getDay()],c:acc}
   ];
   let totalW=0;
@@ -1367,7 +1367,8 @@ updStats();
 const WDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 function updDateBar(){
-  const now=new Date();
+  // توقيت بغداد UTC+3
+  const now=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Baghdad'}));
   const d=now.getDate();
   const m=now.getMonth();
   const y=now.getFullYear();
@@ -1384,4 +1385,4 @@ updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-                                                                                   </html>
+                             </html>
