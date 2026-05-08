@@ -218,6 +218,12 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
   th.rh{min-width:40px;width:40px;}
   table.grid th,table.grid td{height:48px;}
 }
+/* ── DATE BAR ── */
+.datebar{background:var(--s2);border-bottom:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
+.datebar-item{display:flex;align-items:center;gap:4px;font-size:12px;}
+.datebar-val{font-weight:900;color:var(--text);}
+.datebar-lbl{color:var(--text2);font-size:10px;}
+.datebar-sep{color:var(--border);font-size:14px;}
 /* ── THEME ── */
 .theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .theme-card{border-radius:14px;padding:14px 8px;cursor:pointer;text-align:center;border:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;}
@@ -326,6 +332,17 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     <div class="stat"><div class="sv" style="color:var(--acc)" id="ds0">0</div><div class="sl">العدد الكلي</div></div>
     <div class="stat"><div class="sv" style="color:var(--yellow)" id="ds1">0</div><div class="sl">إجمالي الأسعار</div></div>
     <div class="stat"><div class="sv" style="color:var(--green)" id="ds2">0</div><div class="sl">إجمالي الأرباح</div></div>
+  </div>
+  <div class="datebar" id="detailDateBar" style="direction:ltr;justify-content:center;">
+    <span class="datebar-item"><span class="datebar-val" id="dbYear">-</span><span class="datebar-lbl"> السنة</span></span>
+    <span class="datebar-sep">|</span>
+    <span class="datebar-item"><span class="datebar-val" id="dbMonthName">-</span></span>
+    <span class="datebar-sep">|</span>
+    <span class="datebar-item"><span class="datebar-lbl">الشهر </span><span class="datebar-val" id="dbMonthNum">-</span></span>
+    <span class="datebar-sep">|</span>
+    <span class="datebar-item"><span class="datebar-lbl">اليوم </span><span class="datebar-val" id="dbDate">-</span></span>
+    <span class="datebar-sep">|</span>
+    <span class="datebar-item"><span class="datebar-val" id="dbWday" style="color:var(--acc);font-weight:900">-</span></span>
   </div>
   <div class="sheet-wrap">
     <table class="grid" id="grid" oncontextmenu="showCtx(event)"></table>
@@ -1170,7 +1187,8 @@ function _drawCanvas(s){
   const cellW=140,cellH=44,rowHdrW=38,colHdrH=34;
   const statsH=60;
   const baseW=rowHdrW+s.cols*cellW;
-  const baseH=statsH+colHdrH+s.rows*cellH;
+  const dateH=32;
+  const baseH=statsH+dateH+colHdrH+s.rows*cellH;
   const W=baseW*SCALE;
   const H=baseH*SCALE;
   const canvas=document.getElementById('shareCanvas');
@@ -1212,8 +1230,22 @@ function _drawCanvas(s){
     ctx.fillStyle=text2;ctx.font='11px Cairo,sans-serif';
     ctx.fillText(st.l,x+sw/2,statsH*0.72);
   });
+  // DATE BAR in canvas
+  const now=new Date();
+  const WDAYS2=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const MONTHS2=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const dateStr=`${now.getFullYear()} السنة  |  ${MONTHS2[now.getMonth()]}  |  الشهر ${now.getMonth()+1}  |  اليوم ${now.getDate()}  |  ${WDAYS2[now.getDay()]}`;
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--s2').trim()||'#181b28';
+  ctx.fillRect(0,statsH,baseW,dateH);
+  ctx.strokeStyle=borderClr;ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(0,statsH+dateH);ctx.lineTo(baseW,statsH+dateH);ctx.stroke();
+  ctx.fillStyle=textClr;ctx.font='bold 13px Cairo,sans-serif';
+  ctx.direction='ltr';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(dateStr,baseW/2,statsH+dateH/2);
+  ctx.direction='rtl';
+
   // RTL drawing — all coords in base size (SCALE handles 4K)
-  const offY=statsH;
+  const offY=statsH+dateH;
   const rHdrX=baseW-rowHdrW;
   // col headers
   ctx.fillStyle=s2;
@@ -1296,6 +1328,27 @@ function shareVia(app){
 // ════════════════════════════════
 renderRecList();
 updStats();
+// ════════════════════════════════
+// DATE BAR
+// ════════════════════════════════
+const WDAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function updDateBar(){
+  const now=new Date();
+  const d=now.getDate();
+  const m=now.getMonth();
+  const y=now.getFullYear();
+  const w=now.getDay();
+  const el=id=>document.getElementById(id);
+  // ترتيب: رقم اليوم + اسم الشهر | رقم الشهر / السنة | اسم اليوم
+  if(el('dbDate'))el('dbDate').textContent=d;
+  if(el('dbMonthNum'))el('dbMonthNum').textContent=m+1;
+  if(el('dbMonthName'))el('dbMonthName').textContent=MONTHS[m];
+  if(el('dbYear'))el('dbYear').textContent=y;
+  if(el('dbWday'))el('dbWday').textContent=WDAYS[w];
+}
+updDateBar();
+setInterval(updDateBar,60000);
 </script>
 </body>
-                                                                                                                        </html>
+          </html>
