@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+here<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -931,20 +931,18 @@ function updStats(){
   const s=gs(rid);
   let tQ=0,tP=0,tPr=0;
   if(s){
-    // حساب مجموع كل الأرقام في كل عمود بشكل مستقل
     for(let r=1;r<s.rows;r++){
       if(!gcv(r,0,null,rid))continue;
-      const q=parseFloat(gcv(r,2,null,rid))||0;
-      const p=parseFloat(gcv(r,1,null,rid))||0;
-      const tot=parseFloat(gcv(r,3,null,rid))||0; // إجمالي الأسعار
-      const pr=parseFloat(gcv(r,4,null,rid))||0;  // الأرباح
+      const q=parseFloat(s.data[ck(r,2)])||0;
+      const p=parseFloat(s.data[ck(r,1)])||0;
       tQ+=q;
-      if(p>0&&q>0)tP+=p*q; // إجمالي الأسعار = سعر × كمية فقط
-      tPr+=pr;
+      if(p>0&&q>0)tP+=p*q;
     }
   }
+  // الأرباح = مجموع المبيعات الفعلية للسجل الحالي فقط
   const salesArr=rid?salesMap[rid]||[]:[];
-  const sold=salesArr.reduce((a,b)=>a+b.total,0);
+  tPr=salesArr.reduce((a,b)=>a+b.total,0);
+  const sold=tPr;
   ['','b'].forEach(suf=>{
     const fmtQ=n=>currency==='USD'?n.toLocaleString('en-US'):n.toLocaleString('ar-IQ');
     const vals=[fmtQ(tQ),fmtP(tP),fmtP(tPr),fmtP(sold)];
@@ -1148,7 +1146,7 @@ function doSell(){
   const newQty=p.qty-qty;
   s.data[ck(p.r,3)]=String(parseFloat(gcv(p.r,1,null,rid))*newQty);
   if(!salesMap[rid])salesMap[rid]=[];
-  salesMap[rid].unshift({id:sid++,name:p.name,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
+  salesMap[rid].unshift({id:sid++,name:p.name,row:p.r,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
   saveAll();qty=1;document.getElementById('saleSelect').value='';
   popSel();renderSales();updStats();
 }
@@ -1175,18 +1173,55 @@ function renderSales(){
         <div class="sc-sub">الكمية: ${s.qty} × ${fmtP(s.price)} | ${s.date}</div>
       </div>
       <div class="sc-tot">${fmtP(s.total)}<small>الإجمالي</small></div>
-      <button class="sc-del" onclick="delSale(${s.id})">🗑</button>
+      <button class="sc-del" onclick="confirmDelSale(${s.id})">🗑</button>
     </div>`).join('');
 }
 
+function confirmDelSale(id){
+  const arr=salesMap[salesActiveRecId]||[];
+  const sale=arr.find(s=>s.id===id);
+  if(!sale)return;
+  document.getElementById('confirmText').textContent=`هل تريد حذف مبيعة "${sale.name}" (${sale.qty} قطعة)؟`;
+  document.getElementById('confirmOkBtn').onclick=()=>{
+    document.getElementById('confirmModal').classList.remove('show');
+    delSale(id);
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
 function delSale(id){
   if(!salesActiveRecId)return;
   const arr=salesMap[salesActiveRecId];
   if(!arr)return;
   const idx=arr.findIndex(s=>s.id===id);
   if(idx<0)return;
+  const sale=arr[idx];
+  const s=gs(salesActiveRecId);
+  if(s){
+    let targetRow=-1;
+    // أولاً: استخدام رقم الصف المخزون
+    if(sale.row>0){
+      targetRow=sale.row;
+    } else {
+      // ثانياً: البحث بالاسم مع trim
+      const saleName=(sale.name||'').trim();
+      for(let r=1;r<s.rows;r++){
+        const cellName=(gcv(r,0,null,salesActiveRecId)||'').trim();
+        if(cellName===saleName){targetRow=r;break;}
+      }
+    }
+    if(targetRow>0){
+      // رجوع الكمية
+      const oldQty=parseFloat(s.data[ck(targetRow,2)])||0;
+      s.data[ck(targetRow,2)]=String(oldQty+sale.qty);
+      // رجوع الأرباح
+      const profitCol=s.cols>=6?4:3;
+      const oldProfit=parseFloat(s.data[ck(targetRow,profitCol)])||0;
+      const newProfit=Math.max(0,parseFloat((oldProfit-sale.total).toFixed(2)));
+      s.data[ck(targetRow,profitCol)]=String(newProfit);
+    }
+  }
   salesMap[salesActiveRecId].splice(idx,1);
-  saveAll();renderSales();updStats();
+  saveAll();renderSales();updStats();renderSheet();popSel();
 }
 
 // ════════════════════════════════
@@ -1419,4 +1454,4 @@ updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-  </html>
+          </html>
