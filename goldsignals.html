@@ -1234,15 +1234,48 @@ function _drawCanvas(s){
   const now=new Date();
   const WDAYS2=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
   const MONTHS2=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
-  const dateStr=`${now.getFullYear()} السنة  |  ${MONTHS2[now.getMonth()]}  |  الشهر ${now.getMonth()+1}  |  اليوم ${now.getDate()}  |  ${WDAYS2[now.getDay()]}`;
+  // Draw date parts separately left-to-right to avoid bidi issues
+  const dateParts=[
+    now.getFullYear()+' السنة',
+    MONTHS2[now.getMonth()],
+    'الشهر '+( now.getMonth()+1),
+    'اليوم '+now.getDate(),
+    WDAYS2[now.getDay()]
+  ];
+  const dateStr=dateParts.join('  |  ');
   ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--s2').trim()||'#181b28';
   ctx.fillRect(0,statsH,baseW,dateH);
   ctx.strokeStyle=borderClr;ctx.lineWidth=0.5;
   ctx.beginPath();ctx.moveTo(0,statsH+dateH);ctx.lineTo(baseW,statsH+dateH);ctx.stroke();
-  ctx.fillStyle=textClr;ctx.font='bold 13px Cairo,sans-serif';
-  ctx.direction='ltr';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(dateStr,baseW/2,statsH+dateH/2);
-  ctx.direction='rtl';
+  ctx.font='bold 12px Cairo,sans-serif';
+  ctx.textBaseline='middle';
+  ctx.direction='ltr';
+  // measure total width and draw from left
+  const sep=' | ';
+  const parts=[
+    {t:String(now.getFullYear()),c:textClr},
+    {t:' السنة',c:text2},
+    {t:sep,c:text2},
+    {t:MONTHS2[now.getMonth()],c:textClr},
+    {t:sep,c:text2},
+    {t:'الشهر ',c:text2},{t:String(now.getMonth()+1),c:textClr},
+    {t:sep,c:text2},
+    {t:'اليوم ',c:text2},{t:String(now.getDate()),c:textClr},
+    {t:sep,c:text2},
+    {t:WDAYS2[now.getDay()],c:acc}
+  ];
+  let totalW=0;
+  parts.forEach(p=>{ctx.font='bold 12px Cairo,sans-serif';totalW+=ctx.measureText(p.t).width;});
+  let cx3=baseW/2-totalW/2;
+  const cy3=statsH+dateH/2;
+  parts.forEach(p=>{
+    ctx.fillStyle=p.c;
+    ctx.font='bold 12px Cairo,sans-serif';
+    ctx.textAlign='left';
+    ctx.fillText(p.t,cx3,cy3);
+    cx3+=ctx.measureText(p.t).width;
+  });
+  ctx.direction='inherit';
 
   // RTL drawing — all coords in base size (SCALE handles 4K)
   const offY=statsH+dateH;
@@ -1348,7 +1381,7 @@ function updDateBar(){
   if(el('dbWday'))el('dbWday').textContent=WDAYS[w];
 }
 updDateBar();
-setInterval(updDateBar,60000);
+setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-          </html>
+                                                                                   </html>
