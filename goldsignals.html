@@ -329,8 +329,8 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     </div>
   </div>
   <div class="statsbar" id="detailStatsBar" style="border-top:2px solid var(--acc);border-bottom:1px solid var(--border)">
-    <div class="stat"><div class="sv" style="color:var(--acc)" id="ds0">0</div><div class="sl">العدد الكلي</div></div>
     <div class="stat"><div class="sv" style="color:var(--yellow)" id="ds1">0</div><div class="sl">إجمالي الأسعار</div></div>
+    <div class="stat"><div class="sv" style="color:var(--acc)" id="ds0">0</div><div class="sl">العدد الكلي</div></div>
     <div class="stat"><div class="sv" style="color:var(--green)" id="ds2">0</div><div class="sl">إجمالي الأرباح</div></div>
   </div>
   <div class="datebar" id="detailDateBar" style="direction:ltr;justify-content:center;">
@@ -529,9 +529,9 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
 const TEMPLATES=[
   {ico:'🛒',name:'مخزون منتجات',desc:'أسعار وكميات وأرباح',build(){
     const d={},st={},hdr={bg:'#1e3a5f',fg:'#60a5fa',fw:700,fs:13,ta:'center'};
-    ['اسم المنتج','السعر','الكمية','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['منتج A','15000','50','0','إلكترونيات'],['منتج B','8000','30','0','ملابس'],['منتج C','20000','20','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:5,data:d,styles:st};
+    ['اسم المنتج','السعر','الكمية','إجمالي الأسعار','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['منتج A','15000','50','=B2*C2','0','إلكترونيات'],['منتج B','8000','30','=B3*C3','0','ملابس'],['منتج C','20000','20','=B4*C4','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:6,data:d,styles:st};
   }},
   {ico:'🧾',name:'فاتورة بيع',desc:'أصناف مع الإجمالي',build(){
     const d={},st={},hdr={bg:'#14532d',fg:'#86efac',fw:700,fs:13,ta:'center'};
@@ -773,8 +773,30 @@ function openRecord(id){
   activeRecId=id;
   sel={r:0,c:0};sA={r:0,c:0};sB={r:0,c:0};
   const rec=records[id];
-  document.getElementById('detailTitle').textContent=rec?.name||'السجل';
+  // migrate old 5-col inventory to 6-col (insert إجمالي الأسعار at col 3)
   const s=rec.sheet;
+  if(s.cols===5&&s.data&&s.data['0_0']&&s.data['0_3']&&
+     (s.data['0_3']==='الأرباح'||s.data['0_3']==='الربح')){
+    // shift cols 3,4 → 4,5 and add new col 3
+    for(let r=0;r<s.rows;r++){
+      // move col 4→5
+      if(s.data[`${r}_4`]!==undefined){s.data[`${r}_5`]=s.data[`${r}_4`];delete s.data[`${r}_4`];}
+      if(s.styles[`${r}_4`]){s.styles[`${r}_5`]=s.styles[`${r}_4`];delete s.styles[`${r}_4`];}
+      // move col 3→4
+      if(s.data[`${r}_3`]!==undefined){s.data[`${r}_4`]=s.data[`${r}_3`];delete s.data[`${r}_3`];}
+      if(s.styles[`${r}_3`]){s.styles[`${r}_4`]=s.styles[`${r}_3`];delete s.styles[`${r}_3`];}
+      // add new col 3
+      if(r===0){s.data['0_3']='إجمالي الأسعار';if(s.styles['0_0'])s.styles['0_3']={...s.styles['0_0']};}
+      else{
+        const p=parseFloat(s.data[`${r}_1`])||0;
+        const q=parseFloat(s.data[`${r}_2`])||0;
+        s.data[`${r}_3`]=p&&q?String(p*q):'';
+      }
+    }
+    s.cols=6;
+    saveAll();
+  }
+  document.getElementById('detailTitle').textContent=rec?.name||'السجل';
   document.getElementById('rowCount').textContent=s.rows;
   document.getElementById('colCount').textContent=s.cols;
   document.getElementById('rateInp2').value=rate;
@@ -880,7 +902,11 @@ function renderSheet(){
       if(st.fw)style+=`font-weight:${st.fw};`;
       const isSel=r===sel.r&&c===sel.c,inSel2=inS(r,c);
       let v=gcv(r,c);
-      if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      if(r>0&&c===3){
+        const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
+        const rawQ=parseFloat(gs()?.data[ck(r,2)])||0;
+        v=(rawP>0&&rawQ>0)?fmtP(rawP*rawQ):'';
+      } else if(r>0&&(c===1||c===4)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
       h+=`<td class="cell${isSel?' sel':''}${inSel2&&!isSel?' insel':''}" id="c_${r}_${c}" style="${style}"
         onclick="cClk(event,${r},${c})" ondblclick="stEdit(${r},${c})"
         onmousedown="cMD(event,${r},${c})" onmousemove="cMM(event,${r},${c})" onmouseup="cMU()"
@@ -910,22 +936,23 @@ function updStats(){
       if(!gcv(r,0,null,rid))continue;
       const q=parseFloat(gcv(r,2,null,rid))||0;
       const p=parseFloat(gcv(r,1,null,rid))||0;
-      const pr=parseFloat(gcv(r,3,null,rid))||0;
+      const tot=parseFloat(gcv(r,3,null,rid))||0; // إجمالي الأسعار
+      const pr=parseFloat(gcv(r,4,null,rid))||0;  // الأرباح
       tQ+=q;
-      // إجمالي الأسعار = السعر × الكمية إذا عندنا كمية، وإلا السعر فقط
-      tP+=q>0?(p*q):p;
+      if(p>0&&q>0)tP+=p*q; // إجمالي الأسعار = سعر × كمية فقط
       tPr+=pr;
     }
   }
   const salesArr=rid?salesMap[rid]||[]:[];
   const sold=salesArr.reduce((a,b)=>a+b.total,0);
   ['','b'].forEach(suf=>{
-    const vals=[tQ.toLocaleString('ar-IQ'),fmtP(tP),fmtP(tPr),fmtP(sold)];
+    const fmtQ=n=>currency==='USD'?n.toLocaleString('en-US'):n.toLocaleString('ar-IQ');
+    const vals=[fmtQ(tQ),fmtP(tP),fmtP(tPr),fmtP(sold)];
     [0,1,2,3].forEach(i=>{const el=document.getElementById(`s${i}${suf}`);if(el)el.textContent=vals[i];});
   });
   // detail screen stats bar
   const d0=document.getElementById('ds0');const d1=document.getElementById('ds1');const d2=document.getElementById('ds2');
-  if(d0)d0.textContent=tQ.toLocaleString('ar-IQ');
+  if(d0)d0.textContent=currency==='USD'?tQ.toLocaleString('en-US'):tQ.toLocaleString('ar-IQ');
   if(d1)d1.textContent=fmtP(tP);
   if(d2)d2.textContent=fmtP(tPr);
 }
@@ -1080,7 +1107,7 @@ function getProds(rid){
   for(let row=1;row<s.rows;row++){
     const name=gcv(row,0,null,r);if(!name)continue;
     const avail=parseFloat(gcv(row,2,null,r))||0;if(avail<=0)continue;
-    p.push({r:row,name,price:parseFloat(gcv(row,1,null,r))||0,qty:avail,profit:parseFloat(gcv(row,3,null,r))||0});
+    p.push({r:row,name,price:parseFloat(gcv(row,1,null,r))||0,qty:avail,profit:parseFloat(gcv(row,4,null,r))||0});
   }return p;
 }
 function popSel(){
@@ -1116,7 +1143,10 @@ function doSell(){
   const s=gs(rid);if(!s){alert('اختر سجلاً أولاً');return;}
   const total=qty*p.price;
   s.data[ck(p.r,2)]=String(p.qty-qty);
-  s.data[ck(p.r,3)]=String((p.profit+total).toFixed(2));
+  s.data[ck(p.r,4)]=String((p.profit+total).toFixed(2));
+  // update total col 3 = price * new qty
+  const newQty=p.qty-qty;
+  s.data[ck(p.r,3)]=String(parseFloat(gcv(p.r,1,null,rid))*newQty);
   if(!salesMap[rid])salesMap[rid]=[];
   salesMap[rid].unshift({id:sid++,name:p.name,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
   saveAll();qty=1;document.getElementById('saleSelect').value='';
@@ -1220,7 +1250,7 @@ function _drawCanvas(s){
   const d0=document.getElementById('ds0')?.textContent||'0';
   const d1=document.getElementById('ds1')?.textContent||'0';
   const d2=document.getElementById('ds2')?.textContent||'0';
-  const stats=[{v:d0,l:'العدد الكلي',c:acc},{v:d1,l:'إجمالي الأسعار',c:yellow},{v:d2,l:'إجمالي الأرباح',c:green}];
+  const stats=[{v:d2,l:'إجمالي الأرباح',c:green},{v:d0,l:'العدد الكلي',c:acc},{v:d1,l:'إجمالي الأسعار',c:yellow}];
   const sw=baseW/3;
   stats.forEach((st,i)=>{
     const x=i*sw;
@@ -1313,7 +1343,11 @@ function _drawCanvas(s){
       ctx.lineWidth=0.5;
       ctx.strokeRect(x+.5,y+.5,cellW-1,cellH-1);
       let v=gcv(r,c);
-      if(r>0&&(c===1||c===3)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      if(r>0&&c===3){
+        const rawP=parseFloat(s.data[ck(r,1)])||0;
+        const rawQ=parseFloat(s.data[ck(r,2)])||0;
+        v=(rawP>0&&rawQ>0)?fmtP(rawP*rawQ):'';
+      } else if(r>0&&(c===1||c===4)&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
       ctx.fillStyle=st.fg||textClr;
       ctx.font=`${st.fw?'bold ':''} ${st.fs||14}px Cairo,sans-serif`;
       const align=st.ta==='center'?'center':'right';
@@ -1385,4 +1419,4 @@ updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-                             </html>
+  </html>
