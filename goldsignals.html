@@ -398,12 +398,7 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
   <div class="sheet-wrap">
     <table class="grid" id="grid" oncontextmenu="showCtx(event)"></table>
   </div>
-  <div class="cell-editor-bar" id="cellEditorBar">
-    <span class="ceb-label" id="cebLabel">A1</span>
-    <input class="ceb-input" id="cebInput" type="text" inputmode="text" placeholder="اكتب القيمة..." onkeydown="cebKey(event)">
-    <button class="ceb-ok" onclick="cebConfirm()">✓</button>
-    <button class="ceb-cancel" onclick="cebCancel()">✕</button>
-  </div>
+
   <div class="sbar">
     <span>الخلية: <b id="stCell" style="color:var(--text)">A1</b></span>
     <span class="save-ind" id="saveInd">💾 محفوظ</span>
@@ -1017,10 +1012,10 @@ function renderSheet(){
   for(let c=0;c<s.cols;c++)h+=`<th class="ch">${cn(c)}</th>`;
   h+=`</tr>`;
   // sticky second row: show row 0 content (عناوين الأعمدة) in thead
-  h+=`<tr><th class="rh" style="top:34px;z-index:9">1</th>`;
+  h+=`<tr><th class="corner" style="top:34px;z-index:12;background:var(--s2);"></th>`;
   for(let c=0;c<s.cols;c++){
     const k=ck(0,c),st=s.styles[k]||{};
-    let style=`position:sticky;top:34px;z-index:8;text-align:${st.ta||'center'};font-size:${st.fs||12}px;`;
+    let style=`position:sticky;top:34px;z-index:8;text-align:${st.ta||'center'};font-size:${st.fs||12}px;border:1px solid var(--border);`;
     if(st.bg)style+=`background:${st.bg};`;else style+=`background:var(--s2);`;
     if(st.fg)style+=`color:${st.fg};`;else style+=`color:var(--text2);`;
     if(st.fw)style+=`font-weight:${st.fw};`;else style+=`font-weight:700;`;
@@ -1042,11 +1037,13 @@ function renderSheet(){
       const is8c=(gs()?.cols||0)===8;
       const is7c=(gs()?.cols||0)===7;
       if(r>0&&c===3&&is9c){
-        // عدد تم بيعه = كمية أساسية(col2) - كمية متبقية(col4)
-        const qB=parseFloat(gs()?.data[ck(r,2)])||0;
-        const qR=parseFloat(gs()?.data[ck(r,4)])||0;
-        const sold=Math.max(0,qB-qR);
-        v=currency==='USD'?sold.toLocaleString('en-US'):sold.toLocaleString('ar-IQ');
+        const hasProduct=(gs()?.data[ck(r,0)]||'').trim()!=='';
+        if(hasProduct){
+          const qB=parseFloat(gs()?.data[ck(r,2)])||0;
+          const qR=parseFloat(gs()?.data[ck(r,4)])||0;
+          const sold=Math.max(0,qB-qR);
+          v=currency==='USD'?sold.toLocaleString('en-US'):sold.toLocaleString('ar-IQ');
+        } else { v=''; }
       } else if(r>0&&c===5&&is9c){
         // إجمالي أساسي = سعر × كمية أساسية
         const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
@@ -1141,18 +1138,10 @@ function cMM(e,r,c){if(!drag)return;sB={r,c};sel={r,c};renderSheet();}
 function cMU(){drag=false;}
 function stEdit(r,c){
   editing=true;
-  sel={r,c};sA={r,c};sB={r,c};
-  renderSheet();
+  const el=document.getElementById(`c_${r}_${c}`);if(!el)return;
   const raw=gs()?.data[ck(r,c)]||'';
-  const bar=document.getElementById('cellEditorBar');
-  const inp=document.getElementById('cebInput');
-  const lbl=document.getElementById('cebLabel');
-  if(bar&&inp&&lbl){
-    lbl.textContent=`${cn(c)}${r+1}`;
-    inp.value=raw;
-    bar.classList.add('show');
-    setTimeout(()=>{inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);},50);
-  }
+  el.innerHTML=`<input class="ci" id="ci" value="${esc(raw)}" onblur="comE(${r},${c})" onkeydown="edK(event,${r},${c})">`;
+  const inp=document.getElementById('ci');inp.focus();inp.select();
 }
 function cebConfirm(){
   const inp=document.getElementById('cebInput');if(!inp)return;
@@ -1186,7 +1175,9 @@ function edK(e,r,c){
 }
 function stopE(){
   if(!editing)return;
-  cebConfirm();
+  const i=document.getElementById('ci');
+  if(i){const p=i.closest('td');if(p){const m=p.id.match(/c_(\d+)_(\d+)/);if(m)comE(+m[1],+m[2]);}}
+  editing=false;
 }
 document.addEventListener('keydown',e=>{
   if(editing||curScreen!=='detail')return;
@@ -1506,21 +1497,23 @@ function _drawCanvas(s){
   const _tProfit=_salesArr.reduce((a,b)=>a+b.total,0);
   if(s){for(let _r=1;_r<s.rows;_r++){
     if(!s.data[ck(_r,0)])continue;
-    const _is8=(s.cols||0)>=8;
+    const _is9=(s.cols||0)>=9;
+    const _is8=(s.cols||0)===8;
     const _p=parseFloat(s.data[ck(_r,1)])||0;
     const _qb=parseFloat(s.data[ck(_r,2)])||0;
-    const _qr=parseFloat(s.data[ck(_r,_is8?3:2)])||0;
+    // col4=متبقية in 9-col, col3=متبقية in 8-col
+    const _qr=parseFloat(s.data[ck(_r,_is9?4:(_is8?3:2))])||0;
     _tQB+=_qb;_tQR+=_qr;
     if(_p&&_qb)_tPB+=_p*_qb;
     if(_p&&_qr)_tPR+=_p*_qr;
   }}
   const fmtQ2=n=>currency==='USD'?n.toLocaleString('en-US'):n.toLocaleString('ar-IQ');
   const stats=[
-    {v:fmtQ2(_tQB),l:'العدد الأساسي',c:acc},
-    {v:fmtQ2(_tQR),l:'العدد المتبقي',c:'#22d3ee'},
-    {v:fmtP(_tPB),l:'أسعار الأساسي',c:yellow},
-    {v:fmtP(_tPR),l:'أسعار المتبقي',c:yellow},
-    {v:fmtP(_tProfit),l:'إجمالي الأرباح',c:green}
+    {v:fmtQ2(_tQB),l:'عدد أساسي',c:acc},
+    {v:fmtQ2(_tQR),l:'عدد متبقي',c:'#22d3ee'},
+    {v:fmtP(_tPB),l:'سعر أساسي',c:yellow},
+    {v:fmtP(_tPR),l:'سعر متبقي',c:yellow},
+    {v:fmtP(_tProfit),l:'الأرباح',c:green}
   ];
   const sw=baseW/stats.length;
   stats.forEach((st,i)=>{
@@ -1614,20 +1607,42 @@ function _drawCanvas(s){
       ctx.lineWidth=0.5;
       ctx.strokeRect(x+.5,y+.5,cellW-1,cellH-1);
       let v=gcv(r,c);
-      const is8cv=(s.cols||0)>=8;
-      if(r>0&&c===4&&is8cv){
+      const is9cv=(s.cols||0)>=9;
+      const is8cv=(s.cols||0)===8;
+      if(r>0&&c===5&&is9cv){
+        // إجمالي أساسي = سعر × كمية أساسية
+        const rawP=parseFloat(s.data[ck(r,1)])||0;const rawB=parseFloat(s.data[ck(r,2)])||0;
+        v=(rawP>0&&rawB>0)?fmtP(rawP*rawB):'';
+      } else if(r>0&&c===6&&is9cv){
+        // إجمالي متبقي = سعر × كمية متبقية
+        const rawP=parseFloat(s.data[ck(r,1)])||0;const rawR=parseFloat(s.data[ck(r,4)])||0;
+        v=(rawP>0&&rawR>0)?fmtP(rawP*rawR):'';
+      } else if(r>0&&c===4&&is8cv){
         const rawP=parseFloat(s.data[ck(r,1)])||0;const rawB=parseFloat(s.data[ck(r,2)])||0;
         v=(rawP>0&&rawB>0)?fmtP(rawP*rawB):'';
       } else if(r>0&&c===5&&is8cv){
         const rawP=parseFloat(s.data[ck(r,1)])||0;const rawR=parseFloat(s.data[ck(r,3)])||0;
         v=(rawP>0&&rawR>0)?fmtP(rawP*rawR):'';
-      } else if(r>0&&(c===1||(is8cv&&c===6)||(!is8cv&&c===4))&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      } else if(r>0&&(c===1||(is9cv&&c===7)||(is8cv&&c===6)||(!is9cv&&!is8cv&&c===4))&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
       ctx.fillStyle=st.fg||textClr;
-      ctx.font=`${st.fw?'bold ':''} ${st.fs||14}px Cairo,sans-serif`;
+      // حجم خط أصغر للعناوين الطويلة
+      const fontSize=r===0?10:13;
+      ctx.font=`${st.fw?'bold ':''} ${fontSize}px Cairo,sans-serif`;
       const align=st.ta==='center'?'center':'right';
       ctx.textAlign=align;
-      const tx=align==='center'?x+cellW/2:x+cellW-8;
-      ctx.fillText(String(v||'').substring(0,20),tx,y+cellH/2);
+      const tx=align==='center'?x+cellW/2:x+cellW-5;
+      // لا نقطع النص — نصغر الخط إذا كان طويلاً
+      const txt=String(v||'');
+      const maxW=cellW-8;
+      ctx.font=`${st.fw?'bold ':''} ${fontSize}px Cairo,sans-serif`;
+      let measW=ctx.measureText(txt).width;
+      let finalFont=fontSize;
+      while(measW>maxW&&finalFont>7){
+        finalFont--;
+        ctx.font=`${st.fw?'bold ':''} ${finalFont}px Cairo,sans-serif`;
+        measW=ctx.measureText(txt).width;
+      }
+      ctx.fillText(txt,tx,y+cellH/2);
     }
   }
   ctx.strokeStyle=borderClr;
