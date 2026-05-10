@@ -277,6 +277,7 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
   <div class="topbar">
     <div class="logo">📊 InvPro</div>
     <button class="tbtn" onclick="openThemeModal()" style="background:none;border:none;font-size:20px;padding:4px 6px;">🎨</button>
+    <button class="tbtn" onclick="openSettingsModal()" style="background:none;border:none;font-size:20px;padding:4px 6px;">⚙️</button>
     <div style="flex:1"></div>
     <div class="cur-box" style="margin-left:4px">
       <button class="cur-btn on" id="btnIQD" onclick="setCur('IQD')">🇮🇶</button>
@@ -570,6 +571,72 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     </div>
     <div class="modal-body">
       <div class="theme-grid" id="themeGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SETTINGS -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3>⚙️ الإعدادات</h3>
+      <button class="mclose" onclick="document.getElementById('settingsModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" style="gap:16px;">
+
+      <!-- مشاركة الموقع -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;">
+        <div style="font-size:13px;font-weight:900;color:var(--cyan);margin-bottom:10px;">🔗 مشاركة الموقع</div>
+        <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text2);word-break:break-all;margin-bottom:8px;" id="siteUrlDisplay">-</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="copyUrl()" style="flex:1;padding:9px;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">📋 نسخ الرابط</button>
+          <button onclick="shareUrl('whatsapp')" style="flex:1;padding:9px;background:#25D366;border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">📱 واتساب</button>
+          <button onclick="shareUrl('telegram')" style="flex:1;padding:9px;background:#2AABEE;border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">✈️ تلغرام</button>
+        </div>
+        <button onclick="shareUrl('native')" style="width:100%;margin-top:8px;padding:9px;background:var(--acc);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">📤 مشاركة عبر التطبيقات</button>
+      </div>
+
+      <!-- نظام الحسابات -->
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;">
+        <div style="font-size:13px;font-weight:900;color:var(--cyan);margin-bottom:10px;">👤 نظام الحسابات</div>
+        <div id="authSection">
+          <!-- Login Form -->
+          <div id="loginForm">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
+              سجّل دخول لحفظ بياناتك على السحابة والوصول من أي جهاز.
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <input id="authEmail" type="email" placeholder="البريد الإلكتروني" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:Cairo,sans-serif;font-size:13px;outline:none;direction:ltr;">
+              <input id="authPass" type="password" placeholder="كلمة المرور" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:Cairo,sans-serif;font-size:13px;outline:none;direction:ltr;">
+              <div id="authError" style="color:var(--red);font-size:11px;display:none;"></div>
+              <div style="display:flex;gap:8px;">
+                <button onclick="doLogin()" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--acc),#2563eb);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;">تسجيل الدخول</button>
+                <button onclick="doRegister()" style="flex:1;padding:11px;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;font-family:Cairo,sans-serif;font-size:13px;cursor:pointer;">إنشاء حساب</button>
+              </div>
+            </div>
+          </div>
+          <!-- Logged In -->
+          <div id="loggedInSection" style="display:none;">
+            <div style="display:flex;align-items:center;gap:10px;background:var(--s3);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;" id="loggedEmail">-</div>
+                <div style="font-size:10px;color:var(--green);">✓ مسجّل الدخول</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="doSyncUp()" style="flex:1;padding:10px;background:var(--green);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">☁️ رفع البيانات</button>
+              <button onclick="doSyncDown()" style="flex:1;padding:10px;background:var(--acc);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">📥 تحميل البيانات</button>
+              <button onclick="doLogout()" style="flex:1;padding:10px;background:var(--s3);border:1px solid var(--border);color:var(--red);border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">خروج</button>
+            </div>
+            <div id="syncMsg" style="font-size:11px;color:var(--green);text-align:center;margin-top:8px;display:none;"></div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text2);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:8px;">
+          ⚠️ نظام الحسابات يحتاج إعداد Firebase. للتفعيل الكامل راجع التعليمات.
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1015,7 +1082,10 @@ function renderSheet(){
   h+=`<tr><th class="corner" style="top:34px;z-index:12;background:var(--s2);"></th>`;
   for(let c=0;c<s.cols;c++){
     const k=ck(0,c),st=s.styles[k]||{};
-    let style=`position:sticky;top:34px;z-index:8;text-align:${st.ta||'center'};font-size:${st.fs||12}px;border:1px solid var(--border);`;
+    // col 0 (اسم المنتج) also gets sticky right
+    const isFirstCol=(c===0);
+    let style=`position:sticky;top:34px;z-index:${isFirstCol?11:8};text-align:${st.ta||'center'};font-size:${st.fs||12}px;border:1px solid var(--border);`;
+    if(isFirstCol)style+=`right:28px;`;
     if(st.bg)style+=`background:${st.bg};`;else style+=`background:var(--s2);`;
     if(st.fg)style+=`color:${st.fg};`;else style+=`color:var(--text2);`;
     if(st.fw)style+=`font-weight:${st.fw};`;else style+=`font-weight:700;`;
@@ -1063,6 +1133,8 @@ function renderSheet(){
         const rawR=parseFloat(gs()?.data[ck(r,3)])||0;
         v=(rawP>0&&rawR>0)?fmtP(rawP*rawR):'';
       } else if(r>0&&(c===1||(is9c&&c===7)||(is8c&&c===6)||(is7c&&c===5))&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      // col 0 sticky right (اسم المنتج دائماً ظاهر)
+      if(c===0)style+=`position:sticky;right:28px;z-index:2;`;
       h+=`<td class="cell${isSel?' sel':''}${inSel2&&!isSel?' insel':''}" id="c_${r}_${c}" style="${style}"
         onclick="cClk(event,${r},${c})" ondblclick="stEdit(${r},${c})"
         onmousedown="cMD(event,${r},${c})" onmousemove="cMM(event,${r},${c})" onmouseup="cMU()"
@@ -1686,6 +1758,132 @@ renderRecList();
 updStats();
 
 // ════════════════════════════════
+// SETTINGS
+// ════════════════════════════════
+function openSettingsModal(){
+  // Show site URL
+  const url=window.location.href;
+  const el=document.getElementById('siteUrlDisplay');
+  if(el)el.textContent=url;
+  // Check if logged in
+  const savedUser=localStorage.getItem('ip4_user');
+  if(savedUser){
+    try{
+      const u=JSON.parse(savedUser);
+      showLoggedIn(u.email);
+    }catch(e){showLoginForm();}
+  } else {showLoginForm();}
+  document.getElementById('settingsModal').classList.add('show');
+}
+
+function showLoginForm(){
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('loggedInSection').style.display='none';
+}
+function showLoggedIn(email){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('loggedInSection').style.display='block';
+  const el=document.getElementById('loggedEmail');
+  if(el)el.textContent=email;
+}
+
+function doLogin(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  if(!email||!pass){showAuthError('أدخل البريد وكلمة المرور');return;}
+  // Local account system (no server needed)
+  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
+  if(!accounts[email]){showAuthError('الحساب غير موجود — أنشئ حساباً جديداً');return;}
+  if(accounts[email].pass!==btoa(pass)){showAuthError('كلمة المرور خاطئة');return;}
+  localStorage.setItem('ip4_user',JSON.stringify({email}));
+  // Load this user's data
+  if(accounts[email].data){
+    try{
+      const d=JSON.parse(accounts[email].data);
+      if(d.records)records=d.records;
+      if(d.salesMap)salesMap=d.salesMap;
+      saveAll();renderRecList();updStats();
+    }catch(e){}
+  }
+  showLoggedIn(email);
+  showAuthError('');
+}
+
+function doRegister(){
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  if(!email||!pass){showAuthError('أدخل البريد وكلمة المرور');return;}
+  if(!email.includes('@')){showAuthError('بريد إلكتروني غير صحيح');return;}
+  if(pass.length<6){showAuthError('كلمة المرور 6 أحرف على الأقل');return;}
+  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
+  if(accounts[email]){showAuthError('الحساب موجود مسبقاً — سجّل الدخول');return;}
+  accounts[email]={pass:btoa(pass),data:null};
+  localStorage.setItem('ip4_accounts',JSON.stringify(accounts));
+  localStorage.setItem('ip4_user',JSON.stringify({email}));
+  showLoggedIn(email);
+  showAuthError('');
+}
+
+function doLogout(){
+  localStorage.removeItem('ip4_user');
+  showLoginForm();
+  document.getElementById('authEmail').value='';
+  document.getElementById('authPass').value='';
+}
+
+function doSyncUp(){
+  const user=JSON.parse(localStorage.getItem('ip4_user')||'null');
+  if(!user)return;
+  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
+  if(!accounts[user.email])return;
+  accounts[user.email].data=JSON.stringify({records,salesMap});
+  localStorage.setItem('ip4_accounts',JSON.stringify(accounts));
+  showSyncMsg('✓ تم رفع البيانات بنجاح');
+}
+
+function doSyncDown(){
+  const user=JSON.parse(localStorage.getItem('ip4_user')||'null');
+  if(!user)return;
+  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
+  if(!accounts[user.email]?.data){showSyncMsg('لا توجد بيانات محفوظة');return;}
+  try{
+    const d=JSON.parse(accounts[user.email].data);
+    if(d.records)records=d.records;
+    if(d.salesMap)salesMap=d.salesMap;
+    saveAll();renderRecList();updStats();
+    showSyncMsg('✓ تم تحميل البيانات بنجاح');
+  }catch(e){showSyncMsg('خطأ في التحميل');}
+}
+
+function showAuthError(msg){
+  const el=document.getElementById('authError');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.display=msg?'block':'none';
+}
+function showSyncMsg(msg){
+  const el=document.getElementById('syncMsg');
+  if(!el)return;
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+function copyUrl(){
+  const url=window.location.href;
+  navigator.clipboard?.writeText(url).then(()=>alert('✓ تم نسخ الرابط')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('✓ تم نسخ الرابط');
+  });
+}
+function shareUrl(app){
+  const url=encodeURIComponent(window.location.href);
+  const txt=encodeURIComponent('تطبيق InvPro لإدارة المخزون: ');
+  if(app==='whatsapp')window.open(`https://wa.me/?text=${txt}${url}`,'_blank');
+  else if(app==='telegram')window.open(`https://t.me/share/url?url=${url}&text=${txt}`,'_blank');
+  else if(app==='native'&&navigator.share){navigator.share({title:'InvPro',url:window.location.href});}
+  else copyUrl();
+}
+
+// ════════════════════════════════
 // PRODUCT SEARCH
 // ════════════════════════════════
 function getProdNames(){
@@ -1796,4 +1994,4 @@ updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-  </html>
+      </html>
