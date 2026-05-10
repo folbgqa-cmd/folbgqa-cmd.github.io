@@ -88,19 +88,27 @@ html,body{height:100%;overflow:hidden;font-family:'Cairo',sans-serif;background:
 .clr-btn{background:var(--s3);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:12px;cursor:pointer;}
 .clr-btn:active{background:var(--red);border-color:var(--red);color:#fff;}
 
-.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;}
+.sheet-wrap{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;position:relative;direction:ltr;}
+.sheet-wrap table{direction:rtl;}
 table.grid{border-collapse:collapse;table-layout:fixed;}
 table.grid th,table.grid td{border:1px solid var(--border);height:34px;padding:0;white-space:nowrap;overflow:hidden;}
-th.rh{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;min-width:28px;width:28px;text-align:center;user-select:none;position:sticky;right:0;z-index:3;}
-th.ch{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;text-align:center;user-select:none;position:sticky;top:0;z-index:2;}
-th.corner{position:sticky;top:0;right:0;z-index:4;background:var(--s2);}
-td.cell{background:var(--s1);color:var(--text);cursor:cell;min-width:95px;width:95px;}
+th.rh{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;min-width:28px;width:28px;text-align:center;user-select:none;position:sticky;right:0;z-index:9;}
+th.ch{background:var(--s2);color:var(--text2);font-size:11px;font-weight:700;text-align:center;user-select:none;position:sticky;top:0;z-index:10;}
+th.corner{position:sticky;top:0;right:0;z-index:11;background:var(--s2);}
+td.cell{background:var(--s1);color:var(--text);cursor:cell;min-width:85px;width:85px;}
 td.cell.sel{outline:2px solid var(--acc);outline-offset:-1px;z-index:1;}
 td.cell.insel{background:rgba(59,130,246,.1);}
 td.cell input.ci{width:100%;height:100%;border:none;background:rgba(59,130,246,.15);color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;padding:0 7px;outline:none;text-align:inherit;}
 td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center;overflow:hidden;font-size:13px;}
 
 .sbar{background:var(--s2);border-top:1px solid var(--border);padding:4px 12px;font-size:10px;color:var(--text2);display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.cell-editor-bar{background:var(--s1);border-top:2px solid var(--acc);padding:6px 8px;display:flex;align-items:center;gap:6px;flex-shrink:0;display:none;}
+.cell-editor-bar.show{display:flex;}
+.ceb-label{font-size:11px;color:var(--acc);font-weight:900;white-space:nowrap;}
+.ceb-input{flex:1;background:var(--s3);border:1px solid var(--acc);color:var(--text);border-radius:8px;padding:8px 10px;font-family:'Cairo',sans-serif;font-size:15px;outline:none;direction:ltr;text-align:left;}
+.ceb-ok{background:var(--acc);border:none;color:#fff;padding:8px 14px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.ceb-ok:active{opacity:.8;}
+.ceb-cancel{background:var(--s3);border:1px solid var(--border);color:var(--text2);padding:8px 10px;border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;cursor:pointer;}
 .save-ind{font-size:10px;color:var(--green);margin-right:auto;}
 .save-ind.saving{color:var(--yellow);}
 
@@ -218,6 +226,30 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
   th.rh{min-width:40px;width:40px;}
   table.grid th,table.grid td{height:48px;}
 }
+/* ── PRODUCT INFO PANEL ── */
+.prod-info-panel{display:none;background:var(--s2);border-bottom:2px solid var(--acc);padding:8px 10px;flex-shrink:0;}
+.prod-info-panel.show{display:block;}
+.prod-info-title{font-size:12px;font-weight:900;color:var(--acc);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+.prod-info-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.prod-info-box{background:var(--s3);border:1px solid var(--border);border-radius:9px;padding:7px 5px;text-align:center;}
+.prod-info-val{font-size:13px;font-weight:900;line-height:1.2;}
+.prod-info-lbl{font-size:9px;color:var(--text2);margin-top:2px;}
+/* ── PRODUCT SEARCH ── */
+.prod-search-wrap{position:relative;flex-shrink:0;}
+.prod-search-box{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--s2);border-bottom:1px solid var(--border);}
+.prod-search-inp{flex:1;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-family:'Cairo',sans-serif;font-size:13px;outline:none;}
+.prod-search-inp:focus{border-color:var(--acc);}
+.prod-search-btn{background:var(--acc);border:none;color:#fff;padding:9px 14px;border-radius:10px;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.prod-search-btn:active{opacity:.8;}
+.prod-suggestions{position:absolute;top:100%;right:10px;left:10px;background:var(--s2);border:1px solid var(--acc);border-radius:10px;z-index:999;max-height:180px;overflow-y:auto;display:none;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.prod-suggestions.show{display:block;}
+.prod-sug-item{padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);}
+.prod-sug-item:last-child{border-bottom:none;}
+.prod-sug-item:active,.prod-sug-item:hover{background:var(--acc);color:#fff;}
+.prod-sug-item b{color:var(--acc);}
+.prod-sug-item:active b,.prod-sug-item:hover b{color:#fff;}
+.cell-highlight{animation:cellPulse .8s ease 3;}
+@keyframes cellPulse{0%,100%{outline:2px solid var(--acc);}50%{outline:4px solid var(--yellow);background:rgba(245,158,11,.2)!important;}}
 /* ── DATE BAR ── */
 .datebar{background:var(--s2);border-bottom:1px solid var(--border);padding:6px 14px;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
 .datebar-item{display:flex;align-items:center;gap:4px;font-size:12px;}
@@ -335,6 +367,23 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     <div class="stat"><div class="sv" style="color:var(--yellow)" id="ds1">0</div><div class="sl">أسعار المتبقي</div></div>
     <div class="stat"><div class="sv" style="color:var(--green)" id="ds2">0</div><div class="sl">إجمالي الأرباح</div></div>
   </div>
+  <div class="prod-search-wrap">
+    <div class="prod-search-box">
+      <input class="prod-search-inp" id="prodSearchInp" placeholder="🔍 ابحث عن منتج..." oninput="onProdSearchInput()" onkeydown="if(event.key==='Enter')doProdSearch()">
+      <button class="prod-search-btn" onclick="doProdSearch()">بحث</button>
+    </div>
+    <div class="prod-suggestions" id="prodSuggestions"></div>
+  </div>
+  <div class="prod-info-panel" id="prodInfoPanel">
+    <div class="prod-info-title">📦 <span id="prodInfoName">-</span></div>
+    <div class="prod-info-grid">
+      <div class="prod-info-box"><div class="prod-info-val" style="color:var(--acc)" id="piBase">-</div><div class="prod-info-lbl">الكمية الأساسية</div></div>
+      <div class="prod-info-box"><div class="prod-info-val" style="color:var(--cyan)" id="piRem">-</div><div class="prod-info-lbl">الكمية المتبقية</div></div>
+      <div class="prod-info-box"><div class="prod-info-val" style="color:var(--red)" id="piSold">-</div><div class="prod-info-lbl">تم بيعه</div></div>
+      <div class="prod-info-box"><div class="prod-info-val" style="color:var(--yellow)" id="piPrice">-</div><div class="prod-info-lbl">السعر</div></div>
+      <div class="prod-info-box"><div class="prod-info-val" style="color:var(--green)" id="piProfit">-</div><div class="prod-info-lbl">الأرباح</div></div>
+    </div>
+  </div>
   <div class="datebar" id="detailDateBar" style="direction:ltr;justify-content:center;">
     <span class="datebar-item"><span class="datebar-val" id="dbYear" style="color:var(--text);font-weight:900">-</span><span style="color:var(--text);font-size:11px"> السنة</span></span>
     <span class="datebar-sep" style="color:var(--text)">|</span>
@@ -348,6 +397,12 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
   </div>
   <div class="sheet-wrap">
     <table class="grid" id="grid" oncontextmenu="showCtx(event)"></table>
+  </div>
+  <div class="cell-editor-bar" id="cellEditorBar">
+    <span class="ceb-label" id="cebLabel">A1</span>
+    <input class="ceb-input" id="cebInput" type="text" inputmode="text" placeholder="اكتب القيمة..." onkeydown="cebKey(event)">
+    <button class="ceb-ok" onclick="cebConfirm()">✓</button>
+    <button class="ceb-cancel" onclick="cebCancel()">✕</button>
   </div>
   <div class="sbar">
     <span>الخلية: <b id="stCell" style="color:var(--text)">A1</b></span>
@@ -531,9 +586,9 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
 const TEMPLATES=[
   {ico:'🛒',name:'مخزون منتجات',desc:'أسعار وكميات وأرباح',build(){
     const d={},st={},hdr={bg:'#1e3a5f',fg:'#60a5fa',fw:700,fs:13,ta:'center'};
-    ['اسم المنتج','السعر','الكمية الأساسية','الكمية المتبقية','إجمالي الأسعار الأساسي','إجمالي الأسعار المتبقي','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
-    [['منتج A','15000','50','50','750000','750000','0','إلكترونيات'],['منتج B','8000','30','30','240000','240000','0','ملابس'],['منتج C','20000','20','20','400000','400000','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
-    return{rows:10,cols:8,data:d,styles:st};
+    ['اسم المنتج','السعر','الكمية الأساسية','عدد تم بيعه','الكمية المتبقية','إجمالي الأسعار الأساسي','إجمالي الأسعار المتبقي','الأرباح','الفئة'].forEach((v,c)=>{d[`0_${c}`]=v;st[`0_${c}`]={...hdr};});
+    [['منتج A','15000','50','0','50','750000','750000','0','إلكترونيات'],['منتج B','8000','30','0','30','240000','240000','0','ملابس'],['منتج C','20000','20','0','20','400000','400000','0','أثاث']].forEach((r,ri)=>r.forEach((v,ci)=>{d[`${ri+1}_${ci}`]=v;}));
+    return{rows:10,cols:9,data:d,styles:st};
   }},
   {ico:'🧾',name:'فاتورة بيع',desc:'أصناف مع الإجمالي',build(){
     const d={},st={},hdr={bg:'#14532d',fg:'#86efac',fw:700,fs:13,ta:'center'};
@@ -798,6 +853,25 @@ function openRecord(id){
       }
       ms.cols=8;saveAll();
     }
+    // 8→9: insert عدد تم بيعه at col3 (between أساسية and متبقية)
+    if(ms.cols===8&&ms.data&&ms.data['0_0']){
+      for(let r=ms.rows-1;r>=0;r--){
+        // shift cols 3→4, 4→5, 5→6, 6→7, 7→8
+        for(let c=7;c>=3;c--){
+          if(ms.data[`${r}_${c}`]!==undefined){ms.data[`${r}_${c+1}`]=ms.data[`${r}_${c}`];delete ms.data[`${r}_${c}`];}
+          if(ms.styles[`${r}_${c}`]){ms.styles[`${r}_${c+1}`]=ms.styles[`${r}_${c}`];delete ms.styles[`${r}_${c}`];}
+        }
+        if(r===0){
+          ms.data['0_3']='عدد تم بيعه';
+          if(ms.styles['0_0'])ms.styles['0_3']={...ms.styles['0_0']};
+        } else {
+          const qB=parseFloat(ms.data[`${r}_2`])||0;
+          const qR=parseFloat(ms.data[`${r}_4`])||0;
+          ms.data[`${r}_3`]=String(Math.max(0,qB-qR));
+        }
+      }
+      ms.cols=9;saveAll();
+    }
     // 7→8: old4=إجمالي الأسعار → becomes col5(إجمالي متبقي), add col4(إجمالي أساسي)
     if(ms.cols===7&&ms.data&&ms.data['0_0']){
       for(let r=ms.rows-1;r>=0;r--){
@@ -936,12 +1010,25 @@ function renderSheet(){
   const g=document.getElementById('grid');if(!g)return;
   document.getElementById('rowCount').textContent=s.rows;
   document.getElementById('colCount').textContent=s.cols;
+  const colW=s.cols>6?80:85;
   let h=`<colgroup><col style="width:28px">`;
-  for(let c=0;c<s.cols;c++)h+=`<col style="width:${s.styles['cw_'+c]||95}px">`;
+  for(let c=0;c<s.cols;c++)h+=`<col style="width:${s.styles['cw_'+c]||colW}px">`;
   h+=`</colgroup><thead><tr><th class="ch corner"></th>`;
   for(let c=0;c<s.cols;c++)h+=`<th class="ch">${cn(c)}</th>`;
+  h+=`</tr>`;
+  // sticky second row: show row 0 content (عناوين الأعمدة) in thead
+  h+=`<tr><th class="rh" style="top:34px;z-index:9">1</th>`;
+  for(let c=0;c<s.cols;c++){
+    const k=ck(0,c),st=s.styles[k]||{};
+    let style=`position:sticky;top:34px;z-index:8;text-align:${st.ta||'center'};font-size:${st.fs||12}px;`;
+    if(st.bg)style+=`background:${st.bg};`;else style+=`background:var(--s2);`;
+    if(st.fg)style+=`color:${st.fg};`;else style+=`color:var(--text2);`;
+    if(st.fw)style+=`font-weight:${st.fw};`;else style+=`font-weight:700;`;
+    const v0=gcv(0,c);
+    h+=`<th style="${style}" onclick="cClk(event,0,${c})" ondblclick="stEdit(0,${c})">${esc(v0)}</th>`;
+  }
   h+=`</tr></thead><tbody>`;
-  for(let r=0;r<s.rows;r++){
+  for(let r=1;r<s.rows;r++){
     h+=`<tr><th class="rh">${r+1}</th>`;
     for(let c=0;c<s.cols;c++){
       const k=ck(r,c),st=s.styles[k]||{};
@@ -951,19 +1038,34 @@ function renderSheet(){
       if(st.fw)style+=`font-weight:${st.fw};`;
       const isSel=r===sel.r&&c===sel.c,inSel2=inS(r,c);
       let v=gcv(r,c);
-      const is8c=(gs()?.cols||0)>=8;
+      const is9c=(gs()?.cols||0)>=9;
+      const is8c=(gs()?.cols||0)===8;
       const is7c=(gs()?.cols||0)===7;
-      if(r>0&&c===4&&is8c){
-        // إجمالي أساسي = سعر × كمية أساسية (ثابت)
+      if(r>0&&c===3&&is9c){
+        // عدد تم بيعه = كمية أساسية(col2) - كمية متبقية(col4)
+        const qB=parseFloat(gs()?.data[ck(r,2)])||0;
+        const qR=parseFloat(gs()?.data[ck(r,4)])||0;
+        const sold=Math.max(0,qB-qR);
+        v=currency==='USD'?sold.toLocaleString('en-US'):sold.toLocaleString('ar-IQ');
+      } else if(r>0&&c===5&&is9c){
+        // إجمالي أساسي = سعر × كمية أساسية
+        const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
+        const rawB=parseFloat(gs()?.data[ck(r,2)])||0;
+        v=(rawP>0&&rawB>0)?fmtP(rawP*rawB):'';
+      } else if(r>0&&c===6&&is9c){
+        // إجمالي متبقي = سعر × كمية متبقية
+        const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
+        const rawR=parseFloat(gs()?.data[ck(r,4)])||0;
+        v=(rawP>0&&rawR>0)?fmtP(rawP*rawR):'';
+      } else if(r>0&&c===4&&is8c){
         const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
         const rawB=parseFloat(gs()?.data[ck(r,2)])||0;
         v=(rawP>0&&rawB>0)?fmtP(rawP*rawB):'';
       } else if(r>0&&c===5&&is8c){
-        // إجمالي متبقي = سعر × كمية متبقية (متغير)
         const rawP=parseFloat(gs()?.data[ck(r,1)])||0;
         const rawR=parseFloat(gs()?.data[ck(r,3)])||0;
         v=(rawP>0&&rawR>0)?fmtP(rawP*rawR):'';
-      } else if(r>0&&(c===1||(is8c&&c===6)||(is7c&&c===5)||((!is8c&&!is7c)&&c===4))&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
+      } else if(r>0&&(c===1||(is9c&&c===7)||(is8c&&c===6)||(is7c&&c===5))&&v&&!isNaN(parseFloat(v)))v=fmtP(v);
       h+=`<td class="cell${isSel?' sel':''}${inSel2&&!isSel?' insel':''}" id="c_${r}_${c}" style="${style}"
         onclick="cClk(event,${r},${c})" ondblclick="stEdit(${r},${c})"
         onmousedown="cMD(event,${r},${c})" onmousemove="cMM(event,${r},${c})" onmouseup="cMU()"
@@ -991,9 +1093,10 @@ function updStats(){
   if(s){
     for(let r=1;r<s.rows;r++){
       if(!gcv(r,0,null,rid))continue;
-      const is8s=(s.cols||0)>=8;
+      const is9s=(s.cols||0)>=9;
+      const is8s=(s.cols||0)===8;
       const qBaseCol=2;
-      const qRemCol=is8s?3:2;
+      const qRemCol=is9s?4:(is8s?3:2);
       const qBase=parseFloat(s.data[ck(r,qBaseCol)])||0;
       const q=parseFloat(s.data[ck(r,qRemCol)])||0;
       const p=parseFloat(s.data[ck(r,1)])||0;
@@ -1038,22 +1141,43 @@ function cMM(e,r,c){if(!drag)return;sB={r,c};sel={r,c};renderSheet();}
 function cMU(){drag=false;}
 function stEdit(r,c){
   editing=true;
-  const el=document.getElementById(`c_${r}_${c}`);if(!el)return;
+  sel={r,c};sA={r,c};sB={r,c};
+  renderSheet();
   const raw=gs()?.data[ck(r,c)]||'';
-  el.innerHTML=`<input class="ci" id="ci" value="${esc(raw)}" onblur="comE(${r},${c})" onkeydown="edK(event,${r},${c})">`;
-  const inp=document.getElementById('ci');inp.focus();inp.select();
+  const bar=document.getElementById('cellEditorBar');
+  const inp=document.getElementById('cebInput');
+  const lbl=document.getElementById('cebLabel');
+  if(bar&&inp&&lbl){
+    lbl.textContent=`${cn(c)}${r+1}`;
+    inp.value=raw;
+    bar.classList.add('show');
+    setTimeout(()=>{inp.focus();inp.setSelectionRange(inp.value.length,inp.value.length);},50);
+  }
 }
-function comE(r,c){
-  editing=false;
-  const i=document.getElementById('ci');if(!i)return;
+function cebConfirm(){
+  const inp=document.getElementById('cebInput');if(!inp)return;
   const s=gs();if(!s)return;
-  const old=s.data[ck(r,c)]||'';
-  let nv=i.value;
-  if(r>0&&c===1&&nv&&!isNaN(parseFloat(nv))&&!String(nv).startsWith('=')&&currency==='USD'){
+  let nv=inp.value;
+  // USD price conversion for col 1
+  if(sel.r>0&&sel.c===1&&nv&&!isNaN(parseFloat(nv))&&!String(nv).startsWith('=')&&currency==='USD'){
     nv=String(Math.round(parseFloat(nv)*rate));
   }
-  if(old!==nv){s.data[ck(r,c)]=nv;saveAll();}
-  renderSheet();
+  const old=s.data[ck(sel.r,sel.c)]||'';
+  if(old!==nv){s.data[ck(sel.r,sel.c)]=nv;saveAll();}
+  cebClose();renderSheet();
+}
+function cebCancel(){cebClose();renderSheet();}
+function cebClose(){
+  editing=false;
+  document.getElementById('cellEditorBar')?.classList.remove('show');
+  document.getElementById('cebInput')&&(document.getElementById('cebInput').value='');
+}
+function cebKey(e){
+  if(e.key==='Enter')cebConfirm();
+  else if(e.key==='Escape')cebCancel();
+}
+function comE(r,c){
+  editing=false;renderSheet();
 }
 function edK(e,r,c){
   if(e.key==='Enter'){comE(r,c);sel={r:r+1,c};renderSheet();}
@@ -1062,9 +1186,7 @@ function edK(e,r,c){
 }
 function stopE(){
   if(!editing)return;
-  const i=document.getElementById('ci');
-  if(i){const p=i.closest('td');if(p){const m=p.id.match(/c_(\d+)_(\d+)/);if(m)comE(+m[1],+m[2]);}}
-  editing=false;
+  cebConfirm();
 }
 document.addEventListener('keydown',e=>{
   if(editing||curScreen!=='detail')return;
@@ -1172,9 +1294,10 @@ function getProds(rid){
   const p=[];
   for(let row=1;row<s.rows;row++){
     const name=gcv(row,0,null,r);if(!name)continue;
-    const sheet8=(gs(r||salesActiveRecId)?.cols||0)>=8;
-    const remQtyCol=sheet8?3:2;
-    const profitCol8=sheet8?6:4;
+    const sheet9=(gs(r||salesActiveRecId)?.cols||0)>=9;
+    const sheet8=(gs(r||salesActiveRecId)?.cols||0)===8;
+    const remQtyCol=sheet9?4:(sheet8?3:2);
+    const profitCol8=sheet9?7:(sheet8?6:4);
     const avail=parseFloat(s.data[ck(row,remQtyCol)])||0;if(avail<=0)continue;
     p.push({r:row,name,price:parseFloat(s.data[ck(row,1)])||0,qty:avail,profit:parseFloat(s.data[ck(row,profitCol8)])||0});
   }return p;
@@ -1211,10 +1334,11 @@ function doSell(){
   const rid=salesActiveRecId;
   const s=gs(rid);if(!s){alert('اختر سجلاً أولاً');return;}
   const total=qty*p.price;
-  const is8=(s.cols||0)>=8;
-  const remCol=is8?3:2;   // الكمية المتبقية
-  const profCol=is8?6:4;  // الأرباح
-  const totRemCol=is8?5:3; // إجمالي متبقي
+  const is9=(s.cols||0)>=9;
+  const is8=(s.cols||0)===8;
+  const remCol=is9?4:(is8?3:2);   // الكمية المتبقية
+  const profCol=is9?7:(is8?6:4);  // الأرباح
+  const totRemCol=is9?6:(is8?5:3); // إجمالي متبقي
   const newQty=p.qty-qty;
   const rawPrice=parseFloat(s.data[ck(p.r,1)])||0;
   s.data[ck(p.r,remCol)]=String(newQty);
@@ -1223,6 +1347,12 @@ function doSell(){
   // الأرباح
   const oldProfit=parseFloat(s.data[ck(p.r,profCol)])||0;
   s.data[ck(p.r,profCol)]=String((oldProfit+total).toFixed(2));
+  // عدد تم بيعه = كمية أساسية(2) - كمية متبقية(remCol) → col3
+  if(is9){
+    const qB2=parseFloat(s.data[ck(p.r,2)])||0;
+    const qR2=parseFloat(s.data[ck(p.r,remCol)])||0;
+    s.data[ck(p.r,3)]=String(Math.max(0,qB2-qR2));
+  }
   if(!salesMap[rid])salesMap[rid]=[];
   salesMap[rid].unshift({id:sid++,name:p.name,row:p.r,qty,price:p.price,total,date:new Date().toLocaleString('ar-IQ'),cur:currency});
   saveAll();qty=1;document.getElementById('saleSelect').value='';
@@ -1288,15 +1418,18 @@ function delSale(id){
       }
     }
     if(targetRow>0){
-      const is8r=(s.cols||0)>=8;
-      const rCol=is8r?3:2;
-      const profitCol=is8r?6:4;
-      const totRemCol2=is8r?5:3;
+      const is9r=(s.cols||0)>=9;
+      const is8r=(s.cols||0)===8;
+      const rCol=is9r?4:(is8r?3:2);
+      const profitCol=is9r?7:(is8r?6:4);
+      const totRemCol2=is9r?6:(is8r?5:3);
       const oldQty=parseFloat(s.data[ck(targetRow,rCol)])||0;
       s.data[ck(targetRow,rCol)]=String(oldQty+sale.qty);
       // restore إجمالي متبقي
       const rawP2=parseFloat(s.data[ck(targetRow,1)])||0;
       if(totRemCol2&&rawP2)s.data[ck(targetRow,totRemCol2)]=String(rawP2*(oldQty+sale.qty));
+      // restore عدد تم بيعه
+      if(is9r){const qB3=parseFloat(s.data[ck(targetRow,2)])||0;const qR3=oldQty+sale.qty;s.data[ck(targetRow,3)]=String(Math.max(0,qB3-qR3));}
       const oldProfit=parseFloat(s.data[ck(targetRow,profitCol)])||0;
       const newProfit=Math.max(0,parseFloat((oldProfit-sale.total).toFixed(2)));
       s.data[ck(targetRow,profitCol)]=String(newProfit);
@@ -1536,6 +1669,94 @@ function shareVia(app){
 // ════════════════════════════════
 renderRecList();
 updStats();
+
+// ════════════════════════════════
+// PRODUCT SEARCH
+// ════════════════════════════════
+function getProdNames(){
+  const s=gs();if(!s)return[];
+  const names=[];
+  for(let r=1;r<s.rows;r++){
+    const name=(s.data[ck(r,0)]||'').trim();
+    if(name)names.push({name,row:r});
+  }
+  return names;
+}
+
+function onProdSearchInput(){
+  const inp=document.getElementById('prodSearchInp');
+  const sug=document.getElementById('prodSuggestions');
+  if(!inp||!sug)return;
+  const q=inp.value.trim();
+  if(!q){sug.classList.remove('show');document.getElementById('prodInfoPanel')?.classList.remove('show');return;}
+  const prods=getProdNames();
+  const matches=prods.filter(p=>p.name.includes(q)||p.name.toLowerCase().includes(q.toLowerCase()));
+  if(!matches.length){sug.classList.remove('show');return;}
+  sug.innerHTML=matches.slice(0,8).map(p=>`
+    <div class="prod-sug-item" onclick="jumpToRow(${p.row});document.getElementById('prodSearchInp').value='${p.name.replace(/'/g,"\'")}';document.getElementById('prodSuggestions').classList.remove('show')">
+      ${p.name.replace(q,`<b>${q}</b>`)}
+      <span style="color:var(--text2);font-size:10px;float:left">صف ${p.row+1}</span>
+    </div>`).join('');
+  sug.classList.add('show');
+}
+
+function doProdSearch(){
+  const inp=document.getElementById('prodSearchInp');
+  const sug=document.getElementById('prodSuggestions');
+  if(!inp)return;
+  sug?.classList.remove('show');
+  const q=inp.value.trim();
+  if(!q)return;
+  const prods=getProdNames();
+  const match=prods.find(p=>p.name===q||p.name.toLowerCase()===q.toLowerCase()||p.name.includes(q));
+  if(match)jumpToRow(match.row);
+  else{inp.style.borderColor='var(--red)';setTimeout(()=>inp.style.borderColor='',1500);}
+}
+
+function showProdInfo(row){
+  const s=gs();if(!s)return;
+  const is9p=(s.cols||0)>=9;
+  const is8p=(s.cols||0)===8;
+  const name=(s.data[ck(row,0)]||'').trim();
+  const price=parseFloat(s.data[ck(row,1)])||0;
+  const qBase=parseFloat(s.data[ck(row,2)])||0;
+  const qRem=parseFloat(s.data[ck(row,is9p?4:(is8p?3:2))])||0;
+  const profitCol=is9p?7:(is8p?6:4);
+  const profit=parseFloat(s.data[ck(row,profitCol)])||0;
+  // عدد تم بيعه = كمية أساسية - كمية متبقية
+  const sold=Math.max(0,qBase-qRem);
+  const panel=document.getElementById('prodInfoPanel');
+  if(panel){
+    panel.classList.add('show');
+    document.getElementById('prodInfoName').textContent=name;
+    document.getElementById('piBase').textContent=currency==='USD'?qBase.toLocaleString('en-US'):qBase.toLocaleString('ar-IQ');
+    document.getElementById('piRem').textContent=currency==='USD'?qRem.toLocaleString('en-US'):qRem.toLocaleString('ar-IQ');
+    document.getElementById('piPrice').textContent=fmtP(price);
+    document.getElementById('piProfit').textContent=fmtP(profit);
+    document.getElementById('piSold').textContent=currency==='USD'?sold.toLocaleString('en-US'):sold.toLocaleString('ar-IQ');
+  }
+}
+
+function jumpToRow(row){
+  const s=gs();if(!s)return;
+  sel={r:row,c:0};sA={r:row,c:0};sB={r:row,c:0};
+  showProdInfo(row);
+  renderSheet();
+  setTimeout(()=>{
+    const el=document.getElementById(`c_${row}_0`);
+    if(el){
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      el.classList.add('cell-highlight');
+      setTimeout(()=>el.classList.remove('cell-highlight'),2500);
+    }
+  },100);
+}
+
+// close suggestions on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.prod-search-wrap'))
+    document.getElementById('prodSuggestions')?.classList.remove('show');
+});
 // ════════════════════════════════
 // DATE BAR
 // ════════════════════════════════
@@ -1560,4 +1781,4 @@ updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
 </body>
-        </html>
+  </html>
