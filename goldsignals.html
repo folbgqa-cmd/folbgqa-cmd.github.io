@@ -1,4 +1,4 @@
-here<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -596,44 +596,7 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
         <button onclick="shareUrl('native')" style="width:100%;margin-top:8px;padding:9px;background:var(--acc);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer;">📤 مشاركة عبر التطبيقات</button>
       </div>
 
-      <!-- نظام الحسابات -->
-      <div style="background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:14px;">
-        <div style="font-size:13px;font-weight:900;color:var(--cyan);margin-bottom:10px;">👤 نظام الحسابات</div>
-        <div id="authSection">
-          <!-- Login Form -->
-          <div id="loginForm">
-            <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.6;">
-              سجّل دخول لحفظ بياناتك على السحابة والوصول من أي جهاز.
-            </div>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <input id="authEmail" type="email" placeholder="البريد الإلكتروني" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:Cairo,sans-serif;font-size:13px;outline:none;direction:ltr;">
-              <input id="authPass" type="password" placeholder="كلمة المرور" style="width:100%;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:Cairo,sans-serif;font-size:13px;outline:none;direction:ltr;">
-              <div id="authError" style="color:var(--red);font-size:11px;display:none;"></div>
-              <div style="display:flex;gap:8px;">
-                <button onclick="doLogin()" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--acc),#2563eb);border:none;color:#fff;border-radius:8px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;">تسجيل الدخول</button>
-                <button onclick="doRegister()" style="flex:1;padding:11px;background:var(--s3);border:1px solid var(--border);color:var(--text);border-radius:8px;font-family:Cairo,sans-serif;font-size:13px;cursor:pointer;">إنشاء حساب</button>
-              </div>
-            </div>
-          </div>
-          <!-- Logged In -->
-          <div id="loggedInSection" style="display:none;">
-            <div style="display:flex;align-items:center;gap:10px;background:var(--s3);border-radius:10px;padding:10px 12px;margin-bottom:10px;">
-              <div style="width:36px;height:36px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>
-              <div style="flex:1;">
-                <div style="font-size:13px;font-weight:700;" id="loggedEmail">-</div>
-                <div style="font-size:10px;color:var(--green);">✓ مسجّل الدخول — مزامنة تلقائية</div>
-              </div>
-              <button onclick="doLogout()" style="padding:7px 12px;background:var(--s3);border:1px solid var(--border);color:var(--red);border-radius:8px;font-family:Cairo,sans-serif;font-size:11px;cursor:pointer;">خروج</button>
-            </div>
-            <div id="syncMsg" style="font-size:11px;color:var(--green);text-align:center;padding:6px;background:rgba(16,185,129,.1);border-radius:8px;display:none;"></div>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--text2);margin-top:10px;line-height:1.6;border-top:1px solid var(--border);padding-top:8px;">
-          ⚠️ نظام الحسابات يحتاج إعداد Firebase. للتفعيل الكامل راجع التعليمات.
-        </div>
-      </div>
-
-    </div>
+      
   </div>
 </div>
 
@@ -758,8 +721,6 @@ function saveAll(){
       localStorage.setItem('ip4_salesmap',JSON.stringify(salesMap));
       localStorage.setItem('ip4_meta',JSON.stringify({activeRecId,sid,recIdCounter,currency,rate,salesActiveRecId}));
       if(ind){ind.textContent='💾 محفوظ';ind.className='save-ind';}
-      // auto-sync if logged in
-      autoSyncUp();
     }catch(e){if(ind){ind.textContent='⚠️ فشل الحفظ';ind.className='save-ind saving';}}
   },700);
 }
@@ -1756,122 +1717,42 @@ function shareVia(app){
 renderRecList();
 updStats();
 
+
 // ════════════════════════════════
 // SETTINGS
 // ════════════════════════════════
 function openSettingsModal(){
-  // Show site URL
   const url=window.location.href;
   const el=document.getElementById('siteUrlDisplay');
   if(el)el.textContent=url;
-  // Check if logged in
-  const savedUser=localStorage.getItem('ip4_user');
-  if(savedUser){
-    try{
-      const u=JSON.parse(savedUser);
-      showLoggedIn(u.email);
-    }catch(e){showLoginForm();}
-  } else {showLoginForm();}
+  // Firebase handles auth state via onAuthStateChanged
+
   document.getElementById('settingsModal').classList.add('show');
 }
 
-function showLoginForm(){
-  document.getElementById('loginForm').style.display='block';
-  document.getElementById('loggedInSection').style.display='none';
-}
-function showLoggedIn(email){
-  document.getElementById('loginForm').style.display='none';
-  document.getElementById('loggedInSection').style.display='block';
-  const el=document.getElementById('loggedEmail');
-  if(el)el.textContent=email;
-}
 
-function doLogin(){
-  const email=document.getElementById('authEmail').value.trim();
-  const pass=document.getElementById('authPass').value;
-  if(!email||!pass){showAuthError('أدخل البريد وكلمة المرور');return;}
-  // Local account system (no server needed)
-  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
-  if(!accounts[email]){showAuthError('الحساب غير موجود — أنشئ حساباً جديداً');return;}
-  if(accounts[email].pass!==btoa(pass)){showAuthError('كلمة المرور خاطئة');return;}
-  localStorage.setItem('ip4_user',JSON.stringify({email}));
-  // Load this user's data
-  if(accounts[email].data){
-    try{
-      const d=JSON.parse(accounts[email].data);
-      if(d.records)records=d.records;
-      if(d.salesMap)salesMap=d.salesMap;
-      saveAll();renderRecList();updStats();
-    }catch(e){}
-  }
-  showLoggedIn(email);
-  showAuthError('');
-  // auto-load data on login
-  autoSyncDown();
-}
 
-function doRegister(){
-  const email=document.getElementById('authEmail').value.trim();
-  const pass=document.getElementById('authPass').value;
-  if(!email||!pass){showAuthError('أدخل البريد وكلمة المرور');return;}
-  if(!email.includes('@')){showAuthError('بريد إلكتروني غير صحيح');return;}
-  if(pass.length<6){showAuthError('كلمة المرور 6 أحرف على الأقل');return;}
-  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
-  if(accounts[email]){showAuthError('الحساب موجود مسبقاً — سجّل الدخول');return;}
-  accounts[email]={pass:btoa(pass),data:null};
-  localStorage.setItem('ip4_accounts',JSON.stringify(accounts));
-  localStorage.setItem('ip4_user',JSON.stringify({email}));
-  autoSyncUp();
-  showLoggedIn(email);
-  showAuthError('');
-}
 
-function doLogout(){
-  localStorage.removeItem('ip4_user');
-  showLoginForm();
-  document.getElementById('authEmail').value='';
-  document.getElementById('authPass').value='';
-}
 
-function autoSyncUp(){
-  const user=JSON.parse(localStorage.getItem('ip4_user')||'null');
-  if(!user)return;
-  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
-  if(!accounts[user.email])return;
-  accounts[user.email].data=JSON.stringify({records,salesMap});
-  localStorage.setItem('ip4_accounts',JSON.stringify(accounts));
-}
-function autoSyncDown(){
-  const user=JSON.parse(localStorage.getItem('ip4_user')||'null');
-  if(!user)return;
-  const accounts=JSON.parse(localStorage.getItem('ip4_accounts')||'{}');
-  if(!accounts[user.email]?.data)return;
-  try{
-    const d=JSON.parse(accounts[user.email].data);
-    if(d.records&&Object.keys(d.records).length>0){
-      records=d.records;
-      if(d.salesMap)salesMap=d.salesMap;
-      localStorage.setItem('ip4_rec',JSON.stringify(records));
-      localStorage.setItem('ip4_salesmap',JSON.stringify(salesMap));
-      renderRecList();updStats();
-      showSyncMsg('✓ تم تحميل بياناتك تلقائياً');
-    }
-  }catch(e){}
-}
-function doSyncDown(){autoSyncDown();}
 
-function showAuthError(msg){
-  const el=document.getElementById('authError');
-  if(!el)return;
-  el.textContent=msg;
-  el.style.display=msg?'block':'none';
-}
-function showSyncMsg(msg){
-  const el=document.getElementById('syncMsg');
-  if(!el)return;
-  el.textContent=msg;el.style.display='block';
-  setTimeout(()=>el.style.display='none',3000);
-}
+
+
+
+
+// ════════════════════════════════
+// FIREBASE
+// ════════════════════════════════
+
+
+
+
+
+
+
+
+
+
+
 
 function copyUrl(){
   const url=window.location.href;
