@@ -624,7 +624,7 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
     <div class="modal-body">
       <!-- Drop zone -->
       <div id="imgDropZone" class="img-drop-zone"
-        onclick="document.getElementById('imgFileInput').click()"
+        onclick="triggerImgPicker()"
         ondragover="event.preventDefault();this.classList.add('drag')"
         ondragleave="this.classList.remove('drag')"
         ondrop="onImgDrop(event)">
@@ -632,7 +632,7 @@ td.cell .cd{width:100%;height:100%;padding:0 6px;display:flex;align-items:center
         <div class="dz-txt">اضغط لاختيار صورة أو اسحبها هنا</div>
         <div class="dz-sub">PNG, JPG, JPEG, WEBP</div>
       </div>
-      <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="onImgSelect(event)">
+
       <!-- Preview -->
       <div id="imgPreviewWrap" style="display:none">
         <img id="imgPreview" class="img-preview">
@@ -1778,15 +1778,21 @@ updStats();
 let imgImportData=null;
 let imgBase64=null;
 
+function triggerImgPicker(){
+  const inp=document.getElementById('imgFileInput');
+  if(inp){inp.value='';inp.click();}
+}
 function openImgImportModal(){
   imgImportData=null;imgBase64=null;
-  document.getElementById('imgDropZone').style.display='block';
-  document.getElementById('imgPreviewWrap').style.display='none';
-  document.getElementById('aiStatus').style.display='none';
-  document.getElementById('imgResultWrap').style.display='none';
-  document.getElementById('imgImportBtn').style.display='none';
-  document.getElementById('imgFileInput').value='';
-  document.getElementById('imgImportModal').classList.add('show');
+  const modal=document.getElementById('imgImportModal');
+  if(!modal){alert('خطأ: النافذة غير موجودة');return;}
+  const ids=['imgDropZone','imgPreviewWrap','aiStatus','imgResultWrap','imgImportBtn'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const dz=document.getElementById('imgDropZone');
+  if(dz)dz.style.display='block';
+  const fi=document.getElementById('imgFileInput');
+  if(fi)fi.value='';
+  modal.classList.add('show');
 }
 
 function closeImgImportModal(){
@@ -2092,5 +2098,6 @@ function updDateBar(){
 updDateBar();
 setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يتغير تلقائياً عند منتصف الليل
 </script>
+<input type="file" id="imgFileInput" accept="image/*" capture="environment" style="position:fixed;top:-9999px;left:-9999px;opacity:0;" onchange="onImgSelect(event)">
 </body>
-      </html>
+          </html>
