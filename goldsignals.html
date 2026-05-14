@@ -1074,7 +1074,12 @@ function openTplModal(){
       <div class="tpl-ico">${t.ico}</div>
       <div class="tpl-name">${t.name}</div>
       <div class="tpl-desc">${t.desc}</div>
-    </div>`).join('');
+    </div>`).join('')+`
+    <div class="tpl-card" onclick="openTplFromImg()" style="border-color:rgba(124,58,237,.5);background:rgba(124,58,237,.08);">
+      <div class="tpl-ico">📷</div>
+      <div class="tpl-name">من صورة</div>
+      <div class="tpl-desc">استيراد جدول من صورة بالذكاء الاصطناعي</div>
+    </div>`;
   document.getElementById('tplModal').classList.add('show');
 }
 
@@ -1782,6 +1787,12 @@ function triggerImgPicker(){
   const inp=document.getElementById('imgFileInput');
   if(inp){inp.value='';inp.click();}
 }
+function openTplFromImg(){
+  document.getElementById('tplModal').classList.remove('show');
+  // trigger file picker directly
+  const inp=document.getElementById('imgFileInput');
+  if(inp){inp.value='';inp.click();}
+}
 function openImgImportModal(){
   imgImportData=null;imgBase64=null;
   const modal=document.getElementById('imgImportModal');
@@ -1808,7 +1819,17 @@ function onImgDrop(e){
 
 function onImgSelect(e){
   const file=e.target.files[0];
-  if(file)processImgFile(file);
+  if(!file)return;
+  // open processing modal
+  const modal=document.getElementById('imgImportModal');
+  if(modal){
+    const ids=['imgDropZone','imgPreviewWrap','aiStatus','imgResultWrap','imgImportBtn'];
+    ids.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+    const dz=document.getElementById('imgDropZone');
+    if(dz)dz.style.display='none';
+    modal.classList.add('show');
+  }
+  processImgFile(file);
 }
 
 function processImgFile(file){
@@ -2100,4 +2121,4 @@ setInterval(updDateBar,60000); // يتحدث كل دقيقة — اليوم يت
 </script>
 <input type="file" id="imgFileInput" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;" onchange="onImgSelect(event)">
 </body>
-  </html>
+    </html>
