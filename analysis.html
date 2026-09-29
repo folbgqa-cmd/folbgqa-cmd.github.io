@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الأخبار والتحليل والاستراتيجيات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#E8EDF0;--panel:#F7F9FA;--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--amber:#B7791F;--red:#B4423A;--line:#C5D0D8}
+*{box-sizing:border-box;margin:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;background-attachment:fixed}
+h1,h2,h3,.tag{font-family:'Reem Kufi',sans-serif;line-height:1.35}
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding:10px 16px;display:flex;gap:16px;align-items:center;overflow-x:auto;white-space:nowrap}
+header b{font-family:'Reem Kufi';font-size:20px;margin-inline-end:auto}
+header a{color:#cfe0e8;font-size:14px}
+section{max-width:1100px;margin:0 auto;padding:26px 16px}
+h2{font-size:26px;margin-bottom:6px}.sub{color:var(--mute);margin-bottom:16px;max-width:64ch}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.pc{display:grid;gap:2px;border-inline-start:6px solid var(--mute)}
+.pc.ok{border-color:var(--teal)}.pc.mid{border-color:var(--amber)}.pc.bad{border-color:var(--red)}
+.tag{width:max-content;padding:0 12px;border-radius:99px;color:#fff;font-size:15px;background:var(--mute)}
+.ok .tag{background:var(--teal)}.mid .tag{background:var(--amber)}.bad .tag{background:var(--red)}
+.pc small{color:var(--mute);line-height:1.5}
+select,button{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tabs button{border:1px solid var(--ink);background:transparent;border-radius:99px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:#fff}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
+.H{color:var(--red);font-weight:600}.M{color:var(--amber);font-weight:600}.past{opacity:.5}
+.card{border-inline-start:5px solid var(--teal)}.card:nth-child(even){border-color:var(--amber)}
+.card p{font-size:14.5px}.card b{color:var(--mute)}
+dl{display:grid;grid-template-columns:90px 1fr;gap:4px 12px}dt{color:var(--teal);font-weight:600}dd{margin:0}
+ul{margin:8px 22px}li{margin-bottom:4px}
+.warn{background:var(--ink);color:#dbe6ec;padding:22px 16px;text-align:center;font-size:14px}
+@media(max-width:600px){dl{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><b>الأخبار والتحليل</b><a href="#news">الأخبار</a><a href="#schools">المدارس</a><a href="#strats">الاستراتيجيات</a><a href="#rules">المخاطر</a><a href="signals.html">الإشارات</a><a href="forex-hub.html">المركز</a></header>
+
+<section id="news">
+<h2>فلتر الأخبار: هل الوقت مناسب للدخول؟</h2>
+<p class="sub">أي زوج فيه خبر قوي خلال الساعة القادمة أو حدث قبل نصف ساعة يظهر «تجنب». تحقق منه قبل ما تعتمد على أي إشارة.</p>
+<p id="nerr" class="box" hidden style="color:var(--red);margin-bottom:12px">تعذّر جلب الأخبار الحين، فراجع التقويم أدناه يدوياً قبل الدخول.</p>
+<div class="grid" id="pv"></div>
+<div style="display:flex;gap:10px;align-items:center;margin:22px 0 10px;flex-wrap:wrap"><h3>أخبار الـ 48 ساعة القادمة</h3>
+<select id="lv"><option value="H">القوية فقط</option><option value="M">القوية والمتوسطة</option></select></div>
+<div class="box wrap"><table><thead><tr><th>الوقت (بغداد)</th><th>العملة</th><th>الخبر</th><th>التأثير</th><th>المتوقع</th><th>السابق</th></tr></thead><tbody id="ev"></tbody></table></div>
+<div id="tvc" style="height:480px;margin-top:14px" hidden></div>
+</section>
+
+<section id="schools">
+<h2>مدارس التحليل</h2>
+<p class="sub">ما فيه مدرسة «أفضل» للجميع. الأفضل هي اللي تفهمها وتلتزم بقواعدها. المبتدئ يبدأ بحركة السعر أو العرض والطلب، وبعدها يضيف الباقي.</p>
+<div class="tabs" id="tabs" role="tablist"></div><div class="box" id="sc" role="tabpanel" aria-live="polite"></div>
+</section>
+
+<section id="strats">
+<h2>استراتيجيات جاهزة للاختبار</h2>
+<p class="sub">جرّب كل وحدة على حساب تجريبي 30 صفقة على الأقل، وسجّل النتيجة قبل أي مال حقيقي. وأضف لها دائماً فحص الأخبار من الأعلى.</p>
+<div class="grid" id="st"></div>
+</section>
+
+<section id="rules">
+<h2>قواعد إدارة المخاطر</h2>
+<div class="box"><ul>
+<li>لا تخاطر بأكثر من 1% من الرصيد بالصفقة الواحدة.</li>
+<li>الهدف لا يقل عن ضعف الوقف (1:2).</li>
+<li>حد أقصى 3 صفقات باليوم، وإذا خسرت صفقتين ورا بعض وقّف لباقي اليوم.</li>
+<li>لا تبعد وقف الخسارة أبداً بعد الدخول. تقدر تقرّبه فقط.</li>
+<li>لا تدخل صفقة جديدة إذا الزوج عليه «تجنب» بفلتر الأخبار.</li>
+<li>سجّل كل صفقة وسبب دخولها، وراجع السجل كل أسبوع.</li>
+</ul></div>
+</section>
+
+<div class="warn">المحتوى تعليمي وليس نصيحة مالية. التداول عالي المخاطر وقد تخسر رأس مالك بالكامل. بيانات الأخبار من مصدر خارجي وقد تتأخر أو تتغير، فتأكد منها.</div>
+
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PAIRS={"XAU/USD":["USD"],"EUR/USD":["EUR","USD"],"GBP/USD":["GBP","USD"],"USD/JPY":["USD","JPY"],"AUD/USD":["AUD","USD"],"USD/CAD":["USD","CAD"],"USD/CHF":["USD","CHF"]};
+const IMP={High:"قوي",Medium:"متوسط"};let EV=[];
+const fmt=t=>new Date(t).toLocaleString('ar-IQ',{timeZone:'Asia/Baghdad',weekday:'short',hour:'2-digit',minute:'2-digit'});
+async function load(){let d;try{const c=JSON.parse(localStorage.getItem('nw')||'null');if(c&&Date.now()-c.t<18e5)d=c.d}catch(e){}
+if(!d){const r=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');if(!r.ok)throw 0;d=await r.json();try{localStorage.setItem('nw',JSON.stringify({t:Date.now(),d}))}catch(e){}}
+return d.map(e=>({...e,ts:new Date(e.date).getTime()})).filter(e=>IMP[e.impact]).sort((a,b)=>a.ts-b.ts)}
+function verdict(cur,now){let r={v:0,why:''};for(const e of EV){if(!cur.includes(e.country))continue;const m=(e.ts-now)/6e4,w=`${e.country}: ${esc(e.title)} ${m>0?'بعد '+Math.round(m)+' د':'قبل '+Math.round(-m)+' د'}`;
+if(e.impact==='High'&&m>-30&&m<60)return{v:2,why:w};if(e.impact==='Medium'&&m>-15&&m<30&&r.v<1)r={v:1,why:w}}return r}
+function render(){const now=Date.now(),lv=$('lv').value;
+$('pv').innerHTML=Object.entries(PAIRS).map(([p,c])=>{const r=verdict(c,now),nx=EV.find(e=>c.includes(e.country)&&e.impact==='High'&&e.ts>now);
+return `<div class="box pc ${['ok','mid','bad'][r.v]}"><b>${p}</b><span class="tag">${['آمن','حذر','تجنب'][r.v]}</span><small>${r.why||(nx?`أقرب خبر قوي: ${esc(nx.title)} (${nx.country}) ${fmt(nx.ts)}`:'لا أخبار قوية قريبة')}</small></div>`}).join('');
+const rows=EV.filter(e=>e.ts>now-36e5&&e.ts<now+1728e5&&(lv==='H'?e.impact==='High':true));
+$('ev').innerHTML=rows.map(e=>`<tr class="${e.ts<now?'past':''}"><td>${fmt(e.ts)}</td><td>${e.country}</td><td>${esc(e.title)}</td><td class="${e.impact[0]}">${IMP[e.impact]}</td><td>${esc(e.forecast)||'-'}</td><td>${esc(e.previous)||'-'}</td></tr>`).join('')||'<tr><td colspan="6">لا أخبار بهذا الفلتر</td></tr>'}
+function tv(){$('nerr').hidden=false;const c=$('tvc');c.hidden=false;const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-events.js';s.async=true;s.text=JSON.stringify({colorTheme:"light",width:"100%",height:"100%",locale:"ar_AE",importanceFilter:"0,1",currencyFilter:"USD,EUR,GBP,JPY,AUD,CAD,CHF"});c.appendChild(s)}
+$('lv').onchange=render;load().then(d=>{EV=d;render();setInterval(render,6e4)}).catch(tv);
+
+const SC=[
+{n:"حركة السعر",i:"قراءة الشموع والمستويات بدون مؤشرات كثيرة.",t:"Pin Bar، Engulfing، دعم ومقاومة، ترند",f:"H1 إلى D1",l:"مبتدئ",w:"تحتاج صبر وتدريب عين"},
+{n:"العرض والطلب",i:"مناطق دخل منها المال الكبير بقوة وبتنعكس منها لاحقاً.",t:"مناطق Supply/Demand، الشمعة القوية قبل الانطلاق",f:"H4 للمنطقة، M15 للدخول",l:"مبتدئ-متوسط",w:"رسم المناطق فيه اجتهاد"},
+{n:"ICT / SMC",i:"تتبع سيولة المؤسسات: أين توقف المتداولين وأين يجمعون.",t:"سحب السيولة، Order Block، FVG، BOS/CHoCH",f:"M15 للدخول، H4 للاتجاه",l:"متقدم",w:"معقدة وتنتج إشارات كثيرة مربكة"},
+{n:"ويكوف",i:"السوق يمر بتجميع ثم صعود ثم توزيع ثم هبوط.",t:"الحجم، Spring، Upthrust، مراحل الدورة",f:"H1 إلى D1",l:"متقدم",w:"تفسيرها ذاتي وبطيئة"},
+{n:"الكلاسيكي",i:"خطوط الترند والنماذج والمؤشرات.",t:"EMA، RSI، MACD، فيبوناتشي، مثلثات",f:"H4 إلى W1",l:"مبتدئ",w:"إشارات متأخرة أحياناً"},
+{n:"إيشيموكو",i:"نظام كامل يعطي الاتجاه والدعم والمقاومة والزخم.",t:"السحابة، تقاطع Tenkan/Kijun، Chikou",f:"H1 إلى D1",l:"متوسط",w:"ضعيف بالسوق الجانبي"},
+{n:"موجات إليوت",i:"السعر يتحرك بموجات دافعة (5) وتصحيحية (3).",t:"عدّ الموجات، نسب فيبوناتشي",f:"H4 إلى D1",l:"متقدم",w:"كل محلل يعدّها بطريقة"},
+{n:"التحليل الأساسي",i:"الأخبار والفائدة والتضخم هي اللي تحرك العملات فعلاً.",t:"تقويم اقتصادي، قرارات الفائدة، NFP، CPI",f:"يومي وأسبوعي",l:"متوسط",w:"لا يعطي نقطة دخول دقيقة لحاله"},
+{n:"سكالبينغ",i:"صفقات قصيرة كثيرة على حركات صغيرة.",t:"M1 وM5، سبريد منخفض، لندن ونيويورك",f:"M1 إلى M5",l:"متقدم",w:"تكلفة السبريد وضغط نفسي عالي"}];
+const tb=$('tabs');function sh(k){[...tb.children].forEach((b,j)=>b.setAttribute('aria-selected',j===k));const s=SC[k];$('sc').innerHTML=`<h3>${s.n}</h3><p>${s.i}</p><dl><dt>الأدوات</dt><dd>${s.t}</dd><dt>الفريمات</dt><dd>${s.f}</dd><dt>المستوى</dt><dd>${s.l}</dd><dt>العيب</dt><dd>${s.w}</dd></dl>`}
+SC.forEach((s,k)=>{const b=document.createElement('button');b.textContent=s.n;b.setAttribute('role','tab');b.onclick=()=>sh(k);tb.appendChild(b)});sh(0);
+
+const ST=[
+{n:"اختراق لندن",e:"حدد أعلى وأدنى سعر لجلسة آسيا. ادخل عند كسر أحدهما بشمعة إغلاق قوية وقت افتتاح لندن.",s:"خلف الجهة المقابلة للنطاق",t:"1:2 على الأقل",m:"الذهب، GBP/USD، EUR/USD | M15",a:"نطاق آسيا ضيق جداً أو يوم أخبار قوية"},
+{n:"ارتداد EMA 20/50",e:"في ترند واضح، انتظر تراجع السعر للمتوسط ثم شمعة انعكاس باتجاه الترند.",s:"تحت آخر قاع أو فوق آخر قمة",t:"آخر قمة أو 1:2",m:"كل الأزواج | M15-H1",a:"سوق جانبي والمتوسطات متشابكة"},
+{n:"كسر وإعادة اختبار",e:"عند كسر مستوى قوي وإغلاق شمعة خلفه، انتظر رجوع السعر لاختباره ثم ادخل بالاتجاه الجديد.",s:"خلف المستوى المكسور",t:"المستوى التالي",m:"كل الأزواج | H1",a:"الكسر بدون حجم أو رجوع سريع بالعمق"},
+{n:"سحب السيولة",e:"السعر يكسر قمة أو قاع متساوي ويرجع بسرعة ويغلق داخل النطاق (شمعة ابتلاع). ادخل عكس الكسر.",s:"خلف ذيل السحب",t:"الطرف الثاني للنطاق",m:"الذهب، GBP/USD | M5-M15",a:"إغلاق قوي خارج النطاق (كسر حقيقي)"},
+{n:"Order Block",e:"بعد كسر هيكل السوق، ادخل عند رجوع السعر لآخر شمعة معاكسة قبل الحركة القوية.",s:"خلف الـ Order Block",t:"السيولة المقابلة",m:"الذهب، EUR/USD | M15 مع اتجاه H4",a:"عكس اتجاه الفريم الأكبر"},
+{n:"العرض والطلب مع فريم أكبر",e:"ارسم منطقة طلب/عرض على H4، وانتظر دخول السعر لها ثم شمعة انعكاس على M15.",s:"خلف المنطقة",t:"1:3",m:"كل الأزواج | H4 + M15",a:"المنطقة انلمست أكثر من مرتين"},
+{n:"إيشيموكو",e:"شراء عند كسر السعر للسحابة للأعلى مع تقاطع Tenkan فوق Kijun، والعكس للبيع.",s:"تحت السحابة أو Kijun",t:"1:2 أو تقاطع عكسي",m:"USD/JPY، EUR/USD | H1-H4",a:"سحابة رفيعة وسوق جانبي"},
+{n:"تباعد RSI",e:"السعر قمة أعلى وRSI قمة أدنى مع شمعة هابطة تأكيد. والعكس للشراء.",s:"فوق القمة الأخيرة",t:"آخر دعم",m:"كل الأزواج | H1",a:"ترند قوي جداً (التباعد يستمر طويلاً)"},
+{n:"ما بعد الخبر",e:"لا تدخل قبل الخبر. انتظر 15 دقيقة تهدأ فيها الحركة، وادخل باتجاه الشمعة الأقوى المؤكدة بإغلاق.",s:"أوسع من المعتاد (1.5 × ATR)",t:"1:1.5",m:"الذهب، USD/JPY | M5-M15",a:"السبريد واسع أو الحركة عشوائية"}];
+$('st').innerHTML=ST.map(x=>`<div class="box card"><h3>${x.n}</h3><p><b>الدخول:</b> ${x.e}</p><p><b>الوقف:</b> ${x.s}</p><p><b>الهدف:</b> ${x.t}</p><p><b>الأنسب:</b> ${x.m}</p><p><b>تجنبها إذا:</b> ${x.a}</p></div>`).join('');
+</script>
+</body>
+</html>
