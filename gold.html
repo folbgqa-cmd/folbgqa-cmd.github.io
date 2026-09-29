@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سعر الذهب من MT5</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#E8EDF0;--panel:#F7F9FA;--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--red:#B4423A;--amber:#B7791F;--line:#C5D0D8}
+*{box-sizing:border-box;margin:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;min-height:100vh}
+header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;gap:16px;align-items:center}
+header b{font-family:'Reem Kufi';font-size:20px;margin-inline-end:auto}
+header a{color:#cfe0e8;font-size:14px}
+main{max-width:720px;margin:0 auto;padding:24px 16px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;margin-bottom:16px}
+.px{font-family:'Reem Kufi';font-size:clamp(56px,16vw,96px);line-height:1.1;transition:color .2s}
+.up{color:var(--teal)}.dn{color:var(--red)}
+.meta{display:flex;flex-wrap:wrap;gap:24px;margin-top:10px}
+.meta small{color:var(--mute);display:block}
+.meta strong{font-family:'Reem Kufi';font-size:24px}
+.st{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--mute);margin-bottom:6px}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--mute)}
+.dot.on{background:var(--teal)}.dot.off{background:var(--red)}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+input,button{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:4px}
+button{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer;margin-top:8px}
+input:focus-visible,button:focus-visible{outline:3px solid var(--amber)}
+#m{color:var(--red);margin-top:8px;font-size:14px}
+</style>
+</head>
+<body>
+<header><b>سعر الذهب من MT5</b><a href="signals.html">الإشارات</a><a href="forex-hub.html">المدارس</a></header>
+<main>
+<div class="box">
+<div class="st"><span class="dot" id="dot"></span><span id="stt">بانتظار الإعداد</span></div>
+<div class="px" id="bid">-</div>
+<div class="meta">
+<div><small>Bid (بيع)</small><strong id="b2">-</strong></div>
+<div><small>Ask (شراء)</small><strong id="ask">-</strong></div>
+<div><small>السبريد</small><strong id="spr">-</strong></div>
+<div><small>الرمز</small><strong id="sym">-</strong></div>
+</div>
+</div>
+<div class="box">
+<label>رابط قاعدة Firebase
+<input id="u" placeholder="https://xxxx-default-rtdb.firebaseio.com" dir="ltr"></label>
+<button id="save">حفظ وتشغيل</button>
+<p id="m"></p>
+<p style="color:var(--mute);font-size:13px;margin-top:8px">الرابط يبقى في متصفحك فقط. السعر هنا هو سعر وسيطك نفسه كما يظهر في MT5، بشرط EA مشغّل على جهازك.</p>
+</div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let url='';try{url=localStorage.getItem('fb')||''}catch(e){}
+$('u').value=url;
+let prev=null,lastTs=0,lastChange=Date.now();
+$('save').onclick=()=>{url=$('u').value.trim().replace(/\/+$/,'').replace(/\/gold\.json$/,'');try{localStorage.setItem('fb',url)}catch(e){}tick()};
+function status(on,t){$('dot').className='dot '+(on?'on':'off');$('stt').textContent=t}
+async function tick(){
+ if(!url){return}
+ try{
+  const r=await fetch(url+'/gold.json',{cache:'no-store'});
+  const j=await r.json();
+  if(!j){status(false,'ما فيه بيانات بعد. شغّل الـ EA في MT5');return}
+  if(j.ts!==lastTs){lastTs=j.ts;lastChange=Date.now()}
+  const d=j.digits||2;
+  $('bid').textContent=j.bid.toFixed(d);$('b2').textContent=j.bid.toFixed(d);
+  $('ask').textContent=j.ask.toFixed(d);$('spr').textContent=(j.ask-j.bid).toFixed(d);$('sym').textContent=j.symbol;
+  if(prev!==null&&j.bid!==prev)$('bid').className='px '+(j.bid>prev?'up':'dn');
+  prev=j.bid;
+  const age=(Date.now()-lastChange)/1000;
+  status(age<15,age<15?'متصل: يتحدّث لحظياً من MT5':'انقطع الاتصال (السوق مغلق أو الـ EA متوقف)');
+  $('m').textContent='';
+ }catch(e){status(false,'تعذر القراءة من Firebase');$('m').textContent='تأكد من الرابط وقواعد القراءة'}
+}
+setInterval(tick,1000);tick();
+</script>
+</body>
+</html>
