@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إشارات الفوركس ونقاط الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#E8EDF0;--panel:#F7F9FA;--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--amber:#B7791F;--red:#B4423A;--line:#C5D0D8}
+*{box-sizing:border-box;margin:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;background-attachment:fixed}
+h1,h2,h3,.big{font-family:'Reem Kufi',sans-serif;line-height:1.35}
+header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;gap:16px;align-items:center}
+header b{font-family:'Reem Kufi';font-size:20px;margin-inline-end:auto}
+header a{color:#cfe0e8;font-size:14px}
+section{max-width:1100px;margin:0 auto;padding:28px 16px}
+h2{font-size:26px;margin-bottom:8px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+input,select,button{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+button{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer}
+button.alt{background:transparent;color:var(--ink)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--amber)}
+.sig{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.big{font-size:44px;padding:6px 26px;border-radius:6px;color:#fff;text-align:center}
+.buy{background:var(--teal)}.sell{background:var(--red)}.wait{background:var(--mute)}
+.lv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0}
+.lv div{border:1px solid var(--line);border-radius:4px;padding:8px 12px;background:#fff}
+.lv small{color:var(--mute);display:block}
+.lv strong{font-family:'Reem Kufi';font-size:22px}
+ul{margin:8px 22px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:8px;border-bottom:1px solid var(--line);text-align:start}
+tr.go{cursor:pointer}tr.go:hover{background:#fff}
+.t-buy{color:var(--teal);font-weight:600}.t-sell{color:var(--red);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.w{height:520px;overflow:hidden}
+.msg{color:var(--red)}
+.warn{background:var(--ink);color:#dbe6ec;padding:24px 16px;text-align:center;font-size:14px}
+@media(max-width:760px){.two{grid-template-columns:1fr}.sig{grid-template-columns:1fr}.big{font-size:36px}}
+</style>
+</head>
+<body>
+<header><b>إشارات ونقاط الدخول</b><a href="forex-hub.html">المدارس والاستراتيجيات</a></header>
+
+<section>
+<div class="box">
+<h2>الإعداد</h2>
+<p style="color:var(--mute);margin-bottom:12px">الإشارات تُحسب من شموع حقيقية. تحتاج مفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> (سجّل وانسخ API Key). المفتاح يبقى في متصفحك فقط.</p>
+<div class="row">
+<label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
+<label>الزوج<select id="pair"></select></label>
+<label>الفريم<select id="tf"><option value="5min">M5</option><option value="15min" selected>M15</option><option value="1h">H1</option><option value="4h">H4</option></select></label>
+<button id="go">حلّل</button>
+<button id="scan" class="alt">افحص كل الأزواج</button>
+<label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px"><input type="checkbox" id="auto">تحديث كل دقيقة</label>
+</div>
+<p id="err" class="msg"></p>
+</div>
+</section>
+
+<section id="outsec" hidden><div class="box" id="out"></div></section>
+
+<section id="scansec" hidden>
+<h2>فحص كل الأزواج</h2>
+<div class="box"><table><thead><tr><th>الزوج</th><th>الإشارة</th><th>الدخول</th><th>الوقف</th><th>الهدف 1</th><th>الثقة</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+
+<section>
+<h2>ملخص المؤشرات والأخبار</h2>
+<div class="two">
+<div class="box w"><div class="tradingview-widget-container" id="ta" style="height:100%"></div></div>
+<div class="box w"><div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
+<script src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+{"feedMode":"market","market":"forex","isTransparent":false,"displayMode":"regular","width":"100%","height":"100%","colorTheme":"light","locale":"ar_AE"}
+</script></div></div>
+</div>
+</section>
+
+<div class="warn">الإشارات تعليمية ومبنية على قواعد فنية، ولا تضمن ربحاً. التداول عالي المخاطر، فجرّب على حساب تجريبي وحدد المخاطرة بـ 1% أو أقل، ولا تدخل قبل الأخبار القوية.</div>
+
+<script>
+const P={"XAU/USD":{tv:"OANDA:XAUUSD",pip:.1,d:2,n:"الذهب"},"EUR/USD":{tv:"FX:EURUSD",pip:1e-4,d:5,n:"يورو/دولار"},"GBP/USD":{tv:"FX:GBPUSD",pip:1e-4,d:5,n:"إسترليني/دولار"},"USD/JPY":{tv:"FX:USDJPY",pip:.01,d:3,n:"دولار/ين"},"AUD/USD":{tv:"FX:AUDUSD",pip:1e-4,d:5,n:"أسترالي/دولار"},"USD/CAD":{tv:"FX:USDCAD",pip:1e-4,d:5,n:"دولار/كندي"},"USD/CHF":{tv:"FX:USDCHF",pip:1e-4,d:5,n:"دولار/فرنك"}};
+const $=id=>document.getElementById(id);
+$('pair').innerHTML=Object.keys(P).map(k=>`<option value="${k}">${k} - ${P[k].n}</option>`).join('');
+try{$('key').value=localStorage.getItem('td_key')||''}catch(e){}
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>(e=i?v*k+e*(1-k):v))};
+function rsi(c,p=14){let g=0,l=0;for(let i=1;i<=p;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d}g/=p;l/=p;for(let i=p+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(p-1)+(d>0?d:0))/p;l=(l*(p-1)+(d<0?-d:0))/p}return l?100-100/(1+g/l):100}
+function atr(h,l,c,p=14){const t=[];for(let i=1;i<c.length;i++)t.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));let a=t.slice(0,p).reduce((x,y)=>x+y)/p;for(let i=p;i<t.length;i++)a=(a*(p-1)+t[i])/p;return a}
+function analyze(v,pr){
+const c=v.map(x=>+x.close),h=v.map(x=>+x.high),l=v.map(x=>+x.low),n=c.length-1;
+const e20=ema(c,20)[n],e50=ema(c,50)[n],e200=ema(c,200)[n],r=rsi(c),a=atr(h,l,c),px=c[n];
+const hh=Math.max(...h.slice(n-20,n)),ll=Math.min(...l.slice(n-20,n));
+let s=0;const why=[];
+if(px>e50&&e20>e50){s+=2;why.push("ترند صاعد: السعر فوق EMA50 وEMA20 فوقها (المدرسة الكلاسيكية)")}
+else if(px<e50&&e20<e50){s-=2;why.push("ترند هابط: السعر تحت EMA50 وEMA20 تحتها (المدرسة الكلاسيكية)")}
+else why.push("لا يوجد ترند واضح بين المتوسطات");
+if(px>e200){s+=1;why.push("السعر فوق EMA200: الاتجاه العام صاعد")}else{s-=1;why.push("السعر تحت EMA200: الاتجاه العام هابط")}
+if(r>=50&&r<=70){s+=1;why.push(`RSI ${r.toFixed(0)}: زخم شرائي`)}
+else if(r<50&&r>=30){s-=1;why.push(`RSI ${r.toFixed(0)}: زخم بيعي`)}
+else if(r>70){s-=1;why.push(`RSI ${r.toFixed(0)}: تشبع شراء، احذر الانعكاس`)}
+else{s+=1;why.push(`RSI ${r.toFixed(0)}: تشبع بيع، احتمال ارتداد`)}
+if(Math.abs(px-e20)<a*.5&&e20!==e50){s+=e20>e50?1:-1;why.push("السعر قريب من EMA20: فرصة ارتداد (حركة السعر)")}
+if(px>hh){s+=2;why.push("اختراق أعلى قمة لآخر 20 شمعة (استراتيجية الاختراق)")}
+else if(px<ll){s-=2;why.push("كسر أدنى قاع لآخر 20 شمعة (استراتيجية الاختراق)")}
+const side=s>=3?"buy":s<=-3?"sell":"wait",d=side=="buy"?1:-1,risk=a*1.5;
+return{px,e20,e50,e200,r,a,s,side,why,hh,ll,sl:px-d*risk,tp1:px+d*risk*1.5,tp2:px+d*risk*2.5,conf:Math.min(100,Math.round(Math.abs(s)/7*100)),pips:risk/pr.pip}}
+async function get(sym,tf){
+const k=$('key').value.trim();if(!k)throw new Error("الصق مفتاح Twelve Data أولاً");
+try{localStorage.setItem('td_key',k)}catch(e){}
+const r=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${tf}&outputsize=300&apikey=${k}`);
+const j=await r.json();if(j.status==='error'||!j.values)throw new Error(j.message||"فشل جلب البيانات");
+return j.values.slice().reverse()}
+const nm={buy:"شراء",sell:"بيع",wait:"انتظر"};
+function ta(sym){const w=$('ta');w.innerHTML='<div class="tradingview-widget-container__widget"></div>';const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';s.async=true;s.text=JSON.stringify({interval:"15m",width:"100%",height:"100%",symbol:sym,showIntervalTabs:true,locale:"ar_AE",colorTheme:"light",isTransparent:false});w.appendChild(s)}
+function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d);
+$('outsec').hidden=false;
+$('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</div><div><h2>${sym} - ${p.n}</h2><p>السعر الحالي ${f(R.px)} | الثقة ${R.conf}% | نقاط الحركة: ${R.s>0?'+':''}${R.s} من 7</p></div></div>`+
+(R.side=="wait"?`<p style="margin:14px 0">ما فيه إشارة واضحة الحين. راقب اختراق <b>${f(R.hh)}</b> للشراء أو كسر <b>${f(R.ll)}</b> للبيع.</p>`:
+`<div class="lv"><div><small>نقطة الدخول</small><strong>${f(R.px)}</strong></div><div><small>وقف الخسارة</small><strong>${f(R.sl)}</strong></div><div><small>الهدف 1 (1:1.5)</small><strong>${f(R.tp1)}</strong></div><div><small>الهدف 2 (1:2.5)</small><strong>${f(R.tp2)}</strong></div><div><small>حجم الوقف بالنقاط</small><strong>${R.pips.toFixed(0)}</strong></div></div>`)+
+`<h3>ليش هالإشارة؟</h3><ul>${R.why.map(x=>`<li>${x}</li>`).join('')}</ul><p style="color:var(--mute);font-size:13px">الوقف = 1.5 × ATR (${f(R.a)}). قمة 20 شمعة ${f(R.hh)}، قاع 20 شمعة ${f(R.ll)}. لا تدخل قبل ما تراجع التقويم الاقتصادي.</p>`;
+ta(p.tv)}
+async function run(){$('err').textContent='';const sym=$('pair').value;
+try{$('go').disabled=true;const R=analyze(await get(sym,$('tf').value),P[sym]);show(sym,R)}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
+async function scan(){$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;
+for(const sym of Object.keys(P)){try{const R=analyze(await get(sym,$('tf').value),P[sym]),f=x=>x.toFixed(P[sym].d);
+const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${f(R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.conf}%</td>`;
+tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
+catch(e){$('err').textContent=e.message;break}}
+$('scan').disabled=false}
+$('go').onclick=run;$('scan').onclick=scan;
+let t;$('auto').onchange=e=>{clearInterval(t);if(e.target.checked){run();t=setInterval(run,60000)}};
+ta(P["XAU/USD"].tv);
+</script>
+</body>
+</html>
