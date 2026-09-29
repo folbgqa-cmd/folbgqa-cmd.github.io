@@ -14,7 +14,7 @@ header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;gap:16px;
 header b{font-family:'Reem Kufi';font-size:20px;margin-inline-end:auto}
 header a{color:#cfe0e8;font-size:14px}
 section{max-width:1100px;margin:0 auto;padding:24px 16px}
-h2{font-size:26px;margin-bottom:8px}
+h2{font-size:26px;margin-bottom:8px}h3{margin-top:14px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px}
 .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
 label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
@@ -37,6 +37,7 @@ table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
 th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
 tr.go{cursor:pointer}tr.go:hover{background:#fff}
 .t-buy{color:var(--teal);font-weight:600}.t-sell{color:var(--red);font-weight:600}
+.H{color:var(--red);font-weight:600}.M{color:var(--amber);font-weight:600}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .w{height:520px;overflow:hidden}
 .msg{color:var(--red)}
@@ -50,7 +51,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل تحليل مستقل: الاتجاه والزخم والاختراق وسحب السيولة والارتداد والتذبذب والجلسة والأخبار. تظهر إشارة دخول فقط إذا وصلت قوة التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل تحليل مستقل: الاتجاه والزخم والاختراق وسحب السيولة والارتداد والتذبذب والجلسة وأخبار عملات الزوج نفسه. تظهر إشارة دخول فقط إذا وصلت قوة التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -91,21 +92,23 @@ const P={"XAU/USD":{tv:"OANDA:XAUUSD",pip:.1,d:2,n:"الذهب",c:["USD"]},"EUR/
 $('pair').innerHTML=Object.keys(P).map(k=>`<option value="${k}">${k} - ${P[k].n}</option>`).join('');
 try{const m=location.hash.match(/key=([^&]+)/);if(m){localStorage.setItem('td_key',decodeURIComponent(m[1]));history.replaceState(null,'',location.pathname+location.search)}}catch(e){}
 try{$('key').value=localStorage.getItem('td_key')||''}catch(e){}
+const tm=t=>new Date(t).toLocaleString('ar-IQ',{timeZone:'Asia/Baghdad',weekday:'short',hour:'2-digit',minute:'2-digit'});
 const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>(e=i?v*k+e*(1-k):v))};
 function rsi(c,p=14){let g=0,l=0;for(let i=1;i<=p;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d}g/=p;l/=p;for(let i=p+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(p-1)+(d>0?d:0))/p;l=(l*(p-1)+(d<0?-d:0))/p}return l?100-100/(1+g/l):100}
 function atr(h,l,c,p=14){const t=[];for(let i=1;i<c.length;i++)t.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));let a=t.slice(0,p).reduce((x,y)=>x+y)/p;for(let i=p;i<t.length;i++)a=(a*(p-1)+t[i])/p;return a}
-// الأخبار (نفس مصدر analysis.html ونفس الكاش)
+// الأخبار: الأول من news.json (يتحدث بالخادم كل 6 ساعات)، والاحتياط مباشرة من المصدر
 let EV=null;
-async function news(){let d=null;try{const c=JSON.parse(localStorage.getItem('nw')||'null');if(c&&Date.now()-c.t<18e5)d=c.d}catch(e){}
-try{if(!d){const r=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');if(!r.ok)throw 0;d=await r.json();try{localStorage.setItem('nw',JSON.stringify({t:Date.now(),d}))}catch(e){}}
-EV=d.map(e=>({...e,ts:new Date(e.date).getTime()})).filter(e=>e.impact==='High'||e.impact==='Medium')}catch(e){}}
-function nk(cur,now){if(!EV)return{v:-1,t:"الأخبار غير متاحة للتحقق، راجع التقويم يدوياً"};let md=null;
+const mk=a=>a.map(e=>({...e,ts:new Date(e.date).getTime()})).filter(e=>e.impact==='High'||e.impact==='Medium');
+async function news(){
+try{const r=await fetch('news.json?'+Math.floor(Date.now()/3e5));if(!r.ok)throw 0;const j=await r.json();if(Date.now()-new Date(j.updated)>108e6)throw 0;EV=mk(j.events);return}catch(e){}
+let d=null;try{const c=JSON.parse(localStorage.getItem('nw')||'null');if(c&&Date.now()-c.t<18e5)d=c.d}catch(e){}
+try{if(!d){const r=await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json');if(!r.ok)throw 0;d=await r.json();try{localStorage.setItem('nw',JSON.stringify({t:Date.now(),d}))}catch(e){}}EV=mk(d)}catch(e){EV=null}}
+function nk(cur,now){if(!EV)return{v:-1,t:"الأخبار غير متاحة (ملف news.json غير موجود أو قديم). راجع التقويم يدوياً قبل الدخول"};let md=null;
 for(const e of EV){if(!cur.includes(e.country))continue;const m=(e.ts-now)/6e4,w=`${e.country}: ${esc(e.title)} ${m>0?'بعد '+Math.round(m)+' د':'قبل '+Math.round(-m)+' د'}`;
 if(e.impact==='High'&&m>-30&&m<60)return{v:2,t:"خبر قوي "+w};if(e.impact==='Medium'&&m>-15&&m<30&&!md)md=w}
 if(md)return{v:1,t:"خبر متوسط "+md};
 const nx=EV.find(e=>cur.includes(e.country)&&e.impact==='High'&&e.ts>now);
 return{v:0,t:nx?`لا خبر قريب. أقرب خبر قوي: ${nx.country} ${esc(nx.title)} بعد ${Math.round((nx.ts-now)/36e5)} ساعة`:"لا أخبار قوية قريبة"}}
-// الجلسات (UTC تقريبية)
 function ses(pr,now){const D=new Date(now),h=D.getUTCHours()+D.getUTCMinutes()/60,w=D.getUTCDay();
 if(w===6||(w===0&&h<21)||(w===5&&h>=21))return{p:0,closed:1,t:"السوق مغلق (نهاية الأسبوع)"};
 const ld=h>=7&&h<16,ny=h>=12&&h<21,tk=h<9,jp=pr.c.some(x=>x==='JPY'||x==='AUD');
@@ -134,10 +137,11 @@ F.push({n:'التذبذب',s:'ATR',p:vr>=.8&&vr<=2?10:vr<.8?4:0,m:10,w:`الحر
 const S=ses(pr,now),N=nk(pr.c,now);
 F.push({n:'الجلسة',s:'توقيت السوق',p:S.p,m:15,w:S.t});
 F.push({n:'الأخبار',s:'التحليل الأساسي',p:N.v===0?15:N.v===1?7:0,m:15,w:N.t});
+const NL=EV?EV.filter(e=>pr.c.includes(e.country)&&e.ts>now-36e5&&e.ts<now+864e5).sort((a,b)=>a.ts-b.ts).slice(0,6):[];
 const sc=F.reduce((s,x)=>s+x.p,0),trig=bo||sw||pb;let why='';
 if(!d)why='لا اتجاه واضح';else if(S.closed)why=S.t;else if(N.v===2)why=N.t;else if(!trig)why='لا توجد نقطة دخول (لا اختراق ولا ارتداد ولا سحب سيولة)';else if(sc<70)why=`قوة التوافق ${sc}% أقل من 70%`;
 const side=why?'wait':d>0?'buy':'sell',risk=a*1.5;
-return{px,a,F,sc,side,why,d,hh,ll,S,N,sl:px-d*risk,tp1:px+d*risk*2,tp2:px+d*risk*3,pips:risk/pr.pip}}
+return{px,a,F,sc,side,why,d,hh,ll,S,N,NL,sl:px-d*risk,tp1:px+d*risk*2,tp2:px+d*risk*3,pips:risk/pr.pip}}
 async function get(sym,tf){
 const k=$('key').value.trim();if(!k)throw new Error("الصق مفتاح Twelve Data أولاً");
 try{localStorage.setItem('td_key',k)}catch(e){}
@@ -156,12 +160,13 @@ $('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</d
 (R.side=="wait"?`<p style="margin:14px 0"><b>سبب الانتظار:</b> ${R.why}</p>`:
 `<div class="lv"><div><small>نقطة الدخول</small><strong>${f(R.px)}</strong></div><div><small>وقف الخسارة</small><strong>${f(R.sl)}</strong></div><div><small>الهدف 1 (1:2)</small><strong>${f(R.tp1)}</strong></div><div><small>الهدف 2 (1:3)</small><strong>${f(R.tp2)}</strong></div><div><small>الوقف بالنقاط</small><strong>${R.pips.toFixed(0)}</strong></div></div>`)+
 `<h3>تفاصيل التحليل</h3><div class="wrap"><table><thead><tr><th>العامل</th><th>المدرسة / الاستراتيجية</th><th>النقاط</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}</td><td>${x.s}</td><td>${x.p}/${x.m}</td><td>${x.w}</td></tr>`).join('')}</tbody></table></div>`+
+`<h3>أخبار هذا الزوج (${p.c.join(' + ')}) خلال 24 ساعة</h3><div class="wrap"><table><thead><tr><th>الوقت (بغداد)</th><th>العملة</th><th>الخبر</th><th>التأثير</th><th>المتوقع</th><th>السابق</th></tr></thead><tbody>${R.NL.map(e=>`<tr><td>${tm(e.ts)}</td><td>${e.country}</td><td>${esc(e.title)}</td><td class="${e.impact[0]}">${e.impact==='High'?'قوي':'متوسط'}</td><td>${esc(e.forecast)||'-'}</td><td>${esc(e.previous)||'-'}</td></tr>`).join('')||`<tr><td colspan="6">${EV?'لا أخبار متوسطة أو قوية بالـ 24 ساعة':'الأخبار غير متاحة'}</td></tr>`}</tbody></table></div>`+
 `<p style="color:var(--mute);font-size:13px;margin-top:8px">الوقف = 1.5 × ATR (${f(R.a)}). قمة 20 شمعة ${f(R.hh)}، قاع 20 شمعة ${f(R.ll)}. آخر تحديث ${new Date().toLocaleTimeString('ar-IQ')}.</p>`;
 ta(p.tv)}
 async function run(){$('err').style.color='';$('err').textContent='';const sym=$('pair').value;
 try{$('go').disabled=true;const v=await get(sym,$('tf').value);await news();show(sym,analyze(v,P[sym],Date.now()))}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
-async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;await news();
-let i=0;for(const sym of Object.keys(P)){try{if(i++)await new Promise(r=>setTimeout(r,7500));const R=analyze(await get(sym,$('tf').value),P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
+async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;
+let i=0;for(const sym of Object.keys(P)){try{if(i++)await new Promise(r=>setTimeout(r,7500));const v=await get(sym,$('tf').value);await news();const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
 const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
 tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
 catch(e){$('err').textContent=e.message;break}}
