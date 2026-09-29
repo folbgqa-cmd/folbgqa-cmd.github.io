@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مراقب الذهب وتيليجرام</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#E8EDF0;--panel:#F7F9FA;--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--amber:#B7791F;--red:#B4423A;--line:#C5D0D8}
+*{box-sizing:border-box;margin:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:16px;max-width:760px;margin:0 auto}
+h1,h2,.big,strong{font-family:'Reem Kufi',sans-serif}
+h1{font-size:30px;margin:8px 0}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;margin-bottom:14px}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute);margin-bottom:10px}
+input,select,button{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);width:100%}
+button{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer;margin-top:6px}
+button.alt{background:transparent;color:var(--ink)}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid var(--amber)}
+.big{font-size:38px;text-align:center;color:#fff;border-radius:6px;padding:4px}
+.buy{background:var(--teal)}.sell{background:var(--red)}.wait{background:var(--mute)}
+pre{white-space:pre-wrap;font-family:inherit;margin-top:10px}
+#log{font-size:13px;color:var(--mute);max-height:180px;overflow:auto}
+.warn{font-size:13px;color:var(--mute)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:10px}.chk input{width:auto}
+</style>
+</head>
+<body>
+<h1>مراقب الذهب مع تيليجرام</h1>
+<p class="warn">الصفحة تحلل الذهب وترسل الصفقة لتيليجرام مباشرة. لازم تبقى مفتوحة (وشاشة الجوال شغالة) حتى تشتغل المراقبة.</p>
+
+<div class="box">
+<label>مفتاح Twelve Data<input id="td" type="password" autocomplete="off"></label>
+<label>توكن بوت تيليجرام<input id="tk" type="password" autocomplete="off"></label>
+<label>رقم الشات (Chat ID)<input id="ch" inputmode="numeric" autocomplete="off"></label>
+<label>الفحص كل<select id="ev"><option value="3">3 دقائق</option><option value="5" selected>5 دقائق</option><option value="15">15 دقيقة</option></select></label>
+<div class="chk"><input type="checkbox" id="wl" checked><label for="wl" style="margin:0">إبقاء الشاشة شغالة</label></div>
+<button id="start">ابدأ المراقبة</button>
+<button id="test" class="alt">أرسل رسالة اختبار</button>
+<button id="stop" class="alt">إيقاف</button>
+<p class="warn" style="margin-top:8px">المفاتيح تنحفظ في متصفحك فقط ولا ترفع لأي مكان. لا تشارك لقطة شاشة لهذي الصفحة.</p>
+</div>
+
+<div class="box" id="cur"><p>ما بدأت المراقبة بعد.</p></div>
+<div class="box"><strong>السجل</strong><div id="log"></div></div>
+<p class="warn">إشارات فنية تعليمية ولا تضمن ربحاً. حدد المخاطرة بـ 1% أو أقل وراجع الأخبار قبل الدخول.</p>
+
+<script>
+const $=id=>document.getElementById(id);
+const S=(k,v)=>{try{v===undefined?0:localStorage.setItem(k,v)}catch(e){}},G=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}};
+['td','tk','ch'].forEach(i=>$(i).value=G(i));
+const log=m=>{$('log').insertAdjacentHTML('afterbegin',`<div>${new Date().toLocaleTimeString('ar-IQ')} - ${m}</div>`)};
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map((v,i)=>(e=i?v*k+e*(1-k):v))};
+function rsi(c,p=14){let g=0,l=0;for(let i=1;i<=p;i++){const d=c[i]-c[i-1];d>0?g+=d:l-=d}g/=p;l/=p;for(let i=p+1;i<c.length;i++){const d=c[i]-c[i-1];g=(g*(p-1)+(d>0?d:0))/p;l=(l*(p-1)+(d<0?-d:0))/p}return l?100-100/(1+g/l):100}
+function atr(h,l,c,p=14){const t=[];for(let i=1;i<c.length;i++)t.push(Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])));let a=t.slice(0,p).reduce((x,y)=>x+y)/p;for(let i=p;i<t.length;i++)a=(a*(p-1)+t[i])/p;return a}
+function analyze(v){
+const c=v.map(x=>+x.close),h=v.map(x=>+x.high),l=v.map(x=>+x.low),n=c.length-1;
+const e20=ema(c,20)[n],e50=ema(c,50)[n],e200=ema(c,200)[n],r=rsi(c),a=atr(h,l,c),px=c[n];
+const hh=Math.max(...h.slice(n-20,n)),ll=Math.min(...l.slice(n-20,n));
+let s=0;const why=[];
+if(px>e50&&e20>e50){s+=2;why.push('ترند صاعد (EMA20 فوق EMA50)')}else if(px<e50&&e20<e50){s-=2;why.push('ترند هابط (EMA20 تحت EMA50)')}
+if(px>e200){s+=1;why.push('فوق EMA200')}else{s-=1;why.push('تحت EMA200')}
+if(r>=50&&r<=70){s+=1;why.push('RSI '+r.toFixed(0)+' زخم شرائي')}else if(r<50&&r>=30){s-=1;why.push('RSI '+r.toFixed(0)+' زخم بيعي')}else if(r>70){s-=1;why.push('RSI '+r.toFixed(0)+' تشبع شراء')}else{s+=1;why.push('RSI '+r.toFixed(0)+' تشبع بيع')}
+if(Math.abs(px-e20)<a*.5&&e20!==e50){s+=e20>e50?1:-1;why.push('ارتداد عند EMA20')}
+if(px>hh){s+=2;why.push('اختراق قمة 20 شمعة')}else if(px<ll){s-=2;why.push('كسر قاع 20 شمعة')}
+return{px,e20,a,s,hh,ll,why,side:s>=3?'buy':s<=-3?'sell':'wait',conf:Math.min(100,Math.round(Math.abs(s)/7*100))}}
+function build(R){const f=x=>x.toFixed(2),d=R.side=='buy'?1:-1,k=R.a*1.5;
+const lv=e=>`دخول ${f(e)} | وقف ${f(e-d*k)} | هدف1 ${f(e+d*k*1.5)} | هدف2 ${f(e+d*k*2.5)}`;
+const st=R.side=='buy'?R.hh+R.a*.1:R.ll-R.a*.1;
+const lim=(R.side=='buy'&&R.px>R.e20)||(R.side=='sell'&&R.px<R.e20)?`\n${R.side=='buy'?'Buy Limit':'Sell Limit'} (ارتداد):\n${lv(R.e20)}\n`:'';
+return`${R.side=='buy'?'🟢 شراء':'🔴 بيع'} الذهب XAU/USD (M15)\nالثقة: ${R.conf}%\n\nصفقة فورية:\n${lv(R.px)}\n${lim}\n${R.side=='buy'?'Buy Stop':'Sell Stop'} (اختراق):\n${lv(st)}\n\nالأسباب: ${R.why.join('، ')}\n\n⚠️ إشارة فنية تعليمية ولا تضمن ربحاً.`}
+async function tg(text){
+const r=await fetch(`https://api.telegram.org/bot${$('tk').value.trim()}/sendMessage?chat_id=${encodeURIComponent($('ch').value.trim())}&text=${encodeURIComponent(text)}`);
+const j=await r.json();if(!j.ok)throw new Error(j.description||'خطأ تيليجرام');}
+let timer,wl,last=G('last')||'wait';
+async function tick(){
+const d=new Date(),w=d.getUTCDay(),h=d.getUTCHours();
+if(w==6||(w==0&&h<22)||(w==5&&h>=22)){log('السوق مغلق');return}
+try{
+const r=await fetch(`https://api.twelvedata.com/time_series?symbol=XAU%2FUSD&interval=15min&outputsize=300&apikey=${$('td').value.trim()}`);
+const j=await r.json();if(!j.values)throw new Error(j.message||'فشل جلب البيانات');
+const R=analyze(j.values.slice().reverse());
+$('cur').innerHTML=`<div class="big ${R.side}">${{buy:'شراء',sell:'بيع',wait:'انتظر'}[R.side]}</div><p style="margin-top:8px">السعر ${R.px.toFixed(2)} | الثقة ${R.conf}%</p>${R.side=='wait'?`<p>راقب اختراق ${R.hh.toFixed(2)} أو كسر ${R.ll.toFixed(2)}</p>`:`<pre>${build(R)}</pre>`}`;
+if(R.side!==last){
+if(R.side=='wait'){last='wait';S('last',last);log('انتظر')}
+else{await tg(build(R));last=R.side;S('last',last);log('أُرسلت صفقة '+(R.side=='buy'?'شراء':'بيع'))}}
+else log('لا تغيير: '+R.side)
+}catch(e){log('خطأ: '+e.message)}}
+$('start').onclick=async()=>{['td','tk','ch'].forEach(i=>S(i,$(i).value.trim()));
+if(!$('td').value||!$('tk').value||!$('ch').value){log('عبّي الحقول الثلاثة');return}
+clearInterval(timer);try{if($('wl').checked&&navigator.wakeLock)wl=await navigator.wakeLock.request('screen')}catch(e){}
+log('بدأت المراقبة');tick();timer=setInterval(tick,$('ev').value*60000)};
+$('stop').onclick=()=>{clearInterval(timer);try{wl&&wl.release()}catch(e){}log('توقفت المراقبة')};
+$('test').onclick=async()=>{['tk','ch'].forEach(i=>S(i,$(i).value.trim()));try{await tg('✅ اختبار: الربط مع تيليجرام يشتغل');log('أُرسلت رسالة الاختبار')}catch(e){log('خطأ: '+e.message)}};
+</script>
+</body>
+</html>
