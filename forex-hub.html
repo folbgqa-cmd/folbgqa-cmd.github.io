@@ -1,1 +1,160 @@
-<!-- placeholder -->
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مركز تحليل الفوركس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#E8EDF0;--panel:#F7F9FA;--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--amber:#B7791F;--red:#B4423A;--line:#C5D0D8}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;scroll-padding-top:64px}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;
+background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;background-attachment:fixed}
+h1,h2,h3{font-family:'Reem Kufi',sans-serif;line-height:1.35}
+header{position:sticky;top:0;z-index:10;background:var(--ink);color:#fff;display:flex;gap:18px;align-items:center;padding:10px 16px;overflow-x:auto;white-space:nowrap}
+header b{font-family:'Reem Kufi';font-size:20px;margin-inline-end:auto}
+header a{color:#cfe0e8;text-decoration:none;font-size:14px}
+header a:hover,header a:focus-visible{color:#fff;outline:none;text-decoration:underline}
+section{max-width:1100px;margin:0 auto;padding:40px 16px}
+h2{font-size:28px;margin-bottom:6px}
+.sub{color:var(--mute);margin-bottom:22px;max-width:60ch}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.hero h1{font-size:clamp(30px,6vw,52px);margin:16px 0 8px}
+.chart{height:520px;margin-top:18px;overflow:hidden}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.tabs button{font:inherit;padding:8px 16px;border:1px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--ink);color:#fff}
+.tabs button:focus-visible{outline:3px solid var(--amber)}
+.school{padding:22px;display:grid;gap:12px}
+.school h3{font-size:24px}
+.school dl{display:grid;grid-template-columns:110px 1fr;gap:6px 14px}
+.school dt{color:var(--teal);font-weight:600}
+.school dd{margin:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.card{padding:18px;border-inline-start:5px solid var(--teal)}
+.card:nth-child(even){border-inline-start-color:var(--amber)}
+.card h3{font-size:20px;margin-bottom:8px}
+.card p{font-size:15px;margin-bottom:4px}
+.card b{color:var(--mute);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.widget{height:500px;overflow:hidden}
+.calc{padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;align-items:end}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+input,select{font:inherit;padding:9px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+input:focus-visible,select:focus-visible{outline:3px solid var(--amber)}
+.res{grid-column:1/-1;font-size:20px;padding-top:10px;border-top:1px solid var(--line)}
+.res strong{color:var(--teal);font-size:30px;font-family:'Reem Kufi'}
+.link{padding:22px}
+.link ul{margin:10px 22px 0}
+.warn{background:var(--ink);color:#dbe6ec;padding:26px 16px;text-align:center;font-size:14px}
+@media(max-width:760px){.two{grid-template-columns:1fr}.chart{height:420px}.school dl{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header>
+<b>مركز الفوركس</b>
+<a href="#prices">الأسعار</a><a href="#schools">المدارس</a><a href="#strategies">الاستراتيجيات</a><a href="#calc">الحاسبة</a><a href="#news">الأخبار</a><a href="#mt5">ربط MT5</a>
+</header>
+
+<div style="background:#fff;border-bottom:1px solid var(--line)">
+<div class="tradingview-widget-container"><div class="tradingview-widget-container__widget"></div>
+<script src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+{"symbols":[{"proName":"FX:EURUSD","title":"EUR/USD"},{"proName":"FX:GBPUSD","title":"GBP/USD"},{"proName":"FX:USDJPY","title":"USD/JPY"},{"proName":"OANDA:XAUUSD","title":"الذهب"},{"proName":"FX:AUDUSD","title":"AUD/USD"},{"proName":"FX:USDCAD","title":"USD/CAD"},{"proName":"BITSTAMP:BTCUSD","title":"BTC"}],"showSymbolLogo":false,"colorTheme":"light","isTransparent":false,"displayMode":"adaptive","locale":"ar_AE"}
+</script></div></div>
+
+<section class="hero" id="prices">
+<h1>تحليل الفوركس بأسعار لحظية</h1>
+<p class="sub">شارت مباشر، مدارس التحليل، استراتيجيات واضحة، وأخبار الاقتصاد في مكان واحد.</p>
+<div class="box chart">
+<div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
+<script src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js" async>
+{"autosize":true,"symbol":"OANDA:XAUUSD","interval":"15","timezone":"Asia/Baghdad","theme":"light","style":"1","locale":"ar_AE","allow_symbol_change":true,"support_host":"https://www.tradingview.com"}
+</script></div></div>
+</section>
+
+<section id="schools">
+<h2>مدارس التحليل</h2>
+<p class="sub">كل مدرسة ترى السوق بطريقة مختلفة. اختر وحدة وشوف فكرتها وأدواتها.</p>
+<div class="tabs" role="tablist" id="tabs"></div>
+<div class="box school" id="school" role="tabpanel" aria-live="polite"></div>
+</section>
+
+<section id="strategies">
+<h2>استراتيجيات جاهزة للاختبار</h2>
+<p class="sub">قواعد دخول وخروج واضحة. جرّبها على حساب تجريبي وعلى بيانات قديمة قبل أي مال حقيقي.</p>
+<div class="grid" id="strats"></div>
+</section>
+
+<section id="calc">
+<h2>حاسبة حجم الصفقة</h2>
+<p class="sub">تحسب اللوت من رصيدك ونسبة المخاطرة ووقف الخسارة.</p>
+<div class="box calc">
+<label>الرصيد ($)<input id="bal" type="number" value="1000" min="0"></label>
+<label>المخاطرة (%)<input id="risk" type="number" value="1" min="0" step="0.1"></label>
+<label>وقف الخسارة (نقطة Pips)<input id="sl" type="number" value="20" min="1"></label>
+<label>قيمة النقطة للوت الكامل ($)<input id="pv" type="number" value="10" min="0" step="0.1"></label>
+<div class="res">المبلغ المعرّض للخسارة: <span id="amt">-</span> | الحجم المناسب: <strong id="lots">-</strong> لوت</div>
+</div>
+<p class="sub" style="margin-top:8px;font-size:13px">قيمة النقطة 10$ تناسب أزواج مثل EUR/USD وGBP/USD. تختلف للأزواج الأخرى والذهب، فراجعها في MT5.</p>
+</section>
+
+<section id="news">
+<h2>الأخبار والتقويم الاقتصادي</h2>
+<p class="sub">الأخبار عالية التأثير تحرّك السوق بسرعة. تابع التقويم قبل ما تدخل صفقة.</p>
+<div class="two">
+<div class="box widget"><div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
+<script src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+{"colorTheme":"light","isTransparent":false,"width":"100%","height":"100%","locale":"ar_AE","importanceFilter":"0,1","currencyFilter":"USD,EUR,GBP,JPY,AUD,CAD,CHF"}
+</script></div></div>
+<div class="box widget"><div class="tradingview-widget-container" style="height:100%"><div class="tradingview-widget-container__widget" style="height:100%"></div>
+<script src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+{"feedMode":"market","market":"forex","isTransparent":false,"displayMode":"regular","width":"100%","height":"100%","colorTheme":"light","locale":"ar_AE"}
+</script></div></div>
+</div>
+</section>
+
+<section id="mt5">
+<h2>الربط مع MT5</h2>
+<div class="box link">
+<p>الأسعار في هذا الموقع لحظية من TradingView، وتشتغل بدون MT5. أما قراءة حسابك وصفقاتك مباشرة فما تصير من صفحة ثابتة على GitHub Pages، لأنها تحتاج خادم وسيط.</p>
+<ul>
+<li>الطريقة الآمنة: خادم صغير خاص بك يقرأ من MT5 عبر مكتبة Python الرسمية، والموقع يعرض النتائج.</li>
+<li>طريقة أبسط: تصدير تقرير الصفقات من MT5 وتحليله داخل الموقع (نقدر نضيفها لاحقاً).</li>
+<li>لا تحط كلمة سر حساب التداول داخل أي صفحة عامة.</li>
+</ul>
+</div>
+</section>
+
+<div class="warn">المحتوى تعليمي وليس نصيحة مالية. تداول الفوركس عالي المخاطر وقد تخسر رأس مالك بالكامل.</div>
+
+<script>
+const schools=[
+{n:"ICT / SMC",i:"تتبع أثر المؤسسات الكبيرة: سيولة، Order Blocks، فجوات السعر (FVG).",t:"مناطق السيولة، Order Block، FVG، هيكل السوق (BOS/CHoCH)",f:"M15 للدخول، H4 للاتجاه",p:"دخول دقيق وستوب صغير",w:"معقدة وتحتاج تدريب طويل"},
+{n:"حركة السعر",i:"قراءة الشموع والمستويات بدون مؤشرات كثيرة.",t:"شموع الانعكاس (Pin Bar، Engulfing)، دعم ومقاومة",f:"H1 إلى D1",p:"نظيفة وبسيطة",w:"تعتمد على خبرة العين"},
+{n:"التحليل الكلاسيكي",i:"خطوط الاتجاه والنماذج السعرية والمؤشرات.",t:"RSI، MACD، المتوسطات، فيبوناتشي، مثلثات ورأس وكتفين",f:"H4 إلى W1",p:"معروفة ومنتشرة",w:"إشارات متأخرة أحياناً"},
+{n:"ويكوف",i:"السوق يمر بمراحل تجميع وتوزيع يحركها المال الكبير.",t:"الحجم، مراحل التجميع والتوزيع، Spring وUpthrust",f:"H1 إلى D1",p:"تفهّم دورة السوق كاملة",w:"تفسيرها ذاتي"},
+{n:"موجات إليوت",i:"السعر يتحرك بموجات دافعة (5) وتصحيحية (3).",t:"عدّ الموجات، نسب فيبوناتشي",f:"H4 إلى D1",p:"يعطي صورة كبيرة",w:"كل محلل يعدّ بطريقة"},
+{n:"سكالبينغ",i:"صفقات قصيرة كثيرة على حركات صغيرة.",t:"M1 وM5، سبريد منخفض، جلسات لندن ونيويورك",f:"M1 إلى M5",p:"دوران سريع",w:"تكلفة السبريد وضغط نفسي عالي"}];
+const tabs=document.getElementById('tabs'),box=document.getElementById('school');
+function show(k){[...tabs.children].forEach((b,j)=>b.setAttribute('aria-selected',j===k));const s=schools[k];
+box.innerHTML=`<h3>${s.n}</h3><p>${s.i}</p><dl><dt>الأدوات</dt><dd>${s.t}</dd><dt>الفريمات</dt><dd>${s.f}</dd><dt>الميزة</dt><dd>${s.p}</dd><dt>العيب</dt><dd>${s.w}</dd></dl>`}
+schools.forEach((s,k)=>{const b=document.createElement('button');b.textContent=s.n;b.setAttribute('role','tab');b.onclick=()=>show(k);tabs.appendChild(b)});show(0);
+const strats=[
+{n:"اختراق لندن",e:"حدد أعلى وأدنى سعر في جلسة آسيا. ادخل عند كسر أحدهما بشمعة إغلاق قوية وقت افتتاح لندن.",s:"خلف الجهة المقابلة للنطاق",t:"1:2 على الأقل"},
+{n:"ارتداد EMA 20/50",e:"في ترند واضح، انتظر تراجع السعر للمتوسط ثم شمعة انعكاس بنفس اتجاه الترند.",s:"تحت آخر قاع أو فوق آخر قمة",t:"آخر قمة أو 1:2"},
+{n:"انعكاس الدعم والمقاومة",e:"عند كسر مستوى قوي وإغلاق شمعة خلفه، انتظر عودة السعر لاختباره ثم ادخل بالاتجاه الجديد.",s:"خلف المستوى المكسور",t:"المستوى التالي"},
+{n:"تباعد RSI",e:"السعر يسجل قمة أعلى وRSI يسجل قمة أدنى، وتأكيد بشمعة هابطة. والعكس للشراء.",s:"فوق القمة الأخيرة",t:"آخر منطقة دعم"},
+{n:"إعادة اختبار Order Block",e:"بعد كسر هيكل السوق، ادخل عند رجوع السعر لآخر شمعة معاكسة قبل الحركة القوية.",s:"خلف الـ Order Block",t:"السيولة المقابلة"},
+{n:"تداول الأخبار بحذر",e:"لا تدخل قبل الخبر بدقائق. انتظر أول 15 دقيقة تهدأ فيها الحركة، ثم ادخل مع الاتجاه المؤكد.",s:"أوسع من المعتاد",t:"1:1.5"}];
+document.getElementById('strats').innerHTML=strats.map(x=>`<div class="box card"><h3>${x.n}</h3><p><b>الدخول:</b> ${x.e}</p><p><b>الوقف:</b> ${x.s}</p><p><b>الهدف:</b> ${x.t}</p></div>`).join('');
+const $=id=>document.getElementById(id);
+function calc(){const a=$('bal').value*$('risk').value/100,l=a/($('sl').value*$('pv').value);
+$('amt').textContent=isFinite(a)?a.toFixed(2)+' $':'-';$('lots').textContent=isFinite(l)?l.toFixed(2):'-'}
+['bal','risk','sl','pv'].forEach(i=>$(i).addEventListener('input',calc));calc();
+</script>
+</body>
+</html>
