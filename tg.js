@@ -5,7 +5,14 @@ const $=id=>document.getElementById(id);
 const box=document.createElement('section');
 box.innerHTML='<div class="box"><h3 style="margin-top:0">إرسال تيليجرام</h3><div class="row"><label>توكن البوت<input id="tk" type="password" autocomplete="off"></label><label>رقم الشات (Chat ID)<input id="ch" inputmode="numeric" autocomplete="off"></label><button id="tgtest" class="alt">رسالة اختبار</button></div><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:10px"><input type="checkbox" id="atg">إرسال تلقائي لكل إشارة دخول جديدة</label><p style="color:var(--mute);font-size:13px">يُرسل فقط عندما يكون القرار شراء أو بيع (قوة التوافق 70% أو أكثر). يشتغل والصفحة مفتوحة. إذا فعّلت التشغيل على GitHub فلا تفعّل هذا معه حتى لا تتكرر الرسائل.</p><p id="tgm" style="font-size:14px"></p>'+
 '<h3 style="margin:16px 0 4px">ربط بوت الـ 24 ساعة بالزوج المختار</h3><label>توكن GitHub (صلاحية Actions فقط)<input id="gtk" type="password" autocomplete="off"></label><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="gsy">خلّي البوت يرسل صفقات الزوج المختار فقط</label><p style="color:var(--mute);font-size:13px">أي زوج تختاره من القائمة فوق ينتقل له البوت خلال دقيقة. التوكن ينحفظ بمتصفحك فقط.</p><p id="gm" style="font-size:14px"></p></div>';
+// لوحة الإعدادات مخفية افتراضياً وتنفتح من زر ⚙️ في الشريط العلوي
+box.id='settings';box.hidden=true;
 const first=document.querySelector('section');first.after(box);
+const hd=document.querySelector('header'),gear=document.createElement('a');
+gear.href='#settings';gear.textContent='⚙️ الإعدادات';gear.style.cursor='pointer';
+gear.onclick=e=>{e.preventDefault();box.hidden=!box.hidden;if(!box.hidden)box.scrollIntoView({behavior:'smooth'})};
+hd.appendChild(gear);
+if(location.hash==='#settings')box.hidden=false;
 $('tk').value=g('tg_tk');$('ch').value=g('tg_ch');$('atg').checked=g('tg_auto')==='1';
 $('gtk').value=g('gh_tk');$('gsy').checked=g('gh_sy')==='1';
 const say=(t,bad)=>{$('tgm').style.color=bad?'var(--red)':'var(--teal)';$('tgm').textContent=t};
