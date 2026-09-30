@@ -3,16 +3,19 @@
 const g=k=>{try{return localStorage.getItem(k)||''}catch(e){return''}},s=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 const $=id=>document.getElementById(id);
 const box=document.createElement('section');
-box.innerHTML='<div class="box"><h3 style="margin-top:0">إرسال تيليجرام</h3><div class="row"><label>توكن البوت<input id="tk" type="password" autocomplete="off"></label><label>رقم الشات (Chat ID)<input id="ch" inputmode="numeric" autocomplete="off"></label><button id="tgtest" class="alt">رسالة اختبار</button></div><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:10px"><input type="checkbox" id="atg">إرسال تلقائي لكل إشارة دخول جديدة</label><p style="color:var(--mute);font-size:13px">يُرسل فقط عندما يكون القرار شراء أو بيع (قوة التوافق 70% أو أكثر). يشتغل والصفحة مفتوحة. إذا فعّلت التشغيل على GitHub فلا تفعّل هذا معه حتى لا تتكرر الرسائل.</p><p id="tgm" style="font-size:14px"></p>'+
-'<h3 style="margin:16px 0 4px">ربط بوت الـ 24 ساعة بالزوج المختار</h3><label>توكن GitHub (صلاحية Actions فقط)<input id="gtk" type="password" autocomplete="off"></label><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="gsy">خلّي البوت يرسل صفقات الزوج المختار فقط</label><p style="color:var(--mute);font-size:13px">أي زوج تختاره من القائمة فوق ينتقل له البوت خلال دقيقة. التوكن ينحفظ بمتصفحك فقط.</p><p id="gm" style="font-size:14px"></p></div>';
-// لوحة الإعدادات مخفية افتراضياً وتنفتح من زر ⚙️ في الشريط العلوي
+box.innerHTML='<div class="box"><button id="sclose" class="alt" style="float:left;padding:2px 12px" aria-label="إغلاق">✕</button><h3 style="margin-top:0">الإعدادات - إرسال تيليجرام</h3><div class="row"><label>توكن البوت<input id="tk" type="password" autocomplete="off"></label><label>رقم الشات (Chat ID)<input id="ch" inputmode="numeric" autocomplete="off"></label><button id="tgtest" class="alt">رسالة اختبار</button></div><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:10px"><input type="checkbox" id="atg">إرسال تلقائي لكل إشارة دخول جديدة</label><p style="color:var(--mute);font-size:13px">يُرسل فقط عندما يكون القرار شراء أو بيع (قوة التوافق 70% أو أكثر). يشتغل والصفحة مفتوحة. إذا فعّلت التشغيل على GitHub فلا تفعّل هذا معه حتى لا تتكرر الرسائل.</p><p id="tgm" style="font-size:14px"></p>'+
+'<h3 style="margin:16px 0 4px">ربط بوت الـ 24 ساعة بالزوج المختار</h3><label>توكن GitHub (صلاحية Actions فقط)<input id="gtk" type="password" autocomplete="off"></label><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="gsy">خلّي البوت يرسل صفقات الزوج المختار فقط</label><p style="color:var(--mute);font-size:13px">أي زوج تختاره من القائمة الرئيسية ينتقل له البوت خلال دقيقة. التوكن ينحفظ بمتصفحك فقط.</p><p id="gm" style="font-size:14px"></p></div>';
+// لوحة الإعدادات: نافذة صغيرة مخفية، تنفتح من زر ⚙️ أعلى يمين الصفحة
 box.id='settings';box.hidden=true;
-const first=document.querySelector('section');first.after(box);
-const hd=document.querySelector('header'),gear=document.createElement('a');
-gear.href='#settings';gear.textContent='⚙️ الإعدادات';gear.style.cursor='pointer';
-gear.onclick=e=>{e.preventDefault();box.hidden=!box.hidden;if(!box.hidden)box.scrollIntoView({behavior:'smooth'})};
-hd.appendChild(gear);
-if(location.hash==='#settings')box.hidden=false;
+box.style.cssText='position:fixed;top:56px;left:8px;right:8px;max-width:520px;margin:0 auto;max-height:80vh;overflow:auto;z-index:50;padding:0;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,.35)';
+document.body.appendChild(box);
+const hd=document.querySelector('header'),gear=document.createElement('button');
+gear.type='button';gear.textContent='⚙️ الإعدادات';gear.setAttribute('aria-label','الإعدادات');
+gear.style.cssText='background:transparent;color:#cfe0e8;border:1px solid #cfe0e8;padding:3px 12px;font-size:14px;flex:none';
+gear.onclick=()=>{box.hidden=!box.hidden};
+hd.prepend(gear);
+$('sclose').onclick=()=>{box.hidden=true};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')box.hidden=true});
 $('tk').value=g('tg_tk');$('ch').value=g('tg_ch');$('atg').checked=g('tg_auto')==='1';
 $('gtk').value=g('gh_tk');$('gsy').checked=g('gh_sy')==='1';
 const say=(t,bad)=>{$('tgm').style.color=bad?'var(--red)':'var(--teal)';$('tgm').textContent=t};
