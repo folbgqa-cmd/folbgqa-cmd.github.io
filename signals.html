@@ -51,7 +51,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل تحليل مستقل: الاتجاه والزخم والاختراق وسحب السيولة والارتداد والتذبذب والجلسة وأخبار عملات الزوج نفسه. تظهر إشارة دخول فقط إذا وصلت قوة التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلّل تحليل مستقل: الاتجاه والاختراق وسحب السيولة والارتداد والجلسة وأخبار عملات الزوج نفسه. تظهر إشارة دخول فقط إذا وصلت قوة التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -116,24 +116,20 @@ if(ld&&ny)return{p:15,t:"تداخل لندن ونيويورك (أقوى سيول
 if(ld)return{p:11,t:"جلسة لندن"};if(ny)return{p:11,t:"جلسة نيويورك"};
 if(tk)return{p:jp?8:3,t:"جلسة طوكيو"+(jp?" (مناسبة لهذا الزوج)":" (سيولة ضعيفة لهذا الزوج)")};
 return{p:jp?4:2,t:"جلسة سيدني (سيولة ضعيفة)"}}
+// خمسة عوامل فقط مجموعها 100: اتجاه 35 + اختراق/سيولة 20 + ارتداد 15 + جلسة 15 + أخبار 15
 function analyze(v,pr,now){
 const c=v.map(x=>+x.close),h=v.map(x=>+x.high),l=v.map(x=>+x.low),n=c.length-1;
-const e20=ema(c,20)[n],e50=ema(c,50)[n],e200=ema(c,200)[n],r=rsi(c),a=atr(h,l,c),px=c[n];
+const e20=ema(c,20)[n],e50=ema(c,50)[n],e200=ema(c,200)[n],a=atr(h,l,c),px=c[n];
 const hh=Math.max(...h.slice(n-20,n)),ll=Math.min(...l.slice(n-20,n));
 const d=(px>e50&&e20>e50)?1:(px<e50&&e20<e50)?-1:0,F=[];
 let tp=0,tw='لا يوجد ترند واضح بين المتوسطات';
-if(d){tp=15;tw=d>0?'EMA20 فوق EMA50 والسعر فوقهما':'EMA20 تحت EMA50 والسعر تحتهما';if((d>0)===(px>e200)){tp+=10;tw+=' ومع اتجاه EMA200'}else tw+=' لكن عكس EMA200'}
-F.push({n:'الاتجاه',s:'الكلاسيكي',p:tp,m:25,w:tw});
-let rp=0,rw=`RSI ${r.toFixed(0)}`;
-if(d){const x=d>0?r:100-r;if(x>=50&&x<=70){rp=10;rw+=': زخم مع الاتجاه'}else if(x>70){rp=2;rw+=': تشبع، احذر الانعكاس'}else if(x>=40){rp=4;rw+=': زخم ضعيف'}else rw+=': عكس الاتجاه'}
-F.push({n:'الزخم',s:'المؤشرات',p:rp,m:10,w:rw});
+if(d){tp=20;tw=d>0?'EMA20 فوق EMA50 والسعر فوقهما':'EMA20 تحت EMA50 والسعر تحتهما';if((d>0)===(px>e200)){tp+=15;tw+=' ومع اتجاه EMA200'}else tw+=' لكن عكس EMA200'}
+F.push({n:'الاتجاه',s:'الكلاسيكي',p:tp,m:35,w:tw});
 const bo=d>0?px>hh:d<0?px<ll:false,sw=d>0?(l[n]<ll&&px>ll):d<0?(h[n]>hh&&px<hh):false,pb=!!d&&Math.abs(px-e20)<a*.5;
 let bp=0,bw='لا اختراق ولا سحب سيولة';
-if(bo){bp=15;bw=d>0?'اختراق قمة آخر 20 شمعة':'كسر قاع آخر 20 شمعة'}else if(sw){bp=15;bw='سحب سيولة ثم رجوع بالاتجاه'}
-F.push({n:'الاختراق والسيولة',s:'حركة السعر، ICT/SMC',p:bp,m:15,w:bw});
-F.push({n:'الارتداد',s:'ارتداد EMA',p:pb?10:0,m:10,w:pb?'السعر قرب EMA20 مع الترند':'السعر بعيد عن EMA20'});
-const rg=c.map((_,i)=>h[i]-l[i]),av=k=>rg.slice(-k).reduce((s,y)=>s+y,0)/k,vr=av(14)/av(100);
-F.push({n:'التذبذب',s:'ATR',p:vr>=.8&&vr<=2?10:vr<.8?4:0,m:10,w:`الحركة ${vr.toFixed(2)}× المعتاد`+(vr<.8?' (سوق هادئ)':vr>2?' (عنيفة)':'')});
+if(bo){bp=20;bw=d>0?'اختراق قمة آخر 20 شمعة':'كسر قاع آخر 20 شمعة'}else if(sw){bp=20;bw='سحب سيولة ثم رجوع بالاتجاه'}
+F.push({n:'الاختراق والسيولة',s:'حركة السعر، ICT/SMC',p:bp,m:20,w:bw});
+F.push({n:'الارتداد',s:'ارتداد EMA',p:pb?15:0,m:15,w:pb?'السعر قرب EMA20 مع الترند':'السعر بعيد عن EMA20'});
 const S=ses(pr,now),N=nk(pr.c,now);
 F.push({n:'الجلسة',s:'توقيت السوق',p:S.p,m:15,w:S.t});
 F.push({n:'الأخبار',s:'التحليل الأساسي',p:N.v===0?15:N.v===1?7:0,m:15,w:N.t});
