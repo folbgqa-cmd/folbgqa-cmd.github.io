@@ -32,6 +32,8 @@ const k='tg_last_'+sym,last=g(k)||'wait';if(R.side===last)return;
 if(R.side==='wait'){s(k,'wait');return}
 try{await tg(msg(sym,R));s(k,R.side);say('أُرسلت صفقة '+sym+' ('+(R.side==='buy'?'شراء':'بيع')+')')}catch(e){say('تيليجرام: '+e.message,1)}}
 const _an=analyze;
+// نسخة التحليل الأصلية بدون إرسال تيليجرام (يستخدمها الاختبار التاريخي)
+window.rawAnalyze=_an;
 analyze=function(v,pr,now){const R=_an(v,pr,now),sym=Object.keys(P).find(x=>P[x]===pr);R.sym=sym;maybe(sym,R);return R};
 const _show=show;
 show=function(sym,R){_show(sym,R);if(R.side==='wait')return;const b=document.createElement('button');b.textContent='أرسل هذي الصفقة لتيليجرام';b.style.marginTop='10px';
@@ -45,4 +47,6 @@ throw new Error(r.status===401||r.status===403||r.status===404?'GitHub رفض ا
 async function sync(){s('gh_tk',$('gtk').value.trim());s('gh_sy',$('gsy').checked?'1':'0');if(!$('gsy').checked){gsay('تم إيقاف الربط. البوت يبقى على آخر زوج اخترته.');return}
 const p=$('pair').value;try{await dispatch(p);gsay('أُرسل الطلب: البوت صار على '+P[p].n+' وبيتحدث خلال دقيقة')}catch(e){gsay(e.message,1)}}
 $('gsy').onchange=sync;$('gtk').onchange=()=>s('gh_tk',$('gtk').value.trim());$('pair').addEventListener('change',()=>{if($('gsy').checked)sync()});
+// الاختبار التاريخي (ملف منفصل)
+const bs=document.createElement('script');bs.src='bt.js?v=1';document.body.appendChild(bs);
 })();
