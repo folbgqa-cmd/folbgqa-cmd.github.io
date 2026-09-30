@@ -91,11 +91,38 @@ ${why}
 
 let state = {};
 try { state = JSON.parse(fs.readFileSync('state.json', 'utf8')); } catch { }
-if (!state.pairs) state = { pairs: {} };
+state.pairs ||= {};
 let changed = false;
 const now = Date.now();
 
-for (const sym of Object.keys(P)) {
+// اختيار الأزواج: من أوامر تلي (state.sel) وإلا من config.json (pairs) وإلا كل الأزواج
+const activeList = () => { const s = state.sel ?? cfg.pairs; return Array.isArray(s) && s.length ? s.filter(x => P[x]) : Object.keys(P); };
+const K = { gold: 'XAU/USD', xau: 'XAU/USD', 'ذهب': 'XAU/USD', eur: 'EUR/USD', 'يورو': 'EUR/USD', gbp: 'GBP/USD', pound: 'GBP/USD', 'استرليني': 'GBP/USD', jpy: 'USD/JPY', yen: 'USD/JPY', 'ين': 'USD/JPY', aud: 'AUD/USD', cad: 'USD/CAD', chf: 'USD/CHF' };
+const say = async text => { try { await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: TG_CHAT, text }) }); } catch { } };
+const names = () => activeList().map(s => P[s].n).join('، ');
+try {
+  const ur = await (await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${state.off || 0}&timeout=0`)).json();
+  for (const u of ur.result || []) {
+    state.off = u.update_id + 1; changed = true;
+    const m = u.message;
+    if (!m || String(m.chat.id) !== String(TG_CHAT) || !m.text || !m.text.startsWith('/')) continue;
+    const words = m.text.toLowerCase().replace(/\//g, ' ').split(/\s+/).filter(Boolean);
+    const before = activeList();
+    if (words.includes('list')) { await say(`الأزواج الحالية: ${names()}`); continue; }
+    if (words.includes('all')) state.sel = 'all';
+    else {
+      const sel = [...new Set(words.map(w => K[w]).filter(Boolean))];
+      if (!sel.length) { await say(`الأزواج الحالية: ${names()}\nللتغيير اكتب مثلاً: /gold أو /eur أو /gbp /jpy /aud /cad /chf (تكدر تكتب أكثر من زوج بنفس الرسالة: /gold /eur) أو /all للكل. /list لعرض الحالي.`); continue; }
+      state.sel = sel;
+    }
+    for (const s of activeList()) if (!before.includes(s)) state.pairs[s] = 'wait';
+    await say(`✅ التنبيهات صارت لـ: ${names()}`);
+  }
+} catch (e) { console.error('commands:', e.message); }
+const active = activeList();
+console.log('active pairs:', active.join(', '));
+
+for (const sym of active) {
   try {
     const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${TF}&outputsize=300&apikey=${TD_KEY}`);
     const j = await res.json();
@@ -114,4 +141,4 @@ for (const sym of Object.keys(P)) {
   } catch (e) { console.error(sym, e.message); }
   await new Promise(r => setTimeout(r, 1200));
 }
-if (changed) fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, at: new Date().toISOString() }));
+if (changed) fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, sel: state.sel, off: state.off, at: new Date().toISOString() }));
