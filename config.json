@@ -1,4 +1,5 @@
 {
   "minConf": 70,
-  "minWinRate": 0
+  "minWinRate": 0,
+  "pairs": ["XAU/USD"]
 }
