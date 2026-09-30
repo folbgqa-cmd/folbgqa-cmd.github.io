@@ -3,6 +3,10 @@ on:
   schedule:
     - cron: '2,17,32,47 * * * *'
   workflow_dispatch:
+    inputs:
+      pair:
+        description: 'Pair to alert on, or all'
+        required: false
 permissions:
   contents: write
 jobs:
@@ -13,6 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: node scripts/select.mjs
+        env:
+          PAIR: ${{ github.event.inputs.pair }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
       - run: node scripts/gold_signals.mjs
         env:
           TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
