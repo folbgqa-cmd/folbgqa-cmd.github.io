@@ -64,23 +64,17 @@ function analyze(v, pr, now) {
   if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (!trig) why = 'لا توجد نقطة دخول'; else if (sc < cfg.minConf) why = `قوة التوافق ${sc}% أقل من ${cfg.minConf}%`;
   return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll };
 }
+// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) والنسبة بالسطر الأول
 function message(sym, R) {
-  const f = x => x.toFixed(P[sym].d), k = R.a * 1.5, sg = R.d;
-  const lv = e => `دخول ${f(e)} | وقف ${f(e - sg * k)} | هدف1 ${f(e + sg * k * 2)} | هدف2 ${f(e + sg * k * 3)}`;
-  const st = R.side === 'buy' ? R.hh + R.a * .1 : R.ll - R.a * .1;
-  const why = R.F.filter(x => x.p > 0).map(x => `${x.n}: ${x.w}`).join('\n');
-  return `${R.side === 'buy' ? '🟢 شراء' : '🔴 بيع'} ${P[sym].n} ${sym} (M15)
-قوة التوافق: ${R.sc}%
+  const f = x => x.toFixed(P[sym].d), k = R.a * 1.5, sg = R.d, e = R.px;
+  return `${R.side === 'buy' ? '🟢 شراء' : '🔴 بيع'} ${P[sym].n} ${sym} (M15) | قوة التوافق ${R.sc}%
 
-صفقة فورية:
-${lv(R.px)}
+1. الدخول: ${f(e)}
+2. الاستوب: ${f(e - sg * k)}
+3. الهدف 1: ${f(e + sg * k * 2)}
+4. الهدف 2: ${f(e + sg * k * 3)}
 
-${R.side === 'buy' ? 'Buy Stop' : 'Sell Stop'} (اختراق):
-${lv(st)}
-
-${why}
-
-⚠️ قوة التوافق ليست احتمال ربح. إشارة تعليمية، وحدد المخاطرة بـ 1% أو أقل.`;
+⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.`;
 }
 
 let state = {};

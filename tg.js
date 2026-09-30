@@ -22,11 +22,9 @@ const say=(t,bad)=>{$('tgm').style.color=bad?'var(--red)':'var(--teal)';$('tgm')
 const gsay=(t,bad)=>{$('gm').style.color=bad?'var(--red)':'var(--teal)';$('gm').textContent=t};
 async function tg(text){const t=$('tk').value.trim(),c=$('ch').value.trim();if(!t||!c)throw new Error('عبّي توكن البوت ورقم الشات');s('tg_tk',t);s('tg_ch',c);
 const r=await fetch('https://api.telegram.org/bot'+t+'/sendMessage?chat_id='+encodeURIComponent(c)+'&text='+encodeURIComponent(text));const j=await r.json();if(!j.ok)throw new Error(j.description||'خطأ تيليجرام')}
-function msg(sym,R){const d=P[sym].d,f=x=>x.toFixed(d),k=R.a*1.5,sg=R.d;
-const st=R.side==='buy'?R.hh+R.a*.1:R.ll-R.a*.1;
-const lv=(e)=>'دخول '+f(e)+' | وقف '+f(e-sg*k)+' | هدف1 '+f(e+sg*k*2)+' | هدف2 '+f(e+sg*k*3);
-const why=R.F.filter(x=>x.p>0).map(x=>x.n+': '+x.w).join('\n');
-return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+')\nقوة التوافق: '+R.sc+'%\n\nصفقة فورية:\n'+lv(R.px)+'\n\n'+(R.side==='buy'?'Buy Stop':'Sell Stop')+' (اختراق):\n'+lv(st)+'\n\n'+why+'\n\n⚠️ قوة التوافق ليست احتمال ربح. إشارة تعليمية، وحدد المخاطرة بـ 1% أو أقل.'}
+// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) والنسبة بالسطر الأول
+function msg(sym,R){const f=x=>x.toFixed(P[sym].d),k=R.a*1.5,sg=R.d,e=R.px;
+return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\n\n1. الدخول: '+f(e)+'\n2. الاستوب: '+f(e-sg*k)+'\n3. الهدف 1: '+f(e+sg*k*2)+'\n4. الهدف 2: '+f(e+sg*k*3)+'\n\n⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.'}
 async function maybe(sym,R){s('tg_auto',$('atg').checked?'1':'0');if(!$('atg').checked)return;
 const k='tg_last_'+sym,last=g(k)||'wait';if(R.side===last)return;
 if(R.side==='wait'){s(k,'wait');return}
