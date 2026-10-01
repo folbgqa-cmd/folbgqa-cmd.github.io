@@ -173,12 +173,21 @@
     const min = ctx.min || 70; let why = '';
     if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (sc < min) why = 'قوة التوافق ' + sc + '% أقل من ' + min + '%';
 
-    // ===== الوقف والأهداف: ثابتة بنقاط MT5 على كل الفريمات =====
-    // الوقف والهدفان كلهم بين 700 و1500 نقطة. كل ما قوي التوافق وتأكيد نقاط الدخول (q أعلى) صار الوقف أقرب (700) وإلا يوسع (حتى 900).
-    // نقطة MT5 = عُشر النقطة (pip) المعتادة: ذهب 0.01$، وأزواج الفوركس 0.00001.
-    const unit = pr.pip / 10;
+    // ===== الوقف والأهداف بنقاط MT5 (النقطة = 0.01$ للذهب، 100 نقطة = 1$) =====
+    // الوقف والهدفان كلهم بين 700 و1500 نقطة على كل الفريمات. الهدف مو لازم يكون أكبر من الوقف.
+    // تتحدد حسب: حركة السوق (ATR بالنقاط، فتتغير مع الفريم)، قوة التوافق، وأقرب قمة/قاع قريب (الوقف خلف أقرب قاع/قمة حماية، والهدف الأول عند أقرب قمة/قاع أمام السعر).
+    const unit = pr.pip / 10, cl = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x)), r10 = x => Math.round(x / 10) * 10;
+    const aP = a / unit;
     const q = Math.max(0, Math.min(1, 0.6 * (sc - 70) / 30 + 0.4 * Math.min(evW / 8, 1)));
-    const SL = Math.round(900 - q * 200), T1 = Math.round(SL * 1.5), T2 = Math.min(1500, Math.round(SL * 2));
+    const sgn = d || 1, from = Math.max(3, n - 120);
+    const lows = P.pl.filter(i => i >= from).map(i => l[i]), highs = P.ph.filter(i => i >= from).map(i => h[i]);
+    const prot = sgn > 0 ? Math.max(-Infinity, ...lows.filter(x => x < px)) : Math.min(Infinity, ...highs.filter(x => x > px));
+    const front = sgn > 0 ? Math.min(Infinity, ...highs.filter(x => x > px)) : Math.max(-Infinity, ...lows.filter(x => x < px));
+    const dProt = isFinite(prot) ? Math.abs(px - prot) / unit + 0.15 * aP : null, dFront = isFinite(front) ? Math.abs(front - px) / unit : null;
+    const slBase = aP * (1.1 - 0.4 * q), t1Base = aP * (0.6 + 0.5 * q), t2Base = aP * (1 + 0.8 * q);
+    const SL = cl(r10(dProt != null ? 0.5 * slBase + 0.5 * dProt : slBase), 700, 1500);
+    const T1 = cl(r10(dFront != null ? 0.5 * t1Base + 0.5 * dFront : t1Base), 700, 1400);
+    const T2 = cl(r10(Math.max(t2Base, T1 + 100)), T1 + 100, 1500);
     return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: px - d * SL * unit, tp1: px + d * T1 * unit, tp2: px + d * T2 * unit, pips: SL / 10 };
   }
   const API = { analyze };
