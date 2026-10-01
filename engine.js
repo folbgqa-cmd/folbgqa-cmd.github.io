@@ -1,4 +1,4 @@
-// محرك التحليل: 35 أداة مختارة من مدارس واستراتيجيات الفوركس.
+// محرك التحليل: 30 أداة مختارة من مدارس واستراتيجيات الفوركس.
 // نفس الملف يستخدمه الموقع (signals.html) وبوت تيليجرام (scripts/gold_signals.mjs).
 (function (root) {
   'use strict';
@@ -149,40 +149,6 @@
     for (let j = n - 2; j <= n; j++) { if (l[j] < L40 && c[j] > L40) v25 = 1; else if (h[j] > H40 && c[j] < H40) v25 = -1; }
     T('Spring / Upthrust', 'ويكوف', 2, v25, W(v25, 'Spring: كسر كاذب للقاع', 'Upthrust: كسر كاذب للقمة', 'لا Spring أو Upthrust'), true);
 
-    // ===== أدوات تقوية بسيطة (5): كلها تصوّت فقط لما يكون عندها رأي واضح وتسكت بغير ذلك، فما تقلل الصفقات =====
-    // Supertrend (10, 3)
-    const stT = (() => { const p = 10, m = 3, A = atrS(h, l, c, p); let fu = null, fl = null, t = 1;
-      for (let i = p; i <= n; i++) { const hl2 = (h[i] + l[i]) / 2, bu = hl2 + m * A[i], bl = hl2 - m * A[i];
-        if (fu === null) { fu = bu; fl = bl; t = c[i] >= hl2 ? 1 : -1; continue; }
-        const pfu = fu, pfl = fl;
-        fu = (bu < pfu || c[i - 1] > pfu) ? bu : pfu; fl = (bl > pfl || c[i - 1] < pfl) ? bl : pfl;
-        if (t === 1 && c[i] < pfl) t = -1; else if (t === -1 && c[i] > pfu) t = 1; }
-      return t; })();
-    T('Supertrend', 'الكلاسيكي', 3, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
-    // Stochastic (14,3,3): تقاطع بمنطقة تشبع
-    const so = (() => { const raw = [], K = [], D = [];
-      for (let i = n - 8; i <= n; i++) { const a14 = mx(h, i - 13, i), b14 = mn(l, i - 13, i); raw.push(a14 > b14 ? 100 * (c[i] - b14) / (a14 - b14) : 50); }
-      for (let i = 2; i < raw.length; i++) K.push((raw[i] + raw[i - 1] + raw[i - 2]) / 3);
-      for (let i = 2; i < K.length; i++) D.push((K[i] + K[i - 1] + K[i - 2]) / 3);
-      return { K, D }; })();
-    const kL = so.K, dL = so.D;
-    const ku = (kL[6] > dL[4] && kL[5] <= dL[3]) || (kL[5] > dL[3] && kL[4] <= dL[2]), kd = (kL[6] < dL[4] && kL[5] >= dL[3]) || (kL[5] < dL[3] && kL[4] >= dL[2]);
-    const v31 = ku && Math.min(kL[4], kL[5], kL[6]) < 30 ? 1 : kd && Math.max(kL[4], kL[5], kL[6]) > 70 ? -1 : 0;
-    T('Stochastic', 'الكلاسيكي', 3, v31, W(v31, 'تقاطع صاعد من منطقة تشبع بيع', 'تقاطع هابط من منطقة تشبع شراء', 'لا تقاطع بمنطقة تشبع'), true);
-    // CCI (20)
-    const cci = (() => { const p = 20, tp = []; for (let i = n - p + 1; i <= n; i++) tp.push((h[i] + l[i] + c[i]) / 3);
-      const sm = tp.reduce((s, x) => s + x, 0) / p, md = tp.reduce((s, x) => s + Math.abs(x - sm), 0) / p; return md ? (tp[p - 1] - sm) / (0.015 * md) : 0; })();
-    const v32 = cci > 100 ? 1 : cci < -100 ? -1 : 0;
-    T('CCI', 'الكلاسيكي', 2, v32, 'CCI ' + cci.toFixed(0) + W(v32, ': زخم صاعد قوي', ': زخم هابط قوي', ': محايد'));
-    // Bollinger (20,2): اختراق مع اتساع الباند
-    const bb = i => { let s = 0; for (let k = i - 19; k <= i; k++) s += c[k]; const m = s / 20; let q = 0; for (let k = i - 19; k <= i; k++) q += (c[k] - m) * (c[k] - m); const sd = Math.sqrt(q / 20); return { up: m + 2 * sd, lo: m - 2 * sd, w: 4 * sd }; };
-    const b0 = bb(n), b5 = bb(n - 5);
-    const v33 = c[n] > b0.up && b0.w > b5.w ? 1 : c[n] < b0.lo && b0.w > b5.w ? -1 : 0;
-    T('Bollinger اختراق', 'الكلاسيكي', 2, v33, W(v33, 'إغلاق فوق الباند العلوي والباند يتسع', 'إغلاق تحت الباند السفلي والباند يتسع', 'داخل الباند'), true);
-    // زخم السعر (ROC) مقاس بوحدات ATR
-    const mom = (c[n] - c[n - 10]) / a, v34 = mom > 1.5 ? 1 : mom < -1.5 ? -1 : 0;
-    T('زخم السعر (10 شموع)', 'الكلاسيكي', 2, v34, 'الحركة ' + mom.toFixed(1) + ' ATR' + W(v34, ': زخم صاعد', ': زخم هابط', ': هادئ'));
-
     // ===== فلاتر: الجلسة، الأخبار، التذبذب، قوة الترند (تدخل بالنسبة فقط، ما تمنع الدخول) =====
     const S = ctx.ses(pr, now), N = ctx.nk(pr.c, now);
     const fl = (name, school, w, ok, text) => F.push({ n: name, s: school, w, v: null, f: true, ok, t: text, ev: false, p: 0, m: w });
@@ -235,7 +201,7 @@
     if (sc >= 85) { gp += 2; gu.push('اتفاق عالي جداً ' + sc + '%'); } else if (sc >= 78) { gp += 1; gu.push('اتفاق عالي ' + sc + '%'); }
     if (evW >= 6) { gp += 2; gu.push('محفزات دخول قوية'); } else if (evW >= 3) { gp += 1; gu.push('فيه محفز دخول'); } else gd.push('بدون محفز دخول');
     if (ax >= 25) { gp += 1; gu.push('ترند قوي (ADX ' + ax.toFixed(0) + ')'); } else if (ax < 15) { gp -= 1; gd.push('ترند ضعيف (ADX ' + ax.toFixed(0) + ')'); }
-    if ([vt('MACD'), vt('Supertrend'), vt('زخم السعر (10 شموع)')].filter(x => x === dir).length === 3) { gp += 1; gu.push('MACD وSupertrend والزخم متفقة'); }
+    if ([vt('MACD'), vt('RSI'), vt('شموع Heikin Ashi')].filter(x => x === dir).length === 3) { gp += 1; gu.push('MACD وRSI وHeikin Ashi متفقة'); }
     if (v2 !== dir) { gp -= 1; gd.push('عكس اتجاه EMA200'); }
     if ((dir > 0 && rs > 75) || (dir < 0 && rs < 25)) { gp -= 1; gd.push('RSI متطرف (احتمال انعكاس)'); }
     if (!S.closed && S.p >= 11) { gp += 1; gu.push('جلسة سيولة عالية'); } else if (!S.closed && S.p <= 3) { gp -= 1; gd.push('سيولة ضعيفة'); }
