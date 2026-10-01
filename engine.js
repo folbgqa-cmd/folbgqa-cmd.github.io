@@ -1,4 +1,4 @@
-// محرك التحليل: 30 أداة مختارة من مدارس واستراتيجيات الفوركس.
+// محرك التحليل: 35 أداة مختارة من مدارس واستراتيجيات الفوركس.
 // نفس الملف يستخدمه الموقع (signals.html) وبوت تيليجرام (scripts/gold_signals.mjs).
 (function (root) {
   'use strict';
@@ -54,7 +54,7 @@
     const e20 = E20[n], e50 = E50[n], e100 = E100[n], e200 = E200[n];
     const AT = atrS(h, l, c), a = AT[n];
     const hh = mx(h, n - 20, n - 1), ll = mn(l, n - 20, n - 1);
-    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0; // ترتيب المتوسطات: أداة وحدة من الـ 30 (مو شرط)
+    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0; // ترتيب المتوسطات: أداة وحدة من الأدوات (مو شرط)
     const P = pivots(h, l, n);
     const F = [];
     // ev: أداة حدث (تعتبر نقطة دخول). f: فلتر (يتفق مع أي اتجاه).
@@ -149,6 +149,40 @@
     for (let j = n - 2; j <= n; j++) { if (l[j] < L40 && c[j] > L40) v25 = 1; else if (h[j] > H40 && c[j] < H40) v25 = -1; }
     T('Spring / Upthrust', 'ويكوف', 2, v25, W(v25, 'Spring: كسر كاذب للقاع', 'Upthrust: كسر كاذب للقمة', 'لا Spring أو Upthrust'), true);
 
+    // ===== أدوات تقوية بسيطة (5): كلها تصوّت فقط لما يكون عندها رأي واضح وتسكت بغير ذلك، فما تقلل الصفقات =====
+    // Supertrend (10, 3)
+    const stT = (() => { const p = 10, m = 3, A = atrS(h, l, c, p); let fu = null, fl = null, t = 1;
+      for (let i = p; i <= n; i++) { const hl2 = (h[i] + l[i]) / 2, bu = hl2 + m * A[i], bl = hl2 - m * A[i];
+        if (fu === null) { fu = bu; fl = bl; t = c[i] >= hl2 ? 1 : -1; continue; }
+        const pfu = fu, pfl = fl;
+        fu = (bu < pfu || c[i - 1] > pfu) ? bu : pfu; fl = (bl > pfl || c[i - 1] < pfl) ? bl : pfl;
+        if (t === 1 && c[i] < pfl) t = -1; else if (t === -1 && c[i] > pfu) t = 1; }
+      return t; })();
+    T('Supertrend', 'الكلاسيكي', 3, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
+    // Stochastic (14,3,3): تقاطع بمنطقة تشبع
+    const so = (() => { const raw = [], K = [], D = [];
+      for (let i = n - 8; i <= n; i++) { const a14 = mx(h, i - 13, i), b14 = mn(l, i - 13, i); raw.push(a14 > b14 ? 100 * (c[i] - b14) / (a14 - b14) : 50); }
+      for (let i = 2; i < raw.length; i++) K.push((raw[i] + raw[i - 1] + raw[i - 2]) / 3);
+      for (let i = 2; i < K.length; i++) D.push((K[i] + K[i - 1] + K[i - 2]) / 3);
+      return { K, D }; })();
+    const kL = so.K, dL = so.D;
+    const ku = (kL[6] > dL[4] && kL[5] <= dL[3]) || (kL[5] > dL[3] && kL[4] <= dL[2]), kd = (kL[6] < dL[4] && kL[5] >= dL[3]) || (kL[5] < dL[3] && kL[4] >= dL[2]);
+    const v31 = ku && Math.min(kL[4], kL[5], kL[6]) < 30 ? 1 : kd && Math.max(kL[4], kL[5], kL[6]) > 70 ? -1 : 0;
+    T('Stochastic', 'الكلاسيكي', 3, v31, W(v31, 'تقاطع صاعد من منطقة تشبع بيع', 'تقاطع هابط من منطقة تشبع شراء', 'لا تقاطع بمنطقة تشبع'), true);
+    // CCI (20)
+    const cci = (() => { const p = 20, tp = []; for (let i = n - p + 1; i <= n; i++) tp.push((h[i] + l[i] + c[i]) / 3);
+      const sm = tp.reduce((s, x) => s + x, 0) / p, md = tp.reduce((s, x) => s + Math.abs(x - sm), 0) / p; return md ? (tp[p - 1] - sm) / (0.015 * md) : 0; })();
+    const v32 = cci > 100 ? 1 : cci < -100 ? -1 : 0;
+    T('CCI', 'الكلاسيكي', 2, v32, 'CCI ' + cci.toFixed(0) + W(v32, ': زخم صاعد قوي', ': زخم هابط قوي', ': محايد'));
+    // Bollinger (20,2): اختراق مع اتساع الباند
+    const bb = i => { let s = 0; for (let k = i - 19; k <= i; k++) s += c[k]; const m = s / 20; let q = 0; for (let k = i - 19; k <= i; k++) q += (c[k] - m) * (c[k] - m); const sd = Math.sqrt(q / 20); return { up: m + 2 * sd, lo: m - 2 * sd, w: 4 * sd }; };
+    const b0 = bb(n), b5 = bb(n - 5);
+    const v33 = c[n] > b0.up && b0.w > b5.w ? 1 : c[n] < b0.lo && b0.w > b5.w ? -1 : 0;
+    T('Bollinger اختراق', 'الكلاسيكي', 2, v33, W(v33, 'إغلاق فوق الباند العلوي والباند يتسع', 'إغلاق تحت الباند السفلي والباند يتسع', 'داخل الباند'), true);
+    // زخم السعر (ROC) مقاس بوحدات ATR
+    const mom = (c[n] - c[n - 10]) / a, v34 = mom > 1.5 ? 1 : mom < -1.5 ? -1 : 0;
+    T('زخم السعر (10 شموع)', 'الكلاسيكي', 2, v34, 'الحركة ' + mom.toFixed(1) + ' ATR' + W(v34, ': زخم صاعد', ': زخم هابط', ': هادئ'));
+
     // ===== فلاتر: الجلسة، الأخبار، التذبذب، قوة الترند (تدخل بالنسبة فقط، ما تمنع الدخول) =====
     const S = ctx.ses(pr, now), N = ctx.nk(pr.c, now);
     const fl = (name, school, w, ok, text) => F.push({ n: name, s: school, w, v: null, f: true, ok, t: text, ev: false, p: 0, m: w });
@@ -170,7 +204,15 @@
     for (const x of F) x.p = x.f ? x.ok : x.v === dir ? x.w : 0;
     const min = ctx.min || 70, why = sc < min ? 'قوة التوافق ' + sc + '% أقل من ' + min + '%' : '';
 
-    // ===== الوقف والأهداف بنقاط MT5 (النقطة = 0.01$ للذهب، 100 نقطة = 1$) =====
+    // ===== نوع الدخول: فوري أو أمر معلّق =====
+    // فوري: السعر قريب من منطقة الدخول. Limit: السعر ممتد بعيد عن EMA20 فننتظر رجوعه. Stop: ما فيه محفز بعد والسعر قريب من مستوى الاختراق.
+    const ex = dir * (px - e20) / a, bk = dir > 0 ? hh : ll, toBk = dir * (bk - px) / a, trig = evW >= 3;
+    let order = { type: 'market', price: px, label: 'ادخل الآن (Market)', why: trig ? 'فيه محفز دخول والسعر قريب من منطقة الدخول' : 'السعر قريب من منطقة الدخول' };
+    if (ex > 1.5 || (!trig && ex > 0.8)) order = { type: 'limit', price: e20, label: dir > 0 ? 'أمر معلّق Buy Limit' : 'أمر معلّق Sell Limit', why: 'السعر بعيد عن EMA20 (' + ex.toFixed(1) + ' ATR)، الأفضل تنتظر رجوعه لـ EMA20' };
+    else if (!trig && toBk > 0 && toBk <= 1.0) order = { type: 'stop', price: bk + dir * 0.1 * a, label: dir > 0 ? 'أمر معلّق Buy Stop' : 'أمر معلّق Sell Stop', why: 'ما فيه محفز بعد، والسعر قريب من مستوى الاختراق (' + toBk.toFixed(1) + ' ATR)' };
+    const ent = order.price;
+
+    // ===== الوقف والأهداف بنقاط MT5 (النقطة = 0.01$ للذهب، 100 نقطة = 1$) من سعر الدخول =====
     // الوقف والهدفان كلهم بين 700 و1500 نقطة على كل الفريمات. الهدف مو لازم يكون أكبر من الوقف.
     // تتحدد حسب: حركة السوق (ATR بالنقاط، فتتغير مع الفريم)، قوة التوافق، وأقرب قمة/قاع قريب (الوقف خلف أقرب قاع/قمة حماية، والهدف الأول عند أقرب قمة/قاع أمام السعر).
     const unit = pr.pip / 10, cl = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x)), r10 = x => Math.round(x / 10) * 10;
@@ -178,14 +220,14 @@
     const q = Math.max(0, Math.min(1, 0.6 * (sc - 70) / 30 + 0.4 * Math.min(evW / 8, 1)));
     const from = Math.max(3, n - 120);
     const lows = P.pl.filter(i => i >= from).map(i => l[i]), highs = P.ph.filter(i => i >= from).map(i => h[i]);
-    const prot = dir > 0 ? Math.max(-Infinity, ...lows.filter(x => x < px)) : Math.min(Infinity, ...highs.filter(x => x > px));
-    const front = dir > 0 ? Math.min(Infinity, ...highs.filter(x => x > px)) : Math.max(-Infinity, ...lows.filter(x => x < px));
-    const dProt = isFinite(prot) ? Math.abs(px - prot) / unit + 0.15 * aP : null, dFront = isFinite(front) ? Math.abs(front - px) / unit : null;
+    const prot = dir > 0 ? Math.max(-Infinity, ...lows.filter(x => x < ent)) : Math.min(Infinity, ...highs.filter(x => x > ent));
+    const front = dir > 0 ? Math.min(Infinity, ...highs.filter(x => x > ent)) : Math.max(-Infinity, ...lows.filter(x => x < ent));
+    const dProt = isFinite(prot) ? Math.abs(ent - prot) / unit + 0.15 * aP : null, dFront = isFinite(front) ? Math.abs(front - ent) / unit : null;
     const slBase = aP * (1.1 - 0.4 * q), t1Base = aP * (0.6 + 0.5 * q), t2Base = aP * (1 + 0.8 * q);
     const SL = cl(r10(dProt != null ? 0.5 * slBase + 0.5 * dProt : slBase), 700, 1500);
     const T1 = cl(r10(dFront != null ? 0.5 * t1Base + 0.5 * dFront : t1Base), 700, 1400);
     const T2 = cl(r10(Math.max(t2Base, T1 + 100)), T1 + 100, 1500);
-    return { px, a, F, sc, side: why ? 'wait' : dir > 0 ? 'buy' : 'sell', why, d: dir, hh, ll, S, N, ag, dg, miss: 0, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: px - dir * SL * unit, tp1: px + dir * T1 * unit, tp2: px + dir * T2 * unit, pips: SL / 10 };
+    return { px, entry: ent, order, a, F, sc, side: why ? 'wait' : dir > 0 ? 'buy' : 'sell', why, d: dir, hh, ll, S, N, ag, dg, miss: 0, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: ent - dir * SL * unit, tp1: ent + dir * T1 * unit, tp2: ent + dir * T2 * unit, pips: SL / 10 };
   }
   const API = { analyze };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Engine = API;
