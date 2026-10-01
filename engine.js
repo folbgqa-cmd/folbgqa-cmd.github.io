@@ -227,7 +227,22 @@
     const SL = cl(r10(dProt != null ? 0.5 * slBase + 0.5 * dProt : slBase), 700, 1500);
     const T1 = cl(r10(dFront != null ? 0.5 * t1Base + 0.5 * dFront : t1Base), 700, 1400);
     const T2 = cl(r10(Math.max(t2Base, T1 + 100)), T1 + 100, 1500);
-    return { px, entry: ent, order, a, F, sc, side: why ? 'wait' : dir > 0 ? 'buy' : 'sell', why, d: dir, hh, ll, S, N, ag, dg, miss: 0, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: ent - dir * SL * unit, tp1: ent + dir * T1 * unit, tp2: ent + dir * T2 * unit, pips: SL / 10 };
+
+    // ===== درجة جودة الإشارة: للترتيب والتمييز فقط، ما تمنع ولا تقلل أي صفقة =====
+    // كل صفقة نسبتها 70% أو أكثر تبقى تطلع، لكن تنعطى ⭐ حسب التأكيدات (محفزات، ترند، زخم، جلسة، أخبار) فتعرف القوية من العادية.
+    const vt = nm2 => { const x = F.find(y => y.n === nm2); return x ? x.v : 0; };
+    let gp = 0; const gu = [], gd = [];
+    if (sc >= 85) { gp += 2; gu.push('اتفاق عالي جداً ' + sc + '%'); } else if (sc >= 78) { gp += 1; gu.push('اتفاق عالي ' + sc + '%'); }
+    if (evW >= 6) { gp += 2; gu.push('محفزات دخول قوية'); } else if (evW >= 3) { gp += 1; gu.push('فيه محفز دخول'); } else gd.push('بدون محفز دخول');
+    if (ax >= 25) { gp += 1; gu.push('ترند قوي (ADX ' + ax.toFixed(0) + ')'); } else if (ax < 15) { gp -= 1; gd.push('ترند ضعيف (ADX ' + ax.toFixed(0) + ')'); }
+    if ([vt('MACD'), vt('Supertrend'), vt('زخم السعر (10 شموع)')].filter(x => x === dir).length === 3) { gp += 1; gu.push('MACD وSupertrend والزخم متفقة'); }
+    if (v2 !== dir) { gp -= 1; gd.push('عكس اتجاه EMA200'); }
+    if ((dir > 0 && rs > 75) || (dir < 0 && rs < 25)) { gp -= 1; gd.push('RSI متطرف (احتمال انعكاس)'); }
+    if (!S.closed && S.p >= 11) { gp += 1; gu.push('جلسة سيولة عالية'); } else if (!S.closed && S.p <= 3) { gp -= 1; gd.push('سيولة ضعيفة'); }
+    if (N.v === 2) { gp -= 2; gd.push('خبر قوي قريب'); } else if (N.v === 0) { gp += 1; gu.push('ما فيه خبر قريب'); }
+    const grade = { pts: gp, stars: gp >= 6 ? 3 : gp >= 3 ? 2 : 1, label: gp >= 6 ? 'ممتازة' : gp >= 3 ? 'جيدة' : 'عادية', up: gu, down: gd };
+
+    return { px, entry: ent, order, grade, a, F, sc, side: why ? 'wait' : dir > 0 ? 'buy' : 'sell', why, d: dir, hh, ll, S, N, ag, dg, miss: 0, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: ent - dir * SL * unit, tp1: ent + dir * T1 * unit, tp2: ent + dir * T2 * unit, pips: SL / 10 };
   }
   const API = { analyze };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Engine = API;
