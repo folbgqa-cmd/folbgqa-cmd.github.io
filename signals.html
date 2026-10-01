@@ -28,10 +28,15 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 .bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin:6px 0;position:relative}
 .bar i{display:block;height:100%;background:var(--teal)}.bar.lo i{background:var(--amber)}
 .bar:after{content:"";position:absolute;inset-block:0;inset-inline-start:70%;width:2px;background:var(--ink)}
-.lv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0}
-.lv div{border:1px solid var(--line);border-radius:4px;padding:8px 12px;background:#fff}
-.lv small{color:var(--mute);display:block}
-.lv strong{font-family:'Reem Kufi';font-size:22px}
+/* مستويات الصفقة: عمود واحد بالترتيب (دخول، استوب، هدف 1، هدف 2) */
+.lv{display:grid;grid-template-columns:1fr;gap:10px;margin:16px 0;max-width:520px}
+.lv div{border:1px solid var(--line);border-radius:6px;padding:10px 16px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.lv small{color:var(--mute);display:block;font-size:14px}
+.lv strong{font-family:'Reem Kufi';font-size:26px}
+.lv .st{background:#C62828;border-color:#C62828;color:#fff}
+.lv .t1{background:#15803D;border-color:#15803D;color:#fff}
+.lv .t2{background:#1D4ED8;border-color:#1D4ED8;color:#fff}
+.lv .st small,.lv .t1 small,.lv .t2 small{color:rgba(255,255,255,.9)}
 .wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
 th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
@@ -51,7 +56,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 30 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، ويكوف، أخبار وجلسات). تظهر إشارة دخول فقط إذا اتفقت الأدوات بنسبة 70% أو أكثر مع وجود نقطة دخول، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 30 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، ويكوف، أخبار وجلسات). تظهر إشارة دخول فقط إذا اتفقت الأدوات بنسبة 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -133,12 +138,12 @@ const nm={buy:"دخول شراء",sell:"دخول بيع",wait:"انتظر"};
 function ta(sym){const w=$('ta');w.innerHTML='<div class="tradingview-widget-container__widget"></div>';const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';s.async=true;s.text=JSON.stringify({interval:"15m",width:"100%",height:"100%",symbol:sym,showIntervalTabs:true,locale:"ar_AE",colorTheme:"light",isTransparent:false});w.appendChild(s)}
 const fx=x=>(+x).toFixed(1).replace(/\.0$/,'');
 function op(x){return x.f?`<span>${fx(x.ok)}/${x.w}</span>`:x.v>0?'<span class="t-buy">شراء</span>':x.v<0?'<span class="t-sell">بيع</span>':'-'}
-function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d);
+function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d),ent=R.entry!=null?R.entry:R.px;
 $('outsec').hidden=false;
 $('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</div><div><h2>${sym} - ${p.n}</h2><p>السعر ${f(R.px)} | ${R.S.t}</p><div class="bar ${R.sc<70?'lo':''}"><i style="width:${R.sc}%"></i></div><p><b>قوة التوافق ${R.sc}%</b> (الحد الأدنى للدخول 70%)</p></div></div>`+
 (R.side=="wait"?`<p style="margin:14px 0"><b>سبب الانتظار:</b> ${R.why}</p>`:
-`<div class="lv"><div><small>نقطة الدخول</small><strong>${f(R.px)}</strong></div><div><small>وقف الخسارة (${R.pts.sl} نقطة)</small><strong>${f(R.sl)}</strong></div><div><small>الهدف 1 (${R.pts.tp1} نقطة)</small><strong>${f(R.tp1)}</strong></div><div><small>الهدف 2 (${R.pts.tp2} نقطة)</small><strong>${f(R.tp2)}</strong></div></div>`)+
-`<h3>تفاصيل التحليل (${R.tools} أداة)</h3><p style="color:var(--mute);font-size:13px">وزن الأدوات المتفقة ${fx(R.ag)} مقابل المختلفة ${fx(R.dg)} = ${R.sc}%. وزن نقاط الدخول المتفقة ${R.evW} (المطلوب 6 على الأقل). ⚡ تعني أداة نقطة دخول.</p><div class="wrap"><table><thead><tr><th>الأداة</th><th>المدرسة</th><th>الرأي</th><th>الوزن</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}${x.ev?' ⚡':''}</td><td>${x.s}</td><td>${op(x)}</td><td>${x.w}</td><td>${x.t}</td></tr>`).join('')}</tbody></table></div>`+
+`<div class="lv"><div class="en"><small>الدخول${R.order?' - '+R.order.label:''}</small><strong>${f(ent)}</strong></div><div class="st"><small>الاستوب (${R.pts.sl} نقطة)</small><strong>${f(R.sl)}</strong></div><div class="t1"><small>الهدف الأول (${R.pts.tp1} نقطة)</small><strong>${f(R.tp1)}</strong></div><div class="t2"><small>الهدف الثاني (${R.pts.tp2} نقطة)</small><strong>${f(R.tp2)}</strong></div></div>`)+
+`<h3>تفاصيل التحليل (${R.tools} أداة)</h3><p style="color:var(--mute);font-size:13px">وزن الأدوات المتفقة ${fx(R.ag)} مقابل المختلفة ${fx(R.dg)} = ${R.sc}%. الدخول يعتمد على هذي النسبة فقط (70% أو أكثر). ⚡ تعني أداة نقطة دخول.</p><div class="wrap"><table><thead><tr><th>الأداة</th><th>المدرسة</th><th>الرأي</th><th>الوزن</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}${x.ev?' ⚡':''}</td><td>${x.s}</td><td>${op(x)}</td><td>${x.w}</td><td>${x.t}</td></tr>`).join('')}</tbody></table></div>`+
 `<h3>أخبار هذا الزوج (${p.c.join(' + ')}) خلال 24 ساعة</h3><div class="wrap"><table><thead><tr><th>الوقت (بغداد)</th><th>العملة</th><th>الخبر</th><th>التأثير</th><th>المتوقع</th><th>السابق</th></tr></thead><tbody>${R.NL.map(e=>`<tr><td>${tm(e.ts)}</td><td>${e.country}</td><td>${esc(e.title)}</td><td class="${e.impact[0]}">${e.impact==='High'?'قوي':'متوسط'}</td><td>${esc(e.forecast)||'-'}</td><td>${esc(e.previous)||'-'}</td></tr>`).join('')||`<tr><td colspan="6">${EV?'لا أخبار متوسطة أو قوية بالـ 24 ساعة':'الأخبار غير متاحة'}</td></tr>`}</tbody></table></div>`+
 `<p style="color:var(--mute);font-size:13px;margin-top:8px">الوقف والأهداف ثابتة بنقاط MT5 (من 700 إلى 1500 نقطة) على كل الفريمات، وتقرب الوقف كل ما قوي التوافق. قمة 20 شمعة ${f(R.hh)}، قاع 20 شمعة ${f(R.ll)}. آخر تحديث ${new Date().toLocaleTimeString('ar-IQ')}.</p>`;
 ta(p.tv)}
@@ -146,7 +151,7 @@ async function run(){$('err').style.color='';$('err').textContent='';const sym=$
 try{$('go').disabled=true;const v=await get(sym,$('tf').value);await news();show(sym,analyze(v,P[sym],Date.now()))}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
 async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;
 let i=0;for(const sym of Object.keys(P)){try{if(i++)await new Promise(r=>setTimeout(r,7500));const v=await get(sym,$('tf').value);await news();const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
-const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
+const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.entry!=null?R.entry:R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
 tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
 catch(e){$('err').textContent=e.message;break}}
 $('scan').disabled=false}
