@@ -47,15 +47,17 @@ function ses(pr, now) {
 }
 const analyze = (v, pr, now) => Engine.analyze(v, pr, now, { ses, nk, min: cfg.minConf });
 
-// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) والنسبة بالسطر الأول
+// فرق السعر بين Twelve Data ووسيطك (بالدولار): من config.json (offsets) وتغييره من تلي بالأمر /offset
+const offs = () => ({ ...(cfg.offsets || {}), ...(state.offs || {}) });
+// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) بنقاط المحرك (700 إلى 1500)
 function message(sym, R) {
-  const f = x => x.toFixed(P[sym].d), k = R.a * 1.5, sg = R.d, e = R.px;
+  const o = offs()[sym] || 0, f = x => (x + o).toFixed(P[sym].d), pt = R.pts;
   return `${R.side === 'buy' ? '🟢 شراء' : '🔴 بيع'} ${P[sym].n} ${sym} (M15) | قوة التوافق ${R.sc}%
 
-1. الدخول: ${f(e)}
-2. الاستوب: ${f(e - sg * k)}
-3. الهدف 1: ${f(e + sg * k * 2)}
-4. الهدف 2: ${f(e + sg * k * 3)}
+1. الدخول: ${f(R.px)}
+2. الاستوب: ${f(R.sl)} (${pt.sl} نقطة)
+3. الهدف 1: ${f(R.tp1)} (${pt.tp1} نقطة)
+4. الهدف 2: ${f(R.tp2)} (${pt.tp2} نقطة)
 
 ⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.`;
 }
@@ -71,6 +73,7 @@ const activeList = () => { const s = state.sel ?? cfg.pairs; return Array.isArra
 const K = { gold: 'XAU/USD', xau: 'XAU/USD', 'ذهب': 'XAU/USD', eur: 'EUR/USD', 'يورو': 'EUR/USD', gbp: 'GBP/USD', pound: 'GBP/USD', 'استرليني': 'GBP/USD', jpy: 'USD/JPY', yen: 'USD/JPY', 'ين': 'USD/JPY', aud: 'AUD/USD', cad: 'USD/CAD', chf: 'USD/CHF' };
 const say = async text => { try { await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: TG_CHAT, text }) }); } catch { } };
 const names = () => activeList().map(s => P[s].n).join('، ');
+const offText = () => Object.entries(offs()).filter(([, v]) => v).map(([k, v]) => `${P[k]?.n || k}: ${v > 0 ? '+' : ''}${v}$`).join('، ') || 'بدون فرق';
 try {
   const ur = await (await fetch(`https://api.telegram.org/bot${TG_TOKEN}/getUpdates?offset=${state.off || 0}&timeout=0`)).json();
   for (const u of ur.result || []) {
@@ -78,12 +81,19 @@ try {
     const m = u.message;
     if (!m || String(m.chat.id) !== String(TG_CHAT) || !m.text || !m.text.startsWith('/')) continue;
     const words = m.text.toLowerCase().replace(/\//g, ' ').split(/\s+/).filter(Boolean);
+    if (words[0] === 'offset') {
+      const sym = words.map(w => K[w]).find(Boolean), num = words.map(w => /^[+-]?\d+(\.\d+)?$/.test(w) ? parseFloat(w) : null).find(x => x !== null);
+      if (!sym || num === undefined) { await say(`الصيغة: /offset gold 2.5\nالرقم = سعر وسيطك ناقص سعر الموقع بالدولار. /offset gold 0 لإلغائه.\nالفروق الحالية: ${offText()}`); continue; }
+      state.offs = { ...(state.offs || {}), [sym]: num };
+      await say(`✅ فرق سعر ${P[sym].n} صار ${num > 0 ? '+' : ''}${num}$. الصفقات الجاية تطابق سعر وسيطك.`);
+      continue;
+    }
     const before = activeList();
-    if (words.includes('list')) { await say(`الأزواج الحالية: ${names()}`); continue; }
+    if (words.includes('list')) { await say(`الأزواج الحالية: ${names()}\nفروق الأسعار: ${offText()}`); continue; }
     if (words.includes('all')) state.sel = 'all';
     else {
       const sel = [...new Set(words.map(w => K[w]).filter(Boolean))];
-      if (!sel.length) { await say(`الأزواج الحالية: ${names()}\nللتغيير اكتب مثلاً: /gold أو /eur أو /gbp /jpy /aud /cad /chf (تكدر تكتب أكثر من زوج بنفس الرسالة: /gold /eur) أو /all للكل. /list لعرض الحالي.`); continue; }
+      if (!sel.length) { await say(`الأزواج الحالية: ${names()}\nللتغيير اكتب مثلاً: /gold أو /eur أو /gbp /jpy /aud /cad /chf (تكدر تكتب أكثر من زوج بنفس الرسالة: /gold /eur) أو /all للكل. /list لعرض الحالي.\nلضبط فرق السعر مع وسيطك: /offset gold 2.5`); continue; }
       state.sel = sel;
     }
     for (const s of activeList()) if (!before.includes(s)) state.pairs[s] = 'wait';
@@ -112,4 +122,4 @@ for (const sym of active) {
   } catch (e) { console.error(sym, e.message); }
   await new Promise(r => setTimeout(r, 1200));
 }
-if (changed) fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, sel: state.sel, off: state.off, at: new Date().toISOString() }));
+if (changed) fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, sel: state.sel, off: state.off, offs: state.offs, at: new Date().toISOString() }));
