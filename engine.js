@@ -172,8 +172,14 @@
     const sc = d ? Math.round(100 * ag / (ag + dg + (ctx.missW || 0) * miss)) : 0;
     const min = ctx.min || 70; let why = '';
     if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (sc < min) why = 'قوة التوافق ' + sc + '% أقل من ' + min + '%';
-    const risk = a * 1.5;
-    return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, evW, tools: F.length, sl: px - d * risk, tp1: px + d * risk * 2, tp2: px + d * risk * 3, pips: risk / pr.pip };
+
+    // ===== الوقف والأهداف: ثابتة بنقاط MT5 على كل الفريمات =====
+    // الوقف والهدفان كلهم بين 700 و1500 نقطة. كل ما قوي التوافق وتأكيد نقاط الدخول (q أعلى) صار الوقف أقرب (700) وإلا يوسع (حتى 900).
+    // نقطة MT5 = عُشر النقطة (pip) المعتادة: ذهب 0.01$، وأزواج الفوركس 0.00001.
+    const unit = pr.pip / 10;
+    const q = Math.max(0, Math.min(1, 0.6 * (sc - 70) / 30 + 0.4 * Math.min(evW / 8, 1)));
+    const SL = Math.round(900 - q * 200), T1 = Math.round(SL * 1.5), T2 = Math.min(1500, Math.round(SL * 2));
+    return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: px - d * SL * unit, tp1: px + d * T1 * unit, tp2: px + d * T2 * unit, pips: SL / 10 };
   }
   const API = { analyze };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Engine = API;
