@@ -159,21 +159,21 @@
     const ax = adxLast(h, l, c); fl('قوة الترند ADX', 'الكلاسيكي', 2, ax >= 20 ? 2 : ax >= 15 ? 1 : 0, 'ADX ' + ax.toFixed(0));
     const v30 = e100 > e200 ? 1 : -1; T('EMA100 مقابل EMA200', 'الكلاسيكي', 1, v30, W(v30, 'EMA100 فوق EMA200', 'EMA100 تحت EMA200'));
 
-    // ===== النتيجة: نسبة واحدة هي معيار الدخول الوحيد =====
-    // الأدوات المتفقة ÷ (المتفقة + المختلفة + 40% من وزن أدوات نقاط الدخول الصامتة).
-    // يعني بدون اختراق أو ارتداد أو سحب سيولة أو نموذج شموع تنزل النسبة تلقائياً ولا توصل 70%.
-    let ag = 0, dg = 0, miss = 0;
+    // ===== النتيجة: نسبة اتفاق الأدوات هي معيار الدخول الوحيد =====
+    // النسبة = وزن الأدوات المتفقة ÷ (المتفقة + المختلفة). الأدوات الصامتة لا تؤثر افتراضياً.
+    // لو تبي تشدد: مرّر ctx.missW (مثلاً 0.4) فتخصم نسبة من وزن أدوات نقاط الدخول الصامتة.
+    let ag = 0, dg = 0, miss = 0, evW = 0;
     for (const x of F) {
       if (x.f) { ag += x.ok; dg += x.w - x.ok; x.p = x.ok; }
-      else if (d && x.v === d) { ag += x.w; x.p = x.w; }
+      else if (d && x.v === d) { ag += x.w; x.p = x.w; if (x.ev) evW += x.w; }
       else if (d && x.v === -d) dg += x.w;
       else if (d && x.ev) miss += x.w;
     }
-    const sc = d ? Math.round(100 * ag / (ag + dg + 0.4 * miss)) : 0;
+    const sc = d ? Math.round(100 * ag / (ag + dg + (ctx.missW || 0) * miss)) : 0;
     const min = ctx.min || 70; let why = '';
     if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (sc < min) why = 'قوة التوافق ' + sc + '% أقل من ' + min + '%';
     const risk = a * 1.5;
-    return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, tools: F.length, sl: px - d * risk, tp1: px + d * risk * 2, tp2: px + d * risk * 3, pips: risk / pr.pip };
+    return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, evW, tools: F.length, sl: px - d * risk, tp1: px + d * risk * 2, tp2: px + d * risk * 3, pips: risk / pr.pip };
   }
   const API = { analyze };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Engine = API;
