@@ -42,6 +42,8 @@ if(o)['px','sl','tp1','tp2','hh','ll'].forEach(k=>{if(typeof R[k]==='number')R[k
 maybe(sym,R);return R};
 const _show=show;
 show=function(sym,R){_show(sym,R);
+// الدخول يعتمد على نسبة التوافق فقط: نشيل عبارة (المطلوب 6 على الأقل) القديمة من الملاحظة
+$('out').querySelectorAll('p').forEach(p=>{if(p.textContent.includes('المطلوب 6 على الأقل'))p.textContent=p.textContent.replace(/\s*وزن نقاط الدخول المتفقة[^.]*\./,'').trim()});
 if(R.off){const n=document.createElement('p');n.style.cssText='color:var(--mute);font-size:13px;margin-top:6px';n.textContent='الأسعار معدلة بفرق '+(R.off>0?'+':'')+R.off+'$ لتطابق وسيطك.';$('out').appendChild(n)}
 if(R.side==='wait')return;const b=document.createElement('button');b.textContent='أرسل هذي الصفقة لتيليجرام';b.style.marginTop='10px';
 b.onclick=async()=>{try{await tg(msg(sym,R));say('أُرسلت الصفقة لتيليجرام')}catch(e){say('تيليجرام: '+e.message,1)}};$('out').appendChild(b)};
