@@ -22,9 +22,9 @@ const say=(t,bad)=>{$('tgm').style.color=bad?'var(--red)':'var(--teal)';$('tgm')
 const gsay=(t,bad)=>{$('gm').style.color=bad?'var(--red)':'var(--teal)';$('gm').textContent=t};
 async function tg(text){const t=$('tk').value.trim(),c=$('ch').value.trim();if(!t||!c)throw new Error('عبّي توكن البوت ورقم الشات');s('tg_tk',t);s('tg_ch',c);
 const r=await fetch('https://api.telegram.org/bot'+t+'/sendMessage?chat_id='+encodeURIComponent(c)+'&text='+encodeURIComponent(text));const j=await r.json();if(!j.ok)throw new Error(j.description||'خطأ تيليجرام')}
-// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) والنسبة بالسطر الأول
-function msg(sym,R){const f=x=>x.toFixed(P[sym].d),k=R.a*1.5,sg=R.d,e=R.px;
-return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\n\n1. الدخول: '+f(e)+'\n2. الاستوب: '+f(e-sg*k)+'\n3. الهدف 1: '+f(e+sg*k*2)+'\n4. الهدف 2: '+f(e+sg*k*3)+'\n\n⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.'}
+// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) بنقاط MT5 من المحرك (700 إلى 1500)
+function msg(sym,R){const f=x=>x.toFixed(P[sym].d),e=R.px,pt=R.pts;
+return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\n\n1. الدخول: '+f(e)+'\n2. الاستوب: '+f(R.sl)+' ('+pt.sl+' نقطة)\n3. الهدف 1: '+f(R.tp1)+' ('+pt.tp1+' نقطة)\n4. الهدف 2: '+f(R.tp2)+' ('+pt.tp2+' نقطة)\n\n⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.'}
 async function maybe(sym,R){s('tg_auto',$('atg').checked?'1':'0');if(!$('atg').checked)return;
 const k='tg_last_'+sym,last=g(k)||'wait';if(R.side===last)return;
 if(R.side==='wait'){s(k,'wait');return}
