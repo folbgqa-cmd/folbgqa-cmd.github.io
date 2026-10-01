@@ -15,7 +15,7 @@ const before = act(state.sel);
 state.sel = PAIR === 'all' ? 'all' : [PAIR];
 // الزوج الجديد يبدأ من "انتظر" حتى ترسل صفقته الحالية إذا كانت محققة الشروط
 for (const p of act(state.sel)) if (!before.includes(p)) state.pairs[p] = 'wait';
-fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, sel: state.sel, off: state.off, at: new Date().toISOString() }));
+fs.writeFileSync('state.json', JSON.stringify({ pairs: state.pairs, sel: state.sel, off: state.off, offs: state.offs, at: new Date().toISOString() }));
 console.log('selection:', JSON.stringify(state.sel));
 
 const { TG_TOKEN, TG_CHAT } = process.env;
