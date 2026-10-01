@@ -54,7 +54,7 @@
     const e20 = E20[n], e50 = E50[n], e100 = E100[n], e200 = E200[n];
     const AT = atrS(h, l, c), a = AT[n];
     const hh = mx(h, n - 20, n - 1), ll = mn(l, n - 20, n - 1);
-    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0;
+    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0; // ترتيب المتوسطات: أداة وحدة من الـ 30 (مو شرط)
     const P = pivots(h, l, n);
     const F = [];
     // ev: أداة حدث (تعتبر نقطة دخول). f: فلتر (يتفق مع أي اتجاه).
@@ -149,7 +149,7 @@
     for (let j = n - 2; j <= n; j++) { if (l[j] < L40 && c[j] > L40) v25 = 1; else if (h[j] > H40 && c[j] < H40) v25 = -1; }
     T('Spring / Upthrust', 'ويكوف', 2, v25, W(v25, 'Spring: كسر كاذب للقاع', 'Upthrust: كسر كاذب للقمة', 'لا Spring أو Upthrust'), true);
 
-    // ===== فلاتر: الجلسة، الأخبار، التذبذب، قوة الترند =====
+    // ===== فلاتر: الجلسة، الأخبار، التذبذب، قوة الترند (تدخل بالنسبة فقط، ما تمنع الدخول) =====
     const S = ctx.ses(pr, now), N = ctx.nk(pr.c, now);
     const fl = (name, school, w, ok, text) => F.push({ n: name, s: school, w, v: null, f: true, ok, t: text, ev: false, p: 0, m: w });
     fl('الجلسة', 'السكالبينغ', 7, S.closed ? 0 : S.p / 15 * 7, S.t);
@@ -159,20 +159,16 @@
     const ax = adxLast(h, l, c); fl('قوة الترند ADX', 'الكلاسيكي', 2, ax >= 20 ? 2 : ax >= 15 ? 1 : 0, 'ADX ' + ax.toFixed(0));
     const v30 = e100 > e200 ? 1 : -1; T('EMA100 مقابل EMA200', 'الكلاسيكي', 1, v30, W(v30, 'EMA100 فوق EMA200', 'EMA100 تحت EMA200'));
 
-    // ===== النتيجة: نسبة اتفاق الأدوات هي معيار الدخول الوحيد =====
-    // النسبة = وزن الأدوات المتفقة ÷ (المتفقة + المختلفة). الأدوات الصامتة لا تؤثر افتراضياً.
-    // اختياري: ctx.minEv يشترط حد أدنى لوزن أدوات نقاط الدخول المتفقة (الافتراضي 0 = بدون شرط).
-    let ag = 0, dg = 0, miss = 0, evW = 0;
-    for (const x of F) {
-      if (x.f) { ag += x.ok; dg += x.w - x.ok; x.p = x.ok; }
-      else if (d && x.v === d) { ag += x.w; x.p = x.w; if (x.ev) evW += x.w; }
-      else if (d && x.v === -d) dg += x.w;
-      else if (d && x.ev) miss += x.w;
-    }
-    const sc = d ? Math.round(100 * ag / (ag + dg + (ctx.missW || 0) * miss)) : 0;
-    const min = ctx.min || 70, minEv = ctx.minEv ?? 0; let why = '';
-    if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (sc < min) why = 'قوة التوافق ' + sc + '% أقل من ' + min + '%';
-    else if (evW < minEv) why = 'لا توجد نقطة دخول: وزن أدوات الدخول المتفقة ' + evW + ' (المطلوب ' + minEv + ')';
+    // ===== النتيجة: نسبة اتفاق كل الأدوات هي شرط الدخول الوحيد =====
+    // لكل اتجاه (شراء/بيع): النسبة = وزن الأدوات المتفقة ÷ (المتفقة + المختلفة). نختار الاتجاه الأعلى نسبة.
+    // إذا النسبة 70% أو أكثر (ctx.min) يطلع دخول، بدون أي شرط ثاني (لا ترند إلزامي، لا منع للأخبار أو الجلسة).
+    const scoreFor = dir => { let ag = 0, dg = 0, evW = 0;
+      for (const x of F) { if (x.f) { ag += x.ok; dg += x.w - x.ok; } else if (x.v === dir) { ag += x.w; if (x.ev) evW += x.w; } else if (x.v === -dir) dg += x.w; }
+      return { dir, ag, dg, evW, sc: Math.round(100 * ag / ((ag + dg) || 1)) }; };
+    const sB = scoreFor(1), sS = scoreFor(-1), best = sB.sc >= sS.sc ? sB : sS;
+    const dir = best.dir, sc = best.sc, ag = best.ag, dg = best.dg, evW = best.evW;
+    for (const x of F) x.p = x.f ? x.ok : x.v === dir ? x.w : 0;
+    const min = ctx.min || 70, why = sc < min ? 'قوة التوافق ' + sc + '% أقل من ' + min + '%' : '';
 
     // ===== الوقف والأهداف بنقاط MT5 (النقطة = 0.01$ للذهب، 100 نقطة = 1$) =====
     // الوقف والهدفان كلهم بين 700 و1500 نقطة على كل الفريمات. الهدف مو لازم يكون أكبر من الوقف.
@@ -180,16 +176,16 @@
     const unit = pr.pip / 10, cl = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x)), r10 = x => Math.round(x / 10) * 10;
     const aP = a / unit;
     const q = Math.max(0, Math.min(1, 0.6 * (sc - 70) / 30 + 0.4 * Math.min(evW / 8, 1)));
-    const sgn = d || 1, from = Math.max(3, n - 120);
+    const from = Math.max(3, n - 120);
     const lows = P.pl.filter(i => i >= from).map(i => l[i]), highs = P.ph.filter(i => i >= from).map(i => h[i]);
-    const prot = sgn > 0 ? Math.max(-Infinity, ...lows.filter(x => x < px)) : Math.min(Infinity, ...highs.filter(x => x > px));
-    const front = sgn > 0 ? Math.min(Infinity, ...highs.filter(x => x > px)) : Math.max(-Infinity, ...lows.filter(x => x < px));
+    const prot = dir > 0 ? Math.max(-Infinity, ...lows.filter(x => x < px)) : Math.min(Infinity, ...highs.filter(x => x > px));
+    const front = dir > 0 ? Math.min(Infinity, ...highs.filter(x => x > px)) : Math.max(-Infinity, ...lows.filter(x => x < px));
     const dProt = isFinite(prot) ? Math.abs(px - prot) / unit + 0.15 * aP : null, dFront = isFinite(front) ? Math.abs(front - px) / unit : null;
     const slBase = aP * (1.1 - 0.4 * q), t1Base = aP * (0.6 + 0.5 * q), t2Base = aP * (1 + 0.8 * q);
     const SL = cl(r10(dProt != null ? 0.5 * slBase + 0.5 * dProt : slBase), 700, 1500);
     const T1 = cl(r10(dFront != null ? 0.5 * t1Base + 0.5 * dFront : t1Base), 700, 1400);
     const T2 = cl(r10(Math.max(t2Base, T1 + 100)), T1 + 100, 1500);
-    return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll, S, N, ag, dg, miss, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: px - d * SL * unit, tp1: px + d * T1 * unit, tp2: px + d * T2 * unit, pips: SL / 10 };
+    return { px, a, F, sc, side: why ? 'wait' : dir > 0 ? 'buy' : 'sell', why, d: dir, hh, ll, S, N, ag, dg, miss: 0, evW, tools: F.length, q, pts: { sl: SL, tp1: T1, tp2: T2 }, sl: px - dir * SL * unit, tp1: px + dir * T1 * unit, tp2: px + dir * T2 * unit, pips: SL / 10 };
   }
   const API = { analyze };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Engine = API;
