@@ -1,19 +1,20 @@
 import fs from 'fs';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const Engine = require('../engine.js'); // نفس محرك الـ 30 أداة المستخدم بصفحة signals.html
 
 const { TG_TOKEN, TG_CHAT, TD_KEY } = process.env;
 if (!TG_TOKEN || !TG_CHAT || !TD_KEY) { console.error('Missing secrets'); process.exit(1); }
 
-// نفس قواعد صفحة signals.html بالضبط (اتجاه 35، اختراق/سيولة 20، ارتداد 15، جلسة 15، أخبار 15)
 let cfg = { minConf: 70 };
 try { cfg = { ...cfg, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) }; } catch { }
 
 const TF = '15min';
 const P = {
-  'XAU/USD': { n: 'الذهب', d: 2, c: ['USD'] }, 'EUR/USD': { n: 'يورو/دولار', d: 5, c: ['EUR', 'USD'] }, 'GBP/USD': { n: 'إسترليني/دولار', d: 5, c: ['GBP', 'USD'] },
-  'USD/JPY': { n: 'دولار/ين', d: 3, c: ['USD', 'JPY'] }, 'AUD/USD': { n: 'أسترالي/دولار', d: 5, c: ['AUD', 'USD'] }, 'USD/CAD': { n: 'دولار/كندي', d: 5, c: ['USD', 'CAD'] }, 'USD/CHF': { n: 'دولار/فرنك', d: 5, c: ['USD', 'CHF'] }
+  'XAU/USD': { n: 'الذهب', d: 2, pip: .1, c: ['USD'] }, 'EUR/USD': { n: 'يورو/دولار', d: 5, pip: 1e-4, c: ['EUR', 'USD'] }, 'GBP/USD': { n: 'إسترليني/دولار', d: 5, pip: 1e-4, c: ['GBP', 'USD'] },
+  'USD/JPY': { n: 'دولار/ين', d: 3, pip: .01, c: ['USD', 'JPY'] }, 'AUD/USD': { n: 'أسترالي/دولار', d: 5, pip: 1e-4, c: ['AUD', 'USD'] }, 'USD/CAD': { n: 'دولار/كندي', d: 5, pip: 1e-4, c: ['USD', 'CAD'] }, 'USD/CHF': { n: 'دولار/فرنك', d: 5, pip: 1e-4, c: ['USD', 'CHF'] }
 };
-const ema = (a, p) => { const k = 2 / (p + 1); let e = a[0]; return a.map((v, i) => (e = i ? v * k + e * (1 - k) : v)); };
-function atr(h, l, c, p = 14) { const t = []; for (let i = 1; i < c.length; i++) t.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1]))); let a = t.slice(0, p).reduce((x, y) => x + y) / p; for (let i = p; i < t.length; i++) a = (a * (p - 1) + t[i]) / p; return a; }
 
 let EV = null;
 try {
@@ -44,26 +45,8 @@ function ses(pr, now) {
   if (tk) return { p: jp ? 8 : 3, t: 'جلسة طوكيو' + (jp ? ' (مناسبة لهذا الزوج)' : ' (سيولة ضعيفة لهذا الزوج)') };
   return { p: jp ? 4 : 2, t: 'جلسة سيدني (سيولة ضعيفة)' };
 }
-function analyze(v, pr, now) {
-  const c = v.map(x => +x.close), h = v.map(x => +x.high), l = v.map(x => +x.low), n = c.length - 1;
-  const e20 = ema(c, 20)[n], e50 = ema(c, 50)[n], e200 = ema(c, 200)[n], a = atr(h, l, c), px = c[n];
-  const hh = Math.max(...h.slice(n - 20, n)), ll = Math.min(...l.slice(n - 20, n));
-  const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0, F = [];
-  let tp = 0, tw = 'لا يوجد ترند واضح';
-  if (d) { tp = 20; tw = d > 0 ? 'EMA20 فوق EMA50 والسعر فوقهما' : 'EMA20 تحت EMA50 والسعر تحتهما'; if ((d > 0) === (px > e200)) { tp += 15; tw += ' ومع اتجاه EMA200'; } else tw += ' لكن عكس EMA200'; }
-  F.push({ n: 'الاتجاه', p: tp, w: tw });
-  const bo = d > 0 ? px > hh : d < 0 ? px < ll : false, sw = d > 0 ? (l[n] < ll && px > ll) : d < 0 ? (h[n] > hh && px < hh) : false, pb = !!d && Math.abs(px - e20) < a * .5;
-  let bp = 0, bw = 'لا اختراق ولا سحب سيولة';
-  if (bo) { bp = 20; bw = d > 0 ? 'اختراق قمة آخر 20 شمعة' : 'كسر قاع آخر 20 شمعة'; } else if (sw) { bp = 20; bw = 'سحب سيولة ثم رجوع بالاتجاه'; }
-  F.push({ n: 'الاختراق والسيولة', p: bp, w: bw });
-  F.push({ n: 'الارتداد', p: pb ? 15 : 0, w: pb ? 'السعر قرب EMA20 مع الترند' : 'السعر بعيد عن EMA20' });
-  const S = ses(pr, now), N = nk(pr.c, now);
-  F.push({ n: 'الجلسة', p: S.p, w: S.t });
-  F.push({ n: 'الأخبار', p: N.v === 0 ? 15 : N.v === 1 ? 7 : 0, w: N.t });
-  const sc = F.reduce((s, x) => s + x.p, 0), trig = bo || sw || pb; let why = '';
-  if (!d) why = 'لا اتجاه واضح'; else if (S.closed) why = S.t; else if (N.v === 2) why = N.t; else if (!trig) why = 'لا توجد نقطة دخول'; else if (sc < cfg.minConf) why = `قوة التوافق ${sc}% أقل من ${cfg.minConf}%`;
-  return { px, a, F, sc, side: why ? 'wait' : d > 0 ? 'buy' : 'sell', why, d, hh, ll };
-}
+const analyze = (v, pr, now) => Engine.analyze(v, pr, now, { ses, nk, min: cfg.minConf });
+
 // رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) والنسبة بالسطر الأول
 function message(sym, R) {
   const f = x => x.toFixed(P[sym].d), k = R.a * 1.5, sg = R.d, e = R.px;
@@ -116,7 +99,7 @@ for (const sym of active) {
     const j = await res.json();
     if (!j.values || j.values.length < 250) { console.error(sym, 'data error:', j.message || 'not enough data'); continue; }
     const R = analyze(j.values.slice().reverse(), P[sym], now), last = state.pairs[sym] || 'wait';
-    console.log(`${sym} side=${R.side} score=${R.sc} last=${last} ${R.why}`);
+    console.log(`${sym} side=${R.side} score=${R.sc} entry=${R.evW} last=${last} ${R.why}`);
     if (R.side === last) continue;
     if (R.side === 'wait') { state.pairs[sym] = 'wait'; changed = true; continue; }
     const tg = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
