@@ -29,23 +29,30 @@ async function loadOffs(){try{const c=await(await fetch('config.json?'+Date.now(
 const t=Object.keys(OFFS).filter(k=>OFFS[k]).map(k=>(P[k]?P[k].n:k)+': '+(OFFS[k]>0?'+':'')+OFFS[k]+'$').join('، ');
 $('offm').textContent=(t?'الفروق الحالية: '+t+'. ':'ما فيه فرق مضبوط. ')+'لضبطه اكتب للبوت بتلي: /offset gold 2.5 (الرقم = سعر وسيطك ناقص سعر الموقع بالدولار)، و/offset gold 0 لإلغائه. يتطبق على الموقع والرسائل خلال دقايق.'}
 loadOffs();setInterval(loadOffs,6e5);
-// رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) بنقاط MT5 من المحرك (700 إلى 1500)
-function msg(sym,R){const f=x=>x.toFixed(P[sym].d),e=R.px,pt=R.pts;
-return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\n\n1. الدخول: '+f(e)+'\n2. الاستوب: '+f(R.sl)+' ('+pt.sl+' نقطة)\n3. الهدف 1: '+f(R.tp1)+' ('+pt.tp1+' نقطة)\n4. الهدف 2: '+f(R.tp2)+' ('+pt.tp2+' نقطة)\n\n⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.'}
+// رسالة واحدة واضحة: صفقة واحدة فقط بنقاط MT5 من المحرك (700 إلى 1500)، مع نوع الدخول ودرجة الجودة
+function msg(sym,R){const f=x=>x.toFixed(P[sym].d),pt=R.pts,gr=R.grade,od=R.order;
+return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\nجودة الإشارة: '+'⭐'.repeat(gr.stars)+' '+gr.label+
+'\n\n'+od.label+'\n1. الدخول: '+f(R.entry)+'\n2. الاستوب: '+f(R.sl)+' ('+pt.sl+' نقطة)\n3. الهدف 1: '+f(R.tp1)+' ('+pt.tp1+' نقطة)\n4. الهدف 2: '+f(R.tp2)+' ('+pt.tp2+' نقطة)'+
+(gr.up.length?'\n\n✅ '+gr.up.join('، '):'')+(gr.down.length?'\n⚠️ '+gr.down.join('، '):'')+'\n\n⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.'}
 async function maybe(sym,R){s('tg_auto',$('atg').checked?'1':'0');if(!$('atg').checked)return;
 const k='tg_last_'+sym,last=g(k)||'wait';if(R.side===last)return;
 if(R.side==='wait'){s(k,'wait');return}
 try{await tg(msg(sym,R));s(k,R.side);say('أُرسلت صفقة '+sym+' ('+(R.side==='buy'?'شراء':'بيع')+')')}catch(e){say('تيليجرام: '+e.message,1)}}
 const _an=analyze;
 analyze=function(v,pr,now){const R=_an(v,pr,now),sym=Object.keys(P).find(x=>P[x]===pr),o=OFFS[sym]||0;R.sym=sym;R.off=o;
-if(o)['px','sl','tp1','tp2','hh','ll'].forEach(k=>{if(typeof R[k]==='number')R[k]+=o});
+if(o)['px','entry','sl','tp1','tp2','hh','ll'].forEach(k=>{if(typeof R[k]==='number')R[k]+=o});
 maybe(sym,R);return R};
 const _show=show;
 show=function(sym,R){_show(sym,R);
 // الدخول يعتمد على نسبة التوافق فقط: نشيل عبارة (المطلوب 6 على الأقل) القديمة من الملاحظة
 $('out').querySelectorAll('p').forEach(p=>{if(p.textContent.includes('المطلوب 6 على الأقل'))p.textContent=p.textContent.replace(/\s*وزن نقاط الدخول المتفقة[^.]*\./,'').trim()});
 if(R.off){const n=document.createElement('p');n.style.cssText='color:var(--mute);font-size:13px;margin-top:6px';n.textContent='الأسعار معدلة بفرق '+(R.off>0?'+':'')+R.off+'$ لتطابق وسيطك.';$('out').appendChild(n)}
-if(R.side==='wait')return;const b=document.createElement('button');b.textContent='أرسل هذي الصفقة لتيليجرام';b.style.marginTop='10px';
+if(R.side==='wait')return;
+// درجة الجودة: ترتّب الصفقات (⭐ إلى ⭐⭐⭐) بدون ما تمنع أي صفقة
+const gr=R.grade,gd=document.createElement('div');gd.style.cssText='margin:12px 0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:#fff';
+gd.innerHTML='<b>جودة الإشارة: '+'⭐'.repeat(gr.stars)+' '+gr.label+'</b> <span style="color:var(--mute);font-size:13px">('+R.order.label+')</span>'+(gr.up.length?'<div style="color:var(--teal);font-size:14px">✅ '+gr.up.join('، ')+'</div>':'')+(gr.down.length?'<div style="color:var(--amber);font-size:14px">⚠️ '+gr.down.join('، ')+'</div>':'');
+const lvl=$('out').querySelector('.lv');if(lvl)lvl.after(gd);else $('out').appendChild(gd);
+const b=document.createElement('button');b.textContent='أرسل هذي الصفقة لتيليجرام';b.style.marginTop='10px';
 b.onclick=async()=>{try{await tg(msg(sym,R));say('أُرسلت الصفقة لتيليجرام')}catch(e){say('تيليجرام: '+e.message,1)}};$('out').appendChild(b)};
 $('tgtest').onclick=async()=>{try{await tg('✅ اختبار: الربط مع تيليجرام يشتغل');say('أُرسلت رسالة الاختبار')}catch(e){say('تيليجرام: '+e.message,1)}};
 // ربط البوت بالزوج المختار: يشغّل workflow على GitHub مع الزوج كمدخل
