@@ -39,6 +39,16 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 .lv .st small,.lv .t1 small,.lv .t2 small{color:rgba(255,255,255,.9)}
 .hs{border:1px solid var(--line);border-radius:6px;background:#fff;padding:12px 16px;max-width:640px}
 .hs ul{margin:6px 22px}
+.hc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.hc .n{border:1px solid var(--line);border-radius:6px;padding:8px 4px;text-align:center}
+.hc small{display:block;color:var(--mute);font-size:13px;line-height:1.4}
+.hc b{font-family:'Reem Kufi';font-size:30px;display:block;line-height:1.3}
+.hc .b b{color:var(--teal)}.hc .s b{color:var(--red)}
+.pk{font-size:16px;margin:6px 0}
+.vd{padding:10px 12px;border-radius:6px;margin:8px 0;font-weight:600;line-height:1.7}
+.vd.ok{background:#E3F4EE;color:#0B5B54}.vd.no{background:#FBE9E7;color:#8A2E26}.vd.mid{background:#FFF4DC;color:#7A5410}
+.nt{font-size:13px;color:var(--mute)}
+.hs details{margin-top:6px;font-size:14px}.hs summary{cursor:pointer;color:var(--mute)}
 .wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
 th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
@@ -166,8 +176,13 @@ const sg=x=>(x>=0?'+':'')+x.toFixed(2)+'%';
 function histCard(R){const h=R.hist;let b;
 if(!h)b='<p>جاري تحميل التاريخ...</p>';
 else if(h.status!=='ok')b=`<p><b>بيانات غير كافية:</b> ${esc(h.reason||'')}. الصفقة تعتمد على الأدوات وحدها.</p>`;
-else{const M=h.maj==='buy'?'شراء':'بيع';b=`<ul><li>البيانات المستخدمة: ${h.data.toLocaleString('en')} شمعة</li><li>الحالات المشابهة: ${h.cases} (صعدت ${h.up} | هبطت ${h.dn} بعد 10 شموع، بعد إزالة ميل السوق العام)${h.tie?' - تساوى العدد وحسمه متوسط الحركة':''}</li><li>العدد الخام بدون إزالة الميل: صعدت ${h.upRaw} | هبطت ${h.dnRaw} (ميل السوق العام بعد 10 شموع: ${sg(h.med)}). القرار يعتمد على العدد بعد الإزالة، حتى ما يطلع شراء دايماً بسوق صاعد</li><li>الاتجاه التاريخي (بالأغلبية): <b>${M}</b></li><li>متوسط الحركة بعد النمط: ${sg(h.mv.m5)} (5) | ${sg(h.mv.m10)} (10) | ${sg(h.mv.m20)} (20 شمعة)</li><li>الوصول للهدف قبل الوقف (2:1): شراء ${Math.round(h.win.buy*100)}% | بيع ${Math.round(h.win.sell*100)}%</li>${h.conflict?'<li>⚠ نسب الوصول للهدف تميل للجهة المعاكسة للأغلبية، فالثقة بهذا الاتجاه أقل</li>':''}<li><b>النتيجة: ${h.maj.toUpperCase()}</b></li><li>أثرها: ${R.hAgree?'توافق مع الأدوات، رفع التوافق (+'+HW+' وزن)':'عكس الأدوات: رفض الصفقة'}</li></ul>`}
-return `<h3>Historical Analysis</h3><div class="hs">${b}<div id="hbo"></div></div>`}
+else{const N=x=>`<span dir="ltr">${x}</span>`,hs=h.maj==='buy'?'شراء':'بيع',ts=R.d>0?'شراء':'بيع',ties=h.cases-h.up-h.dn,big=h.maj==='buy'?h.up:h.dn,small=h.maj==='buy'?h.dn:h.up,
+vd=!R.hAgree?`<div class="vd no">❌ الصفقة مرفوضة: التحليل التاريخي يقول ${hs} والأدوات تقول ${ts}، ما يتوافقون</div>`:R.side==='wait'?`<div class="vd mid">⏸ التحليل التاريخي (${hs}) يتوافق مع الأدوات (${ts})، لكن قوة التوافق ${R.sc}% أقل من 70% فما تظهر صفقة</div>`:`<div class="vd ok">✅ الصفقة مقبولة: التحليل التاريخي (${hs}) يتوافق مع الأدوات (${ts})</div>`;
+b=`<div class="hc"><div class="n"><small>إجمالي الحالات المشابهة</small><b>${N(h.cases)}</b></div><div class="n b"><small>شراء (صعدت)</small><b>${N(h.up)}</b></div><div class="n s"><small>بيع (هبطت)</small><b>${N(h.dn)}</b></div></div>`+
+`<p class="pk">الأكثر: <b class="${h.maj==='buy'?'t-buy':'t-sell'}">${hs}</b> (${N(big)} مقابل ${N(small)})${h.tie?' - تساوى العدد وحسمه متوسط الحركة':''}${ties>0?` - ${N(ties)} حالة تعادل ما انحسبت`:''}</p>`+vd+
+`<p class="nt">العدد محسوب بعد 10 شموع وبعد إزالة ميل السوق العام، حتى ما يطلع شراء دايماً بسوق صاعد أو بيع دايماً بسوق هابط. ${N(h.data.toLocaleString('en'))} شمعة مستخدمة.</p>`+
+`<details><summary>تفاصيل إضافية</summary><ul><li>العدد الخام بدون إزالة الميل: شراء ${N(h.upRaw)} | بيع ${N(h.dnRaw)} (ميل السوق العام ${N(sg(h.med))})</li><li>متوسط الحركة بعد النمط: ${N(sg(h.mv.m5))} (5 شموع) | ${N(sg(h.mv.m10))} (10) | ${N(sg(h.mv.m20))} (20)</li><li>الوصول للهدف قبل الوقف (2:1): شراء ${N(Math.round(h.win.buy*100)+'%')} | بيع ${N(Math.round(h.win.sell*100)+'%')}</li>${h.conflict?'<li>⚠ نسب الوصول للهدف تميل للجهة المعاكسة للأغلبية، فالثقة بهذا الاتجاه أقل</li>':''}${R.hAgree?'<li>أثره: رفع التوافق (+'+HW+' وزن)</li>':''}</ul></details>`}
+return `<h3>التحليل التاريخي (حالات مشابهة)</h3><div class="hs">${b}<div id="hbo"></div></div>`}
 function btHtml(b){if(b.status!=='ok')return `<p>${esc(b.reason)}</p>`;
 return `<h4 style="margin:10px 0 4px">الاختبار التاريخي لقاعدة الأغلبية (تلقائي)</h4><p><b>${b.valid?'الطريقة لها قيمة فعلية بالاختبار':'ما ثبتت قيمتها بالاختبار'}</b>: ${b.sig} إشارة من ${b.tests-b.insuff} لحظة (شراء ${b.nb} | بيع ${b.ns})</p><ul><li>نسبة الوصول للهدف قبل الوقف: ${Math.round(b.winRate*100)}% (الحد الأدنى الإحصائي ${Math.round(b.winLB*100)}%، نقطة التعادل 33%)</li><li>الربح المتوقع لكل صفقة: ${b.ev.toFixed(2)}R مقابل شراء دايماً ${b.base.buy.toFixed(2)}R وبيع دايماً ${b.base.sell.toFixed(2)}R</li></ul><p style="font-size:13px;color:var(--mute)">الاختبار تقدّمي (walk-forward): كل قرار اتخذ بالبيانات اللي قبله فقط، واللحظات المختبرة متباعدة 20 شمعة على الأقل حتى ما تتداخل النتائج. ${b.sig<30?'عدد الإشارات قليل، النتيجة غير موثوقة.':''}</p>`}
 // الاختبار التاريخي يشتغل تلقائياً مرة لكل زوج وفريم، وبعدها يظهر محفوظ
