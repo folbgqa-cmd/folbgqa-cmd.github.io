@@ -37,6 +37,8 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 .lv .t1{background:#15803D;border-color:#15803D;color:#fff}
 .lv .t2{background:#1D4ED8;border-color:#1D4ED8;color:#fff}
 .lv .st small,.lv .t1 small,.lv .t2 small{color:rgba(255,255,255,.9)}
+.hs{border:1px solid var(--line);border-radius:6px;background:#fff;padding:12px 16px;max-width:640px}
+.hs ul{margin:6px 22px}.hs button{margin-top:8px}
 .wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
 th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
@@ -56,7 +58,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 30 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، ويكوف، أخبار وجلسات). تظهر إشارة دخول فقط إذا اتفقت الأدوات بنسبة 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 30 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، ويكوف، أخبار وجلسات). وتدخل معها طبقة تحليل تاريخي مستقلة (آخر 10,000 شمعة) بوزن ثابت 15 بالتوافق. تظهر إشارة دخول فقط إذا اتفقت بنسبة 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -74,7 +76,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 
 <section id="scansec" hidden>
 <h2>فحص كل الأزواج</h2>
-<p style="color:var(--mute);margin-bottom:8px">الفحص ياخذ حوالي دقيقة (حد المفتاح المجاني 8 طلبات بالدقيقة). اضغط أي صف لتشوف تحليله الكامل.</p>
+<p style="color:var(--mute);margin-bottom:8px">الفحص ياخذ حوالي دقيقة (حد المفتاح المجاني 8 طلبات بالدقيقة). اضغط أي صف لتشوف تحليله الكامل. التحليل التاريخي يدخل بالفحص فقط للأزواج اللي حمّلت تاريخها بزر «حلّل».</p>
 <div class="box wrap"><table><thead><tr><th>الزوج</th><th>القرار</th><th>الدخول</th><th>الوقف</th><th>الهدف 1</th><th>قوة التوافق</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 
@@ -92,6 +94,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <div class="warn">قوة التوافق 70% تعني أن 70% من وزن الأدوات اللي عندها رأي متفقة على الاتجاه، وليست احتمال ربح 70%. الإشارات تعليمية ولا تضمن ربحاً. جرّب على حساب تجريبي وخاطر بـ 1% أو أقل. أوقات الجلسات تقريبية وقد تتغير مع التوقيت الصيفي.</div>
 
 <script src="engine.js"></script>
+<script src="history.js"></script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const P={"XAU/USD":{tv:"OANDA:XAUUSD",pip:.1,d:2,n:"الذهب",c:["USD"]},"EUR/USD":{tv:"FX:EURUSD",pip:1e-4,d:5,n:"يورو/دولار",c:["EUR","USD"]},"GBP/USD":{tv:"FX:GBPUSD",pip:1e-4,d:5,n:"إسترليني/دولار",c:["GBP","USD"]},"USD/JPY":{tv:"FX:USDJPY",pip:.01,d:3,n:"دولار/ين",c:["USD","JPY"]},"AUD/USD":{tv:"FX:AUDUSD",pip:1e-4,d:5,n:"أسترالي/دولار",c:["AUD","USD"]},"USD/CAD":{tv:"FX:USDCAD",pip:1e-4,d:5,n:"دولار/كندي",c:["USD","CAD"]},"USD/CHF":{tv:"FX:USDCHF",pip:1e-4,d:5,n:"دولار/فرنك",c:["USD","CHF"]}};
@@ -119,9 +122,30 @@ if(ld&&ny)return{p:15,t:"تداخل لندن ونيويورك (أقوى سيول
 if(ld)return{p:11,t:"جلسة لندن"};if(ny)return{p:11,t:"جلسة نيويورك"};
 if(tk)return{p:jp?8:3,t:"جلسة طوكيو"+(jp?" (مناسبة لهذا الزوج)":" (سيولة ضعيفة لهذا الزوج)")};
 return{p:jp?4:2,t:"جلسة سيدني (سيولة ضعيفة)"}}
-// التحليل (30 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار ونضيف قائمة أخبار الزوج
+// ===== التحليل التاريخي (10,000 شمعة): طبقة مستقلة، تدخل بالتوافق النهائي بوزن ثابت =====
+// قاعدة الدمج: عند اتجاه تاريخي واضح (شراء/بيع) يضاف وزن 15 للاتفاق إذا وافق اتجاه الأدوات، أو للاختلاف إذا خالفه.
+// وإذا كان محايد أو البيانات غير كافية: لا يؤثر أبداً على النسبة ولا يلغي أي صفقة.
+const HW=15,HC={},HPR={},HBT={},HF={};let HCUR=null;
+async function tdPage(sym,tf,end){const k=$('key').value.trim();
+const r=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${tf}&outputsize=5000&apikey=${k}`+(end?`&end_date=${encodeURIComponent(end)}`:''));
+const j=await r.json();if(j.status==='error'||!j.values)throw new Error(j.code===429?'وصلت حد الاستخدام المجاني':(j.message||'فشل جلب البيانات التاريخية'));return j.values}
+async function loadHist(sym,tf){const a=await tdPage(sym,tf);let all=a;
+if(a.length>=4990){try{all=a.concat(await tdPage(sym,tf,a[a.length-1].datetime))}catch(e){}}
+const seen=new Set(),o=[];for(const x of all)if(!seen.has(x.datetime)){seen.add(x.datetime);o.push(x)}
+o.sort((x,y)=>x.datetime<y.datetime?-1:1);return o.slice(-10000)}
+function histRun(sym,tf,recent){const key=sym+'|'+tf,e=HC[key];if(!e)return null;
+const f0=recent[0].datetime;if(e.cs[e.cs.length-1].datetime<f0){delete HC[key];return null}
+let cut=e.cs.length;while(cut>0&&e.cs[cut-1].datetime>=f0)cut--;e.cs=e.cs.slice(0,cut).concat(recent).slice(-10000);
+const Pp=Hist.prep(e.cs);HPR[key]=Pp;const q=Hist.query(Pp,Pp.n-1);q.data=e.cs.length;return q}
+async function histFor(sym,tf,recent){const key=sym+'|'+tf;let r=histRun(sym,tf,recent);if(r)return r;
+if(HF[key]&&Date.now()-HF[key].t<6e5)return{status:'insufficient',reason:HF[key].m};
+$('err').style.color='var(--mute)';$('err').textContent='جاري تحميل التاريخ (حتى 10,000 شمعة)...';
+try{HC[key]={cs:await loadHist(sym,tf)}}catch(e){HF[key]={t:Date.now(),m:e.message};$('err').textContent='';return{status:'insufficient',reason:e.message}}
+$('err').textContent='';return histRun(sym,tf,recent)||{status:'insufficient',reason:'تعذر دمج البيانات'}}
+// التحليل (30 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار ونضيف الطبقة التاريخية وقائمة أخبار الزوج
 function analyze(v,pr,now){
-const R=Engine.analyze(v,pr,now,{ses,nk,min:70});
+const R=Engine.analyze(v,pr,now,{ses,nk,min:70}),h=HCUR;R.hist=h;
+if(h&&h.status==='ok'&&h.side!=='neutral'&&R.d){const ag=(h.side==='buy')===(R.d>0);R.hAgree=ag;R.scTools=R.sc;R.ag+=ag?HW:0;R.dg+=ag?0:HW;R.sc=Math.round(100*R.ag/(R.ag+R.dg));R.why=R.sc<70?'قوة التوافق '+R.sc+'% أقل من 70%':'';R.side=R.why?'wait':R.d>0?'buy':'sell'}
 R.NL=EV?EV.filter(e=>pr.c.includes(e.country)&&e.ts>now-36e5&&e.ts<now+864e5).sort((a,b)=>a.ts-b.ts).slice(0,6):[];
 return R}
 async function get(sym,tf){
@@ -138,19 +162,31 @@ const nm={buy:"دخول شراء",sell:"دخول بيع",wait:"انتظر"};
 function ta(sym){const w=$('ta');w.innerHTML='<div class="tradingview-widget-container__widget"></div>';const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js';s.async=true;s.text=JSON.stringify({interval:"15m",width:"100%",height:"100%",symbol:sym,showIntervalTabs:true,locale:"ar_AE",colorTheme:"light",isTransparent:false});w.appendChild(s)}
 const fx=x=>(+x).toFixed(1).replace(/\.0$/,'');
 function op(x){return x.f?`<span>${fx(x.ok)}/${x.w}</span>`:x.v>0?'<span class="t-buy">شراء</span>':x.v<0?'<span class="t-sell">بيع</span>':'-'}
+const sd={buy:'شراء',sell:'بيع',neutral:'محايد'},sg=x=>(x>=0?'+':'')+x.toFixed(2)+'%';
+function histCard(R){const h=R.hist;let b;
+if(!h)b='<p>لم يُحمَّل التاريخ بعد (اضغط «حلّل» لهذا الزوج).</p>';
+else if(h.status!=='ok')b=`<p><b>بيانات غير كافية:</b> ${esc(h.reason||'')}</p>`;
+else{const L=h.lean==='buy'?'شراء':'بيع';b=`<ul><li>البيانات المستخدمة: ${h.data.toLocaleString('en')} شمعة</li><li>الحالات المشابهة: ${h.cases}</li><li>الاتجاه التاريخي: ${sd[h.side]}${h.side==='neutral'?` (الأقرب ${L} لكنه غير حاسم إحصائياً)`:''}</li><li>قوة الإشارة التاريخية: ${h.strength}% من الحالات تحركت ${h.lean==='buy'?'للأعلى':'للأسفل'} بعد 10 شموع</li><li>متوسط الحركة بعد النمط: ${sg(h.mv.m5)} (5) | ${sg(h.mv.m10)} (10) | ${sg(h.mv.m20)} (20 شمعة)</li><li>الوصول للهدف قبل الوقف (2:1): شراء ${Math.round(h.win.buy*100)}% | بيع ${Math.round(h.win.sell*100)}%</li><li><b>النتيجة: ${h.side.toUpperCase()}</b></li><li>أثرها بالتوافق: ${h.side==='neutral'?'لا تأثير':(R.hAgree?'توافق مع الأدوات (+'+HW+' وزن للاتفاق)':'اختلاف مع الأدوات (+'+HW+' وزن للاختلاف)')}</li></ul>`}
+return `<h3>Historical Analysis</h3><div class="hs">${b}<button class="alt" id="hbt">اختبار تاريخي منفصل</button><div id="hbo"></div></div>`}
+function btHtml(b){if(b.status!=='ok')return `<p>${esc(b.reason)}</p>`;
+return `<p><b>${b.valid?'الطريقة لها قيمة فعلية بالاختبار':'ما ثبتت قيمتها بالاختبار'}</b>: ${b.sig} إشارة من ${b.tests-b.insuff} لحظة (شراء ${b.nb} | بيع ${b.ns} | محايد ${b.neutral})</p><ul><li>نسبة الوصول للهدف قبل الوقف: ${Math.round(b.winRate*100)}% (الحد الأدنى الإحصائي ${Math.round(b.winLB*100)}%، نقطة التعادل 33%)</li><li>الربح المتوقع لكل صفقة: ${b.ev.toFixed(2)}R مقابل شراء دايماً ${b.base.buy.toFixed(2)}R وبيع دايماً ${b.base.sell.toFixed(2)}R</li></ul><p style="font-size:13px;color:var(--mute)">الاختبار تقدّمي (walk-forward): كل قرار اتخذ بالبيانات اللي قبله فقط. ${b.sig<30?'عدد الإشارات قليل، النتيجة غير موثوقة.':''}</p>`}
+function histBT(sym){const key=sym+'|'+$('tf').value,Pp=HPR[key],o=$('hbo');if(!Pp){o.textContent='حمّل التاريخ أولاً (اضغط حلّل).';return}
+o.textContent='جاري الاختبار...';setTimeout(()=>{HBT[key]=Hist.backtest(Pp);o.innerHTML=btHtml(HBT[key])},30)}
 function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d),ent=R.entry!=null?R.entry:R.px;
 $('outsec').hidden=false;
 $('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</div><div><h2>${sym} - ${p.n}</h2><p>السعر ${f(R.px)} | ${R.S.t}</p><div class="bar ${R.sc<70?'lo':''}"><i style="width:${R.sc}%"></i></div><p><b>قوة التوافق ${R.sc}%</b> (الحد الأدنى للدخول 70%)</p></div></div>`+
 (R.side=="wait"?`<p style="margin:14px 0"><b>سبب الانتظار:</b> ${R.why}</p>`:
 `<div class="lv"><div class="en"><small>الدخول${R.order?' - '+R.order.label:''}</small><strong>${f(ent)}</strong></div><div class="st"><small>الاستوب (${R.pts.sl} نقطة)</small><strong>${f(R.sl)}</strong></div><div class="t1"><small>الهدف الأول (${R.pts.tp1} نقطة)</small><strong>${f(R.tp1)}</strong></div><div class="t2"><small>الهدف الثاني (${R.pts.tp2} نقطة)</small><strong>${f(R.tp2)}</strong></div></div>`)+
-`<h3>تفاصيل التحليل (${R.tools} أداة)</h3><p style="color:var(--mute);font-size:13px">وزن الأدوات المتفقة ${fx(R.ag)} مقابل المختلفة ${fx(R.dg)} = ${R.sc}%. الدخول يعتمد على هذي النسبة فقط (70% أو أكثر). ⚡ تعني أداة نقطة دخول.</p><div class="wrap"><table><thead><tr><th>الأداة</th><th>المدرسة</th><th>الرأي</th><th>الوزن</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}${x.ev?' ⚡':''}</td><td>${x.s}</td><td>${op(x)}</td><td>${x.w}</td><td>${x.t}</td></tr>`).join('')}</tbody></table></div>`+
+histCard(R)+
+`<h3>تفاصيل التحليل (${R.tools} أداة)</h3><p style="color:var(--mute);font-size:13px">وزن الأدوات المتفقة ${fx(R.ag)} مقابل المختلفة ${fx(R.dg)} = ${R.sc}%${R.scTools!=null?` (الأدوات وحدها ${R.scTools}%، ومعها التحليل التاريخي ${R.sc}%)`:''}. الدخول يعتمد على هذي النسبة فقط (70% أو أكثر). ⚡ تعني أداة نقطة دخول.</p><div class="wrap"><table><thead><tr><th>الأداة</th><th>المدرسة</th><th>الرأي</th><th>الوزن</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}${x.ev?' ⚡':''}</td><td>${x.s}</td><td>${op(x)}</td><td>${x.w}</td><td>${x.t}</td></tr>`).join('')}</tbody></table></div>`+
 `<h3>أخبار هذا الزوج (${p.c.join(' + ')}) خلال 24 ساعة</h3><div class="wrap"><table><thead><tr><th>الوقت (بغداد)</th><th>العملة</th><th>الخبر</th><th>التأثير</th><th>المتوقع</th><th>السابق</th></tr></thead><tbody>${R.NL.map(e=>`<tr><td>${tm(e.ts)}</td><td>${e.country}</td><td>${esc(e.title)}</td><td class="${e.impact[0]}">${e.impact==='High'?'قوي':'متوسط'}</td><td>${esc(e.forecast)||'-'}</td><td>${esc(e.previous)||'-'}</td></tr>`).join('')||`<tr><td colspan="6">${EV?'لا أخبار متوسطة أو قوية بالـ 24 ساعة':'الأخبار غير متاحة'}</td></tr>`}</tbody></table></div>`+
 `<p style="color:var(--mute);font-size:13px;margin-top:8px">الوقف والأهداف ثابتة بنقاط MT5 (من 700 إلى 1500 نقطة) على كل الفريمات، وتقرب الوقف كل ما قوي التوافق. قمة 20 شمعة ${f(R.hh)}، قاع 20 شمعة ${f(R.ll)}. آخر تحديث ${new Date().toLocaleTimeString('ar-IQ')}.</p>`;
+const bk=sym+'|'+$('tf').value;if($('hbo')&&HBT[bk])$('hbo').innerHTML=btHtml(HBT[bk]);if($('hbt'))$('hbt').onclick=()=>histBT(sym);
 ta(p.tv)}
 async function run(){$('err').style.color='';$('err').textContent='';const sym=$('pair').value;
-try{$('go').disabled=true;const v=await get(sym,$('tf').value);await news();show(sym,analyze(v,P[sym],Date.now()))}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
+try{$('go').disabled=true;const tf=$('tf').value,v=await get(sym,tf);await news();HCUR=await histFor(sym,tf,v);show(sym,analyze(v,P[sym],Date.now()))}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
 async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;
-let i=0;for(const sym of Object.keys(P)){try{if(i++)await new Promise(r=>setTimeout(r,7500));const v=await get(sym,$('tf').value);await news();const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
+let i=0;for(const sym of Object.keys(P)){try{if(i++)await new Promise(r=>setTimeout(r,7500));const v=await get(sym,$('tf').value);await news();HCUR=histRun(sym,$('tf').value,v);const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
 const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.entry!=null?R.entry:R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
 tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
 catch(e){$('err').textContent=e.message;break}}
