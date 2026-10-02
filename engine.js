@@ -37,6 +37,20 @@
     for (let i = p; i < dx.length; i++) x = (x * (p - 1) + dx[i]) / p;
     return x;
   }
+  function rsiSeries(c, p = 14) {
+    const n = c.length, out = new Array(n).fill(null); if (n <= p) return out;
+    let g = 0, l = 0;
+    for (let i = 1; i <= p; i++) { const d = c[i] - c[i - 1]; d > 0 ? g += d : l -= d; }
+    g /= p; l /= p; out[p] = l ? 100 - 100 / (1 + g / l) : 100;
+    for (let i = p + 1; i < n; i++) { const d = c[i] - c[i - 1]; g = (g * (p - 1) + (d > 0 ? d : 0)) / p; l = (l * (p - 1) + (d < 0 ? -d : 0)) / p; out[i] = l ? 100 - 100 / (1 + g / l) : 100; }
+    return out;
+  }
+  function stochS(h, l, c, k = 14, s1 = 3, s2 = 3) {
+    const n = c.length, raw = new Array(n).fill(null);
+    for (let i = k - 1; i < n; i++) { const H = mx(h, i - k + 1, i), L = mn(l, i - k + 1, i); raw[i] = H > L ? 100 * (c[i] - L) / (H - L) : 50; }
+    const sma = (a, p) => a.map((_, i) => { if (i < p - 1) return null; let t = 0; for (let j = 0; j < p; j++) { if (a[i - j] == null) return null; t += a[i - j]; } return t / p; });
+    const K = sma(raw, s1), D = sma(K, s2); return { K, D };
+  }
   function pivots(h, l, n, k = 3) {
     const ph = [], pl = [];
     for (let i = k; i <= n - k; i++) {
@@ -152,6 +166,61 @@
       return t; })();
     T('Supertrend', 'الكلاسيكي', 2, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
 
+    // ===== 13 أداة إضافية =====
+    // كل أداة تصوّت فقط لما يكون عندها رأي واضح، وغير هذا تمتنع (صفر) فما تدخل بالنسبة. أدوات الارتداد (Stochastic وBollinger وCCI) مفلترة بالترند:
+    // تصوّت بس لما تكون نقطة دخول بعد تصحيح مع الاتجاه العام، فما تعاكس الأدوات الأساسية وما تقلل الصفقات.
+    const up50 = px > e50, dn50 = px < e50;
+    const stc = stochS(h, l, c); let x1 = 0;
+    for (let j = n - 2; j <= n; j++) { const K0 = stc.K[j], D0 = stc.D[j], K1 = stc.K[j - 1], D1 = stc.D[j - 1]; if (K0 == null || D0 == null || K1 == null || D1 == null) continue;
+      if (up50 && K0 > D0 && K1 <= D1 && Math.min(K0, K1) < 35) x1 = 1; else if (dn50 && K0 < D0 && K1 >= D1 && Math.max(K0, K1) > 65) x1 = -1; }
+    T('Stochastic', 'الكلاسيكي', 3, x1, W(x1, 'تقاطع صاعد من تشبع بيع مع الترند', 'تقاطع هابط من تشبع شراء مع الترند', 'لا تقاطع من منطقة تشبع'), true);
+    const bbAt = i => { let t = 0; for (let k = i - 19; k <= i; k++) t += c[k]; const m = t / 20; let q2 = 0; for (let k = i - 19; k <= i; k++) q2 += (c[k] - m) * (c[k] - m); return { m, sd: Math.sqrt(q2 / 20) }; };
+    let x2 = 0;
+    for (let j = n - 1; j <= n; j++) { const B = bbAt(j), lowB = B.m - 2 * B.sd, upB = B.m + 2 * B.sd;
+      if (up50 && l[j] < lowB && c[j] > lowB && c[n] > o[n]) x2 = 1; else if (dn50 && h[j] > upB && c[j] < upB && c[n] < o[n]) x2 = -1; }
+    T('Bollinger ارتداد', 'الكلاسيكي', 2, x2, W(x2, 'لمس الحد السفلي ورجع داخل النطاق مع الترند', 'لمس الحد العلوي ورجع داخل النطاق مع الترند', 'لا ارتداد من حدود بولنجر'), true);
+    const cciAt = i => { const tp = j2 => (h[j2] + l[j2] + c[j2]) / 3; let t = 0; for (let k = i - 19; k <= i; k++) t += tp(k); const m = t / 20; let md = 0; for (let k = i - 19; k <= i; k++) md += Math.abs(tp(k) - m); md /= 20; return md ? (tp(i) - m) / (0.015 * md) : 0; };
+    let x3 = 0;
+    for (let j = n - 1; j <= n; j++) { const c0 = cciAt(j), c1 = cciAt(j - 1); if (up50 && c1 < -100 && c0 > -100) x3 = 1; else if (dn50 && c1 > 100 && c0 < 100) x3 = -1; }
+    T('CCI', 'الكلاسيكي', 2, x3, W(x3, 'CCI عاد فوق -100 مع الترند', 'CCI عاد تحت +100 مع الترند', 'CCI بدون إشارة'));
+    const RS = rsiSeries(c); let x4 = 0;
+    // تباعد حقيقي فقط: قاعين (أو قمتين) متباعدين 8-50 شمعة، فرق السعر 0.3 ATR على الأقل، فرق RSI 4 نقاط على الأقل، والقاع الثاني بمنطقة ضعف (RSI تحت 45) أو القمة الثانية بمنطقة قوة (فوق 55)
+    if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
+    else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
+    T('تباعد RSI', 'الكلاسيكي', 3, x4, W(x4, 'تباعد صاعد (قاع أدنى بالسعر وأعلى بـ RSI)', 'تباعد هابط (قمة أعلى بالسعر وأدنى بـ RSI)', 'لا تباعد'), true);
+    const sqz = i => 2 * bbAt(i).sd < 1.5 * AT[i];
+    let x5 = 0, sqn = 0; for (let j = n - 6; j <= n - 1; j++) if (sqz(j)) sqn++;
+    if (sqn >= 3 && !sqz(n)) { if (c[n] > e20 && c[n] > c[n - 1] && c[n] - e20 > .3 * a) x5 = 1; else if (c[n] < e20 && c[n] < c[n - 1] && e20 - c[n] > .3 * a) x5 = -1; }
+    T('انفجار بعد انضغاط (Squeeze)', 'الكلاسيكي', 3, x5, W(x5, 'خروج صاعد بعد انضغاط التذبذب', 'خروج هابط بعد انضغاط التذبذب', 'لا انضغاط منتهي'), true);
+    let hao = o[n - 40], hac = (o[n - 40] + h[n - 40] + l[n - 40] + c[n - 40]) / 4; const ha = [];
+    for (let j = n - 39; j <= n; j++) { const nc = (o[j] + h[j] + l[j] + c[j]) / 4, no = (hao + hac) / 2; ha.push({ o: no, c: nc, hi: Math.max(h[j], no, nc), lo: Math.min(l[j], no, nc) }); hao = no; hac = nc; }
+    const hz = ha.slice(-3); let x6 = 0;
+    if (hz.every(x => x.c > x.o) && hz.slice(-2).every(x => x.o - x.lo < .05 * a)) x6 = 1; else if (hz.every(x => x.c < x.o) && hz.slice(-2).every(x => x.hi - x.o < .05 * a)) x6 = -1;
+    T('Heikin Ashi', 'حركة السعر', 2, x6, W(x6, 'شموع هايكن آشي صاعدة بدون ظل سفلي', 'شموع هايكن آشي هابطة بدون ظل علوي', 'لا ترند هايكن آشي نظيف'));
+    const bdy = i => Math.abs(c[i] - o[i]); let x7 = 0;
+    if (c[n - 2] < o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] > o[n] && c[n] > (o[n - 2] + c[n - 2]) / 2) x7 = 1;
+    else if (c[n - 2] > o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] < o[n] && c[n] < (o[n - 2] + c[n - 2]) / 2) x7 = -1;
+    else if ([n - 2, n - 1, n].every((i, t, A) => c[i] > o[i] && bdy(i) >= .5 * (h[i] - l[i]) && (t === 0 || c[i] > c[A[t - 1]]))) x7 = 1;
+    else if ([n - 2, n - 1, n].every((i, t, A) => c[i] < o[i] && bdy(i) >= .5 * (h[i] - l[i]) && (t === 0 || c[i] < c[A[t - 1]]))) x7 = -1;
+    T('نمط 3 شموع (نجمة/جنود)', 'حركة السعر', 3, x7, W(x7, 'نجمة صباح أو ثلاث شموع صاعدة متتالية', 'نجمة مساء أو ثلاث شموع هابطة متتالية', 'لا نمط ثلاث شموع'), true);
+    let x8 = 0;
+    if (h[n - 1] < h[n - 2] && l[n - 1] > l[n - 2] && h[n - 2] - l[n - 2] >= .8 * a) { if (c[n] > h[n - 2]) x8 = 1; else if (c[n] < l[n - 2]) x8 = -1; }
+    T('Inside Bar اختراق', 'حركة السعر', 2, x8, W(x8, 'اختراق صاعد لشمعة داخلية', 'اختراق هابط لشمعة داخلية', 'لا Inside Bar مخترق'), true);
+    let x9 = 0;
+    if (ph2.length === 2) { const p0 = ph2[0], p1 = ph2[1]; if (Math.abs(h[p0] - h[p1]) <= .35 * a && p1 - p0 >= 8 && p1 - p0 <= 60 && p1 >= n - 25) { const nk2 = mn(l, p0, p1); if (c[n] < nk2 && c[n] > nk2 - 2 * a) x9 = -1; } }
+    if (!x9 && pl2.length === 2) { const p0 = pl2[0], p1 = pl2[1]; if (Math.abs(l[p0] - l[p1]) <= .35 * a && p1 - p0 >= 8 && p1 - p0 <= 60 && p1 >= n - 25) { const nk2 = mx(h, p0, p1); if (c[n] > nk2 && c[n] < nk2 + 2 * a) x9 = 1; } }
+    T('قمة/قاع مزدوج', 'حركة السعر', 3, x9, W(x9, 'قاع مزدوج مع كسر خط العنق للأعلى', 'قمة مزدوجة مع كسر خط العنق للأسفل', 'لا قمة أو قاع مزدوج'), true);
+    const H100 = mx(h, n - 100, n), L100 = mn(l, n - 100, n), pdp = H100 > L100 ? (px - L100) / (H100 - L100) : .5;
+    const x10 = d > 0 && pdp < .5 ? 1 : d < 0 && pdp > .5 ? -1 : 0;
+    T('Premium / Discount', 'ICT/SMC', 2, x10, W(x10, 'شراء من منطقة خصم (النصف السفلي) مع ترند صاعد', 'بيع من منطقة علاوة (النصف العلوي) مع ترند هابط', 'السعر عكس منطقة الدخول المناسبة'));
+    const x11 = c[n] > h[n - 26] ? 1 : c[n] < l[n - 26] ? -1 : 0;
+    T('Chikou Span', 'إيشيموكو', 2, x11, W(x11, 'السعر الحالي فوق شمعة قبل 26', 'السعر الحالي تحت شمعة قبل 26', 'السعر داخل نطاق شمعة قبل 26'));
+    const sAn = (tk(n) + kj(n)) / 2, sBn = sb(n), x12 = sAn > sBn ? 1 : sAn < sBn ? -1 : 0;
+    T('لون السحابة المستقبلية', 'إيشيموكو', 2, x12, W(x12, 'السحابة القادمة صاعدة', 'السحابة القادمة هابطة', 'السحابة القادمة محايدة'));
+    let hiI = n - 25, loI = n - 25; for (let j = n - 25; j <= n; j++) { if (h[j] >= h[hiI]) hiI = j; if (l[j] <= l[loI]) loI = j; }
+    const aUp = 100 * (25 - (n - hiI)) / 25, aDn = 100 * (25 - (n - loI)) / 25, x13 = aUp > 70 && aDn < 30 ? 1 : aDn > 70 && aUp < 30 ? -1 : 0;
+    T('Aroon (25)', 'الكلاسيكي', 2, x13, W(x13, 'Aroon صاعد (قمة حديثة وقاع قديم)', 'Aroon هابط (قاع حديث وقمة قديمة)', 'Aroon بدون اتجاه واضح'));
+
     // ===== التحليل التاريخي (Historical Pattern Analysis): دليل مستقل من حالات مشابهة سابقة =====
     // يدخل بالتوافق (وزن 8) فقط إذا نجح اختباره الزمني بدون تسريب مستقبلي (adopted)، وإلا يظهر بتصويت صفر.
     if (ctx.hpa) T('Historical Pattern', 'التحليل التاريخي', 8, ctx.hpa.adopted ? ctx.hpa.vote : 0, ctx.hpa.text);
@@ -185,8 +254,7 @@
     const ent = order.price;
 
     // ===== الوقف والأهداف بنقاط MT5 (النقطة = 0.01$ للذهب، 100 نقطة = 1$) من سعر الدخول =====
-    // الوقف والهدفان كلهم بين 700 و1500 نقطة على كل الفريمات. الهدف مو لازم يكون أكبر من الوقف.
-    // تتحدد حسب: قوة الإشارة، التذبذب، وأقرب قمة/قاع (الوقف خلف أقرب قاع/قمة حماية، والهدف الأول عند أقرب قمة/قاع أمام السعر). تتوزع داخل المدى وما تنحشر على حده.
+    // الوقف والهدفان بين 700 و1500 نقطة على كل الفريمات. الهدف مو لازم يكون أكبر من الوقف.
     const unit = pr.pip / 10, cl = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x)), r10 = x => Math.round(x / 10) * 10;
     const aP = a / unit;
     const q = Math.max(0, Math.min(1, 0.6 * (sc - 70) / 30 + 0.4 * Math.min(evW / 8, 1)));
@@ -195,18 +263,18 @@
     const prot = dir > 0 ? Math.max(-Infinity, ...lows.filter(x => x < ent)) : Math.min(Infinity, ...highs.filter(x => x > ent));
     const front = dir > 0 ? Math.min(Infinity, ...highs.filter(x => x > ent)) : Math.max(-Infinity, ...lows.filter(x => x < ent));
     const dProt = isFinite(prot) ? Math.abs(ent - prot) / unit + 0.15 * aP : null, dFront = isFinite(front) ? Math.abs(front - ent) / unit : null;
-    // بدل ما نقص القيمة على 700 أو 1500 (وهذا كان يثبّت الوقف والأهداف على 1400-1500 بفريم 4 ساعات لأن ATR كبير)،
-    // نحوّل كل عامل لموقع بين 0 و1 داخل المدى 700-1500 ونخلي القوة والظروف هي اللي تحدد الموقع:
-    // قوة الإشارة (q): أقوى = وقف أقرب وهدف أبعد. التذبذب (rt): أعلى من المعتاد = كلشي أوسع. أقرب قمة/قاع بوحدات ATR. حجم الفريم نفسه (gS) بوزن صغير.
-    const u01 = x => cl(x, 0, 1), gS = u01((aP - 300) / 1700), sw01 = d0 => u01((d0 / aP - 0.5) / 2.5);
-    let fSL = 0.3 * gS + 0.7 * u01(0.55 - 0.30 * q + 0.35 * (rt - 1));
-    if (dProt != null) fSL = 0.5 * fSL + 0.5 * sw01(dProt);
-    let fT1 = 0.3 * gS + 0.7 * u01(0.35 + 0.40 * q + 0.20 * (rt - 1));
+    // الوقف والأهداف تتحدد فقط حسب قوة الإشارة وظروف السوق (بدون أي رقم ثابت): نحوّل كل عامل لموقع بين 0 و1 داخل المدى 700-1500،
+    // وإذا طلع الوقف أو الهدف على 700 أو 1500 فهذا نتيجة التحليل مو قص إجباري.
+    // قوة الإشارة (q): أقوى = وقف أقرب وهدف أبعد. التذبذب (rt): أعلى من المعتاد = كلشي أوسع. أقرب قاع/قمة بوحدات ATR: الوقف خلفها والهدف الأول عندها.
+    const u01 = x => cl(x, 0, 1), sw01 = d0 => u01((d0 / aP - 0.5) / 2.5);
+    let fSL = u01(0.60 - 0.45 * q + 0.35 * (rt - 1));
+    if (dProt != null) fSL = 0.4 * fSL + 0.6 * sw01(dProt);
+    let fT1 = u01(0.20 + 0.65 * q + 0.25 * (rt - 1));
     if (dFront != null) fT1 = 0.5 * fT1 + 0.5 * sw01(dFront);
-    const fT2 = 0.3 * gS + 0.7 * u01(0.50 + 0.50 * q + 0.20 * (rt - 1));
+    const fT2 = u01(0.35 + 0.65 * q + 0.25 * (rt - 1));
     const SL = cl(r10(700 + 800 * fSL), 700, 1500);
-    const T1 = cl(r10(700 + 700 * fT1), 700, 1400);
-    const T2 = cl(r10(Math.max(700 + 800 * fT2, T1 + 100)), T1 + 100, 1500);
+    const T1 = cl(r10(700 + 800 * fT1), 700, 1450);
+    const T2 = cl(r10(Math.max(700 + 800 * fT2, T1 + 50)), T1 + 50, 1500);
 
     // ===== درجة جودة الإشارة: للترتيب والتمييز فقط، ما تمنع ولا تقلل أي صفقة =====
     // كل صفقة نسبتها 70% أو أكثر تبقى تطلع، لكن تنعطى ⭐ حسب التأكيدات (محفزات، ترند، زخم، جلسة، أخبار) فتعرف القوية من العادية.
