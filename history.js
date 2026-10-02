@@ -3,14 +3,18 @@
 // (شكل آخر 8 إغلاقات، طبيعة الشمعة، الموقع داخل نطاق 50 شمعة، التذبذب، الميل، ساعة اليوم).
 // منع Look-Ahead: ميزات الحالة j تستخدم شموع <= j فقط. والحالة j ما تدخل مقارنة اللحظة q إلا إذا j + 20 <= q
 // (يعني نتيجتها كانت معروفة قبل q). كل الأوزان والحدود ثابتة مسبقاً وما انضبطت على أي نتيجة سوق حقيقية.
-// قاعدة الدمج (gate): نعد الحالات المشابهة اللي صعدت (up) واللي هبطت (dn) بعد 10 شموع. الأغلبية = اتجاه التحليل التاريخي (شراء أو بيع فقط، ما فيه حياد).
-// لو تساوى العدد بالضبط (نادر) يُحسم بمتوسط الحركة بعد 10 شموع (وإذا صفر، بالربح المتوقع).
+// إزالة ميل السوق العام (drift): لو السوق صاعد أغلب فترة الـ10,000 شمعة فأغلب الحالات المشابهة تطلع "صعدت" حتى لو النمط ما له أي أثر،
+// وهذا كان يعطي شراء أكثر من بيع. الحل: نقارن حركة كل حالة بعد 10 شموع مع وسيط حركة السوق كله (من الشموع المعروفة قبل اللحظة الحالية فقط).
+// "صعدت" = تفوقت على الحركة المعتادة للأعلى، و"هبطت" = تفوقت عليها للأسفل. فيصير الأساس 50/50 بالتعريف، وأي ميل يطلع هو أثر النمط نفسه.
+// قاعدة الدمج (gate): الأغلبية بين up وdn = اتجاه التحليل التاريخي (شراء أو بيع فقط، ما فيه حياد).
+// لو تساوى العدد بالضبط (نادر) يُحسم بمتوسط الحركة بعد 10 شموع مقابل الوسيط، وإذا تساوى أيضاً بالربح المتوقع.
 // أغلبية بنفس اتجاه الأدوات: تدخل الصفقة ويزيد التوافق. أغلبية عكس الأدوات: ترفض الصفقة. بيانات غير كافية: لا تأثير.
 (function (root) {
   'use strict';
   const MAXH = 20, K = 120, MINCASES = 40, MINDATA = 2500, SEP = 20, EVMIN = 0.35, LBMIN = .58, Z = 1.645, NF = 15;
   const WT = [1, 1, 1, 1, 1, 1, 1, 1.5, 1, 1, 3, 2, 1.5, .7, .7];
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  const median = a => { const s = Float64Array.from(a).sort(), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
   function prep(cs) {
     const n = cs.length, o = new Float64Array(n), h = new Float64Array(n), l = new Float64Array(n), c = new Float64Array(n), ts = new Float64Array(n), r = new Float64Array(n);
@@ -52,11 +56,11 @@
     const { F, OL } = P, lim = q - MAXH;
     if (q < 60 || !(P.sc[q] > 0) || isNaN(F[q * NF])) return { status: 'insufficient', reason: 'الحالة الحالية غير قابلة للقياس' };
     const qf = new Float32Array(NF); for (let f = 0; f < NF; f++) qf[f] = F[q * NF + f];
-    const idx = [], dist = [];
+    const idx = [], dist = [], r10s = [];
     for (let j = 60; j <= lim; j++) {
       if (isNaN(OL[j]) || isNaN(F[j * NF])) continue;
       let d = 0; for (let f = 0; f < NF; f++) { const x = F[j * NF + f] - qf[f]; d += WT[f] * x * x; }
-      idx.push(j); dist.push(d);
+      idx.push(j); dist.push(d); r10s.push(P.R10[j]);
     }
     if (idx.length < MINDATA) return { status: 'insufficient', reason: 'عدد الشموع المتاحة قليل (' + idx.length + ' من ' + MINDATA + ' على الأقل)', used: idx.length };
     const ord = idx.map((_, i) => i).sort((a, b) => dist[a] - dist[b]);
@@ -64,30 +68,41 @@
     for (const i of ord) { const j = idx[i]; let ok = true; for (const p of pick) if (Math.abs(p - j) < SEP) { ok = false; break; } if (ok) { pick.push(j); if (pick.length >= K) break; } }
     const n = pick.length;
     if (n < MINCASES) return { status: 'insufficient', reason: 'الحالات المشابهة قليلة (' + n + ' من ' + MINCASES + ' على الأقل)', used: idx.length, cases: n };
-    let evL = 0, evS = 0, wL = 0, wS = 0, m5 = 0, m10 = 0, m20 = 0, up = 0, dn = 0;
-    for (const j of pick) { evL += P.OL[j]; evS += P.OS[j]; wL += P.WL[j]; wS += P.WS[j]; m5 += P.R5[j]; m10 += P.R10[j]; m20 += P.R20[j]; if (P.R10[j] > 0) up++; else if (P.R10[j] < 0) dn++; }
+    // ميل السوق العام: وسيط حركة 10 شموع على كل الحالات المعروفة قبل اللحظة q (ما فيه أي معلومة من المستقبل)
+    const med = median(r10s);
+    let evL = 0, evS = 0, wL = 0, wS = 0, m5 = 0, m10 = 0, m20 = 0, up = 0, dn = 0, upRaw = 0, dnRaw = 0;
+    for (const j of pick) {
+      evL += P.OL[j]; evS += P.OS[j]; wL += P.WL[j]; wS += P.WS[j]; m5 += P.R5[j]; m10 += P.R10[j]; m20 += P.R20[j];
+      const r = P.R10[j];
+      if (r > med) up++; else if (r < med) dn++;     // بعد إزالة ميل السوق العام (هذا اللي يحسم الاتجاه)
+      if (r > 0) upRaw++; else if (r < 0) dnRaw++;   // العدد الخام للعرض فقط
+    }
     evL /= n; evS /= n; wL /= n; wS /= n; m5 /= n; m10 /= n; m20 /= n;
     const side0 = evL >= evS ? 'buy' : 'sell', ev = Math.max(evL, evS), k = side0 === 'buy' ? up : dn, tot = up + dn || 1, share = k / tot, lb = wilson(share, tot);
-    // maj: الأغلبية بالعدد (كم حالة صعدت وكم هبطت بعد 10 شموع): شراء أو بيع فقط. لو تساوى العدد بالضبط يُحسم بمتوسط الحركة، وإذا صفر بالربح المتوقع.
-    const tie = up === dn, maj = up > dn ? 'buy' : dn > up ? 'sell' : m10 > 0 ? 'buy' : m10 < 0 ? 'sell' : side0;
+    // maj: الأغلبية بالعدد (بعد إزالة ميل السوق): شراء أو بيع فقط. لو تساوى العدد بالضبط يُحسم بمتوسط الحركة مقابل الوسيط، وإذا تساوى بالربح المتوقع.
+    const tie = up === dn, maj = up > dn ? 'buy' : dn > up ? 'sell' : m10 > med ? 'buy' : m10 < med ? 'sell' : side0;
+    // تنبيه: لو نسب الوصول للهدف قبل الوقف تميل لجهة معاكسة للأغلبية، الثقة أقل (للعرض فقط)
+    const conflict = (maj === 'buy') !== (evL >= evS);
     // side: اتجاه حاسم إحصائياً (للعرض فقط): القيمة المتوقعة >= 0.35R والحد الأدنى الإحصائي (90%) فوق 58%
     const dir = ev >= EVMIN && lb > LBMIN;
-    return { status: 'ok', cases: n, used: idx.length, up, dn, tie, maj, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
+    return { status: 'ok', cases: n, used: idx.length, up, dn, upRaw, dnRaw, med, tie, maj, conflict, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
   }
 
   // اختبار walk-forward لقاعدة الأغلبية: لكل لحظة q نقرر بالبيانات اللي قبلها فقط، ثم نقيس النتيجة الفعلية بعدها
+  // اللحظات المختبرة متباعدة 20 شمعة على الأقل (طول نافذة النتيجة) حتى ما تتداخل النتائج وتتضخم الثقة الإحصائية
   function backtest(P) {
     const n = P.n, from = 60 + MINDATA + MAXH + 20, last = n - MAXH - 1;
     if (last - from < 300) return { status: 'insufficient', reason: 'البيانات ما تكفي لاختبار موثوق (تحتاج حوالي 3,000 شمعة على الأقل بعد فترة التدريب)' };
-    const step = Math.max(10, Math.floor((last - from) / 600)); let tests = 0, insuff = 0, neutral = 0, sig = 0, nb = 0, ns = 0, win = 0, ev = 0, bAll = 0, sAll = 0;
+    const step = Math.max(MAXH, Math.floor((last - from) / 600)); let tests = 0, insuff = 0, sig = 0, nb = 0, ns = 0, win = 0, ev = 0, bAll = 0, sAll = 0;
     for (let q = from; q <= last; q += step) {
-      const r = query(P, q); tests++; bAll += P.OL[q]; sAll += P.OS[q];
-      if (r.status !== 'ok') { insuff++; continue; } if (r.maj === 'neutral') { neutral++; continue; }
-      sig++; if (r.maj === 'buy') { nb++; ev += P.OL[q]; win += P.WL[q]; } else { ns++; ev += P.OS[q]; win += P.WS[q]; }
+      const r = query(P, q); tests++;
+      if (r.status !== 'ok') { insuff++; continue; }
+      sig++; bAll += P.OL[q]; sAll += P.OS[q]; // المقارنة (شراء دايماً / بيع دايماً) على نفس اللحظات اللي طلعت فيها إشارة
+      if (r.maj === 'buy') { nb++; ev += P.OL[q]; win += P.WL[q]; } else { ns++; ev += P.OS[q]; win += P.WS[q]; }
     }
     // "لها قيمة فعلية" فقط إذا: 30 إشارة على الأقل، ربح متوقع موجب، الحد الأدنى لنسبة الوصول للهدف فوق نقطة التعادل (33%)، وتتفوق على "شراء دايماً" و"بيع دايماً"
-    const wr = sig ? win / sig : 0, lbw = wilson(wr, sig), evm = sig ? ev / sig : 0, bAvg = { buy: bAll / tests, sell: sAll / tests }, valid = sig >= 30 && evm > 0 && lbw > 1 / 3 && evm > Math.max(bAvg.buy, bAvg.sell);
-    return { status: 'ok', tests, insuff, neutral, sig, nb, ns, winRate: wr, winLB: lbw, ev: evm, base: bAvg, valid };
+    const wr = sig ? win / sig : 0, lbw = wilson(wr, sig), evm = sig ? ev / sig : 0, bAvg = { buy: sig ? bAll / sig : 0, sell: sig ? sAll / sig : 0 }, valid = sig >= 30 && evm > 0 && lbw > 1 / 3 && evm > Math.max(bAvg.buy, bAvg.sell);
+    return { status: 'ok', tests, insuff, neutral: 0, sig, nb, ns, winRate: wr, winLB: lbw, ev: evm, base: bAvg, valid };
   }
 
   // الدمج مع نتيجة الأدوات R (من Engine.analyze): يوافق الأدوات = يرفع التوافق، يخالفها = رفض الصفقة، بدون بيانات كافية = لا تأثير
@@ -98,7 +113,7 @@
     R.hAgree = agree; R.scTools = R.sc;
     if (agree) R.ag += W; else R.dg += W;
     R.sc = Math.round(100 * R.ag / ((R.ag + R.dg) || 1));
-    R.why = !agree ? 'التحليل التاريخي عكس الأدوات (' + h.up + ' حالة صعود مقابل ' + h.dn + ' هبوط)' : R.sc < min ? 'قوة التوافق ' + R.sc + '% أقل من ' + min + '%' : '';
+    R.why = !agree ? 'التحليل التاريخي عكس الأدوات (' + h.up + ' حالة صعود مقابل ' + h.dn + ' هبوط بعد إزالة ميل السوق العام)' : R.sc < min ? 'قوة التوافق ' + R.sc + '% أقل من ' + min + '%' : '';
     R.side = R.why ? 'wait' : R.d > 0 ? 'buy' : 'sell';
     return R;
   }
