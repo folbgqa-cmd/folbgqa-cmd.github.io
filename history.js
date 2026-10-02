@@ -3,6 +3,8 @@
 // (شكل آخر 8 إغلاقات، طبيعة الشمعة، الموقع داخل نطاق 50 شمعة، التذبذب، الميل، ساعة اليوم).
 // منع Look-Ahead: ميزات الحالة j تستخدم شموع <= j فقط. والحالة j ما تدخل مقارنة اللحظة q إلا إذا j + 20 <= q
 // (يعني نتيجتها كانت معروفة قبل q). كل الأوزان والحدود ثابتة مسبقاً وما انضبطت على أي نتيجة سوق حقيقية.
+// قاعدة الدمج (gate): نعد الحالات المشابهة اللي صعدت (up) واللي هبطت (dn) بعد 10 شموع. الأغلبية = اتجاه التحليل التاريخي.
+// أغلبية بنفس اتجاه الأدوات: تدخل الصفقة ويزيد التوافق. أغلبية عكس الأدوات: ترفض الصفقة. تعادل أو بيانات غير كافية: لا تأثير.
 (function (root) {
   'use strict';
   const MAXH = 20, K = 120, MINCASES = 40, MINDATA = 2500, SEP = 20, EVMIN = 0.35, LBMIN = .58, Z = 1.645, NF = 15;
@@ -65,27 +67,41 @@
     for (const j of pick) { evL += P.OL[j]; evS += P.OS[j]; wL += P.WL[j]; wS += P.WS[j]; m5 += P.R5[j]; m10 += P.R10[j]; m20 += P.R20[j]; if (P.R10[j] > 0) up++; else if (P.R10[j] < 0) dn++; }
     evL /= n; evS /= n; wL /= n; wS /= n; m5 /= n; m10 /= n; m20 /= n;
     const side0 = evL >= evS ? 'buy' : 'sell', ev = Math.max(evL, evS), k = side0 === 'buy' ? up : dn, tot = up + dn || 1, share = k / tot, lb = wilson(share, tot);
-    // قاعدة القرار (ثابتة مسبقاً): اتجاه واضح فقط إذا القيمة المتوقعة >= 0.35R والحد الأدنى الإحصائي لنسبة الاتجاه (90%) فوق 58%
-    // (الحدود انضبطت على بيانات عشوائية بحتة لتقليل الإشارات الكاذبة، مو على نتائج السوق)
+    // maj: الأغلبية بالعدد (كم حالة صعدت وكم هبطت بعد 10 شموع). هذا هو اللي يدخل بالتوافق.
+    const maj = up > dn ? 'buy' : dn > up ? 'sell' : 'neutral';
+    // side: اتجاه حاسم إحصائياً (للعرض فقط): القيمة المتوقعة >= 0.35R والحد الأدنى الإحصائي (90%) فوق 58%
     const dir = ev >= EVMIN && lb > LBMIN;
-    return { status: 'ok', cases: n, used: idx.length, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
+    return { status: 'ok', cases: n, used: idx.length, up, dn, maj, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
   }
 
-  // اختبار walk-forward: لكل لحظة q نقرر بالبيانات اللي قبلها فقط، ثم نقيس النتيجة الفعلية بعدها
+  // اختبار walk-forward لقاعدة الأغلبية: لكل لحظة q نقرر بالبيانات اللي قبلها فقط، ثم نقيس النتيجة الفعلية بعدها
   function backtest(P) {
     const n = P.n, from = 60 + MINDATA + MAXH + 20, last = n - MAXH - 1;
     if (last - from < 300) return { status: 'insufficient', reason: 'البيانات ما تكفي لاختبار موثوق (تحتاج حوالي 3,000 شمعة على الأقل بعد فترة التدريب)' };
     const step = Math.max(10, Math.floor((last - from) / 600)); let tests = 0, insuff = 0, neutral = 0, sig = 0, nb = 0, ns = 0, win = 0, ev = 0, bAll = 0, sAll = 0;
     for (let q = from; q <= last; q += step) {
       const r = query(P, q); tests++; bAll += P.OL[q]; sAll += P.OS[q];
-      if (r.status !== 'ok') { insuff++; continue; } if (r.side === 'neutral') { neutral++; continue; }
-      sig++; if (r.side === 'buy') { nb++; ev += P.OL[q]; win += P.WL[q]; } else { ns++; ev += P.OS[q]; win += P.WS[q]; }
+      if (r.status !== 'ok') { insuff++; continue; } if (r.maj === 'neutral') { neutral++; continue; }
+      sig++; if (r.maj === 'buy') { nb++; ev += P.OL[q]; win += P.WL[q]; } else { ns++; ev += P.OS[q]; win += P.WS[q]; }
     }
     // "لها قيمة فعلية" فقط إذا: 30 إشارة على الأقل، ربح متوقع موجب، الحد الأدنى لنسبة الوصول للهدف فوق نقطة التعادل (33%)، وتتفوق على "شراء دايماً" و"بيع دايماً"
     const wr = sig ? win / sig : 0, lbw = wilson(wr, sig), evm = sig ? ev / sig : 0, bAvg = { buy: bAll / tests, sell: sAll / tests }, valid = sig >= 30 && evm > 0 && lbw > 1 / 3 && evm > Math.max(bAvg.buy, bAvg.sell);
     return { status: 'ok', tests, insuff, neutral, sig, nb, ns, winRate: wr, winLB: lbw, ev: evm, base: bAvg, valid };
   }
 
-  const API = { prep, query, backtest, MAXH, K, MINCASES, MINDATA };
+  // الدمج مع نتيجة الأدوات R (من Engine.analyze): يوافق الأدوات = يرفع التوافق، يخالفها = رفض الصفقة، بدون بيانات أو تعادل = لا تأثير
+  function gate(R, h, W, min) {
+    R.hist = h;
+    if (!h || h.status !== 'ok' || h.maj === 'neutral' || !R.d) return R;
+    const agree = (h.maj === 'buy') === (R.d > 0);
+    R.hAgree = agree; R.scTools = R.sc;
+    if (agree) R.ag += W; else R.dg += W;
+    R.sc = Math.round(100 * R.ag / ((R.ag + R.dg) || 1));
+    R.why = !agree ? 'التحليل التاريخي عكس الأدوات (' + h.up + ' حالة صعود مقابل ' + h.dn + ' هبوط)' : R.sc < min ? 'قوة التوافق ' + R.sc + '% أقل من ' + min + '%' : '';
+    R.side = R.why ? 'wait' : R.d > 0 ? 'buy' : 'sell';
+    return R;
+  }
+
+  const API = { prep, query, backtest, gate, MAXH, K, MINCASES, MINDATA };
   if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.Hist = API;
 })(typeof window !== 'undefined' ? window : this);
