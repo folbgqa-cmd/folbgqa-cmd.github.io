@@ -58,7 +58,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 27 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، فريمات أكبر، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 10,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط، بعد إزالة ميل السوق العام (حتى ما يطلع شراء دايماً إذا السوق صاعد، أو بيع دايماً إذا هابط). إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 40 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، فريمات أكبر، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 10,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط، بعد إزالة ميل السوق العام (حتى ما يطلع شراء دايماً إذا السوق صاعد، أو بيع دايماً إذا هابط). إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -143,7 +143,7 @@ if(HF[key]&&Date.now()-HF[key].t<6e5)return{status:'insufficient',reason:HF[key]
 $('err').style.color='var(--mute)';$('err').textContent='جاري تحميل التاريخ ('+sym+'، حتى 10,000 شمعة)...';
 try{HC[key]={cs:await loadHist(sym,tf)}}catch(e){HF[key]={t:Date.now(),m:e.message};$('err').textContent='';return{status:'insufficient',reason:e.message}}
 $('err').textContent='';return histRun(sym,tf,recent)||{status:'insufficient',reason:'تعذر دمج البيانات'}}
-// التحليل (27 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار، وندمج الطبقة التاريخية بقاعدة الأغلبية، ونضيف قائمة أخبار الزوج
+// التحليل (40 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار، وندمج الطبقة التاريخية بقاعدة الأغلبية، ونضيف قائمة أخبار الزوج
 function analyze(v,pr,now){
 const R=Hist.gate(Engine.analyze(v,pr,now,{ses,nk,min:70}),HCUR,HW,70);
 R.NL=EV?EV.filter(e=>pr.c.includes(e.country)&&e.ts>now-36e5&&e.ts<now+864e5).sort((a,b)=>a.ts-b.ts).slice(0,6):[];
