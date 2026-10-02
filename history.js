@@ -3,8 +3,9 @@
 // (شكل آخر 8 إغلاقات، طبيعة الشمعة، الموقع داخل نطاق 50 شمعة، التذبذب، الميل، ساعة اليوم).
 // منع Look-Ahead: ميزات الحالة j تستخدم شموع <= j فقط. والحالة j ما تدخل مقارنة اللحظة q إلا إذا j + 20 <= q
 // (يعني نتيجتها كانت معروفة قبل q). كل الأوزان والحدود ثابتة مسبقاً وما انضبطت على أي نتيجة سوق حقيقية.
-// قاعدة الدمج (gate): نعد الحالات المشابهة اللي صعدت (up) واللي هبطت (dn) بعد 10 شموع. الأغلبية = اتجاه التحليل التاريخي.
-// أغلبية بنفس اتجاه الأدوات: تدخل الصفقة ويزيد التوافق. أغلبية عكس الأدوات: ترفض الصفقة. تعادل أو بيانات غير كافية: لا تأثير.
+// قاعدة الدمج (gate): نعد الحالات المشابهة اللي صعدت (up) واللي هبطت (dn) بعد 10 شموع. الأغلبية = اتجاه التحليل التاريخي (شراء أو بيع فقط، ما فيه حياد).
+// لو تساوى العدد بالضبط (نادر) يُحسم بمتوسط الحركة بعد 10 شموع (وإذا صفر، بالربح المتوقع).
+// أغلبية بنفس اتجاه الأدوات: تدخل الصفقة ويزيد التوافق. أغلبية عكس الأدوات: ترفض الصفقة. بيانات غير كافية: لا تأثير.
 (function (root) {
   'use strict';
   const MAXH = 20, K = 120, MINCASES = 40, MINDATA = 2500, SEP = 20, EVMIN = 0.35, LBMIN = .58, Z = 1.645, NF = 15;
@@ -67,11 +68,11 @@
     for (const j of pick) { evL += P.OL[j]; evS += P.OS[j]; wL += P.WL[j]; wS += P.WS[j]; m5 += P.R5[j]; m10 += P.R10[j]; m20 += P.R20[j]; if (P.R10[j] > 0) up++; else if (P.R10[j] < 0) dn++; }
     evL /= n; evS /= n; wL /= n; wS /= n; m5 /= n; m10 /= n; m20 /= n;
     const side0 = evL >= evS ? 'buy' : 'sell', ev = Math.max(evL, evS), k = side0 === 'buy' ? up : dn, tot = up + dn || 1, share = k / tot, lb = wilson(share, tot);
-    // maj: الأغلبية بالعدد (كم حالة صعدت وكم هبطت بعد 10 شموع). هذا هو اللي يدخل بالتوافق.
-    const maj = up > dn ? 'buy' : dn > up ? 'sell' : 'neutral';
+    // maj: الأغلبية بالعدد (كم حالة صعدت وكم هبطت بعد 10 شموع): شراء أو بيع فقط. لو تساوى العدد بالضبط يُحسم بمتوسط الحركة، وإذا صفر بالربح المتوقع.
+    const tie = up === dn, maj = up > dn ? 'buy' : dn > up ? 'sell' : m10 > 0 ? 'buy' : m10 < 0 ? 'sell' : side0;
     // side: اتجاه حاسم إحصائياً (للعرض فقط): القيمة المتوقعة >= 0.35R والحد الأدنى الإحصائي (90%) فوق 58%
     const dir = ev >= EVMIN && lb > LBMIN;
-    return { status: 'ok', cases: n, used: idx.length, up, dn, maj, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
+    return { status: 'ok', cases: n, used: idx.length, up, dn, tie, maj, side: dir ? side0 : 'neutral', lean: side0, strength: Math.round(share * 100), lb, ev: { buy: evL, sell: evS }, win: { buy: wL, sell: wS }, mv: { m5, m10, m20 } };
   }
 
   // اختبار walk-forward لقاعدة الأغلبية: لكل لحظة q نقرر بالبيانات اللي قبلها فقط، ثم نقيس النتيجة الفعلية بعدها
@@ -89,10 +90,10 @@
     return { status: 'ok', tests, insuff, neutral, sig, nb, ns, winRate: wr, winLB: lbw, ev: evm, base: bAvg, valid };
   }
 
-  // الدمج مع نتيجة الأدوات R (من Engine.analyze): يوافق الأدوات = يرفع التوافق، يخالفها = رفض الصفقة، بدون بيانات أو تعادل = لا تأثير
+  // الدمج مع نتيجة الأدوات R (من Engine.analyze): يوافق الأدوات = يرفع التوافق، يخالفها = رفض الصفقة، بدون بيانات كافية = لا تأثير
   function gate(R, h, W, min) {
     R.hist = h;
-    if (!h || h.status !== 'ok' || h.maj === 'neutral' || !R.d) return R;
+    if (!h || h.status !== 'ok' || !R.d) return R;
     const agree = (h.maj === 'buy') === (R.d > 0);
     R.hAgree = agree; R.scTools = R.sc;
     if (agree) R.ag += W; else R.dg += W;
