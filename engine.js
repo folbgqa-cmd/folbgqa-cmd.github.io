@@ -135,12 +135,8 @@
     const v23 = tk(n) > kj(n) ? 1 : tk(n) < kj(n) ? -1 : 0;
     T('تقاطع Tenkan/Kijun', 'إيشيموكو', 3, v23, W(v23, 'Tenkan فوق Kijun', 'Tenkan تحت Kijun', 'متساويان'));
 
-    // ===== ويكوف =====
-    const L40 = mn(l, n - 45, n - 6), H40 = mx(h, n - 45, n - 6); let v25 = 0;
-    for (let j = n - 2; j <= n; j++) { if (l[j] < L40 && c[j] > L40) v25 = 1; else if (h[j] > H40 && c[j] < H40) v25 = -1; }
-    T('Spring / Upthrust', 'ويكوف', 2, v25, W(v25, 'Spring: كسر كاذب للقاع', 'Upthrust: كسر كاذب للقمة', 'لا Spring أو Upthrust'), true);
-
-    // ===== أدوات أقوى: فريمات أكبر، Supertrend، قمة/قاع أمس، الانحدار الخطي =====
+    // ===== أدوات أقوى: فريمات أكبر وSupertrend =====
+    // (انشالت 3 أدوات متكررة: Spring/Upthrust يكرر سحب السيولة، وقمة/قاع أمس والانحدار الخطي وزنهم 1 ويكررون أدوات ثانية)
     const agg = k => { const g = Math.floor((n + 1) / k), st = n + 1 - g * k, cc = []; for (let i = 0; i < g; i++) cc.push(c[st + i * k + k - 1]); return cc; };
     const htf = (k, f, sl) => { const cc = agg(k); if (cc.length < sl + 3) return 0; const A = ema(cc, f)[cc.length - 1], B = ema(cc, sl)[cc.length - 1], x = cc[cc.length - 1]; return x > B && A > B ? 1 : x < B && A < B ? -1 : 0; };
     const h4 = htf(4, 20, 50);
@@ -155,15 +151,6 @@
         if (t === 1 && c[i] < pfb) t = -1; else if (t === -1 && c[i] > pfu) t = 1; }
       return t; })();
     T('Supertrend', 'الكلاسيكي', 2, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
-    const dk = x => String(x.datetime || '').slice(0, 10), days = v.map(dk); let v30 = 0, v31 = 0;
-    if (days[n]) { let k = n; while (k >= 0 && days[k] === days[n]) k--;
-      if (k >= 0) { const pd = days[k]; let pH = -Infinity, pL = Infinity, e = k, cn = 0; while (e >= 0 && days[e] === pd) { if (h[e] > pH) pH = h[e]; if (l[e] < pL) pL = l[e]; e--; cn++; }
-        if (cn >= 4) v30 = px > pH ? 1 : px < pL ? -1 : (l[n] < pL && px > pL) ? 1 : (h[n] > pH && px < pH) ? -1 : 0; } }
-    T('قمة/قاع أمس', 'ICT/SMC', 1, v30, W(v30, 'اختراق قمة أمس أو سحب قاعه ورجوع', 'كسر قاع أمس أو سحب قمته ورجوع', 'السعر داخل نطاق أمس'), true);
-    { const m = 50; let sx = 0, sy = 0, sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < m; i++) { const y = c[n - m + 1 + i]; sx += i; sy += y; sxy += i * y; sxx += i * i; syy += y * y; }
-      const den = m * sxx - sx * sx, sl = (m * sxy - sx * sy) / den, r2 = Math.pow(m * sxy - sx * sy, 2) / (den * (m * syy - sy * sy) || 1), tot = sl * (m - 1);
-      v31 = r2 >= .5 && tot > 3 * a ? 1 : r2 >= .5 && tot < -3 * a ? -1 : 0;
-      T('انحدار خطي (50)', 'الكلاسيكي', 1, v31, 'R² ' + r2.toFixed(2) + W(v31, ': ترند صاعد منتظم', ': ترند هابط منتظم', ': ترند غير منتظم')); }
 
     // ===== التحليل التاريخي (Historical Pattern Analysis): دليل مستقل من حالات مشابهة سابقة =====
     // يدخل بالتوافق (وزن 8) فقط إذا نجح اختباره الزمني بدون تسريب مستقبلي (adopted)، وإلا يظهر بتصويت صفر.
