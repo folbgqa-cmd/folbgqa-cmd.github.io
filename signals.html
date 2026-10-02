@@ -58,7 +58,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 30 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، ويكوف، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 10,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط. إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 27 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، فريمات أكبر، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 10,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط، بعد إزالة ميل السوق العام (حتى ما يطلع شراء دايماً إذا السوق صاعد، أو بيع دايماً إذا هابط). إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -123,7 +123,7 @@ if(ld)return{p:11,t:"جلسة لندن"};if(ny)return{p:11,t:"جلسة نيوي�
 if(tk)return{p:jp?8:3,t:"جلسة طوكيو"+(jp?" (مناسبة لهذا الزوج)":" (سيولة ضعيفة لهذا الزوج)")};
 return{p:jp?4:2,t:"جلسة سيدني (سيولة ضعيفة)"}}
 // ===== التحليل التاريخي (10,000 شمعة): طبقة مستقلة، تشتغل تلقائياً مع كل تحليل =====
-// قاعدة الدمج (داخل history.js): نعدّ الحالات المشابهة اللي صعدت واللي هبطت. أغلبية بنفس اتجاه الأدوات = تدخل وتزيد التوافق (+15)،
+// قاعدة الدمج (داخل history.js): نعدّ الحالات المشابهة اللي صعدت واللي هبطت (بعد إزالة ميل السوق العام). أغلبية بنفس اتجاه الأدوات = تدخل وتزيد التوافق (+15)،
 // أغلبية عكس الأدوات = ترفض الصفقة. بيانات غير كافية = ما تأثر.
 const HW=15,HC={},HPR={},HBT={},HF={};let HCUR=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -143,7 +143,7 @@ if(HF[key]&&Date.now()-HF[key].t<6e5)return{status:'insufficient',reason:HF[key]
 $('err').style.color='var(--mute)';$('err').textContent='جاري تحميل التاريخ ('+sym+'، حتى 10,000 شمعة)...';
 try{HC[key]={cs:await loadHist(sym,tf)}}catch(e){HF[key]={t:Date.now(),m:e.message};$('err').textContent='';return{status:'insufficient',reason:e.message}}
 $('err').textContent='';return histRun(sym,tf,recent)||{status:'insufficient',reason:'تعذر دمج البيانات'}}
-// التحليل (30 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار، وندمج الطبقة التاريخية بقاعدة الأغلبية، ونضيف قائمة أخبار الزوج
+// التحليل (27 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار، وندمج الطبقة التاريخية بقاعدة الأغلبية، ونضيف قائمة أخبار الزوج
 function analyze(v,pr,now){
 const R=Hist.gate(Engine.analyze(v,pr,now,{ses,nk,min:70}),HCUR,HW,70);
 R.NL=EV?EV.filter(e=>pr.c.includes(e.country)&&e.ts>now-36e5&&e.ts<now+864e5).sort((a,b)=>a.ts-b.ts).slice(0,6):[];
@@ -166,10 +166,10 @@ const sg=x=>(x>=0?'+':'')+x.toFixed(2)+'%';
 function histCard(R){const h=R.hist;let b;
 if(!h)b='<p>جاري تحميل التاريخ...</p>';
 else if(h.status!=='ok')b=`<p><b>بيانات غير كافية:</b> ${esc(h.reason||'')}. الصفقة تعتمد على الأدوات وحدها.</p>`;
-else{const M=h.maj==='buy'?'شراء':'بيع';b=`<ul><li>البيانات المستخدمة: ${h.data.toLocaleString('en')} شمعة</li><li>الحالات المشابهة: ${h.cases} (صعدت ${h.up} | هبطت ${h.dn} بعد 10 شموع)${h.tie?' - تساوى العدد وحسمه متوسط الحركة':''}</li><li>الاتجاه التاريخي (بالأغلبية): <b>${M}</b></li><li>متوسط الحركة بعد النمط: ${sg(h.mv.m5)} (5) | ${sg(h.mv.m10)} (10) | ${sg(h.mv.m20)} (20 شمعة)</li><li>الوصول للهدف قبل الوقف (2:1): شراء ${Math.round(h.win.buy*100)}% | بيع ${Math.round(h.win.sell*100)}%</li><li><b>النتيجة: ${h.maj.toUpperCase()}</b></li><li>أثرها: ${R.hAgree?'توافق مع الأدوات، رفع التوافق (+'+HW+' وزن)':'عكس الأدوات: رفض الصفقة'}</li></ul>`}
+else{const M=h.maj==='buy'?'شراء':'بيع';b=`<ul><li>البيانات المستخدمة: ${h.data.toLocaleString('en')} شمعة</li><li>الحالات المشابهة: ${h.cases} (صعدت ${h.up} | هبطت ${h.dn} بعد 10 شموع، بعد إزالة ميل السوق العام)${h.tie?' - تساوى العدد وحسمه متوسط الحركة':''}</li><li>العدد الخام بدون إزالة الميل: صعدت ${h.upRaw} | هبطت ${h.dnRaw} (ميل السوق العام بعد 10 شموع: ${sg(h.med)}). القرار يعتمد على العدد بعد الإزالة، حتى ما يطلع شراء دايماً بسوق صاعد</li><li>الاتجاه التاريخي (بالأغلبية): <b>${M}</b></li><li>متوسط الحركة بعد النمط: ${sg(h.mv.m5)} (5) | ${sg(h.mv.m10)} (10) | ${sg(h.mv.m20)} (20 شمعة)</li><li>الوصول للهدف قبل الوقف (2:1): شراء ${Math.round(h.win.buy*100)}% | بيع ${Math.round(h.win.sell*100)}%</li>${h.conflict?'<li>⚠ نسب الوصول للهدف تميل للجهة المعاكسة للأغلبية، فالثقة بهذا الاتجاه أقل</li>':''}<li><b>النتيجة: ${h.maj.toUpperCase()}</b></li><li>أثرها: ${R.hAgree?'توافق مع الأدوات، رفع التوافق (+'+HW+' وزن)':'عكس الأدوات: رفض الصفقة'}</li></ul>`}
 return `<h3>Historical Analysis</h3><div class="hs">${b}<div id="hbo"></div></div>`}
 function btHtml(b){if(b.status!=='ok')return `<p>${esc(b.reason)}</p>`;
-return `<h4 style="margin:10px 0 4px">الاختبار التاريخي لقاعدة الأغلبية (تلقائي)</h4><p><b>${b.valid?'الطريقة لها قيمة فعلية بالاختبار':'ما ثبتت قيمتها بالاختبار'}</b>: ${b.sig} إشارة من ${b.tests-b.insuff} لحظة (شراء ${b.nb} | بيع ${b.ns})</p><ul><li>نسبة الوصول للهدف قبل الوقف: ${Math.round(b.winRate*100)}% (الحد الأدنى الإحصائي ${Math.round(b.winLB*100)}%، نقطة التعادل 33%)</li><li>الربح المتوقع لكل صفقة: ${b.ev.toFixed(2)}R مقابل شراء دايماً ${b.base.buy.toFixed(2)}R وبيع دايماً ${b.base.sell.toFixed(2)}R</li></ul><p style="font-size:13px;color:var(--mute)">الاختبار تقدّمي (walk-forward): كل قرار اتخذ بالبيانات اللي قبله فقط. ${b.sig<30?'عدد الإشارات قليل، النتيجة غير موثوقة.':''}</p>`}
+return `<h4 style="margin:10px 0 4px">الاختبار التاريخي لقاعدة الأغلبية (تلقائي)</h4><p><b>${b.valid?'الطريقة لها قيمة فعلية بالاختبار':'ما ثبتت قيمتها بالاختبار'}</b>: ${b.sig} إشارة من ${b.tests-b.insuff} لحظة (شراء ${b.nb} | بيع ${b.ns})</p><ul><li>نسبة الوصول للهدف قبل الوقف: ${Math.round(b.winRate*100)}% (الحد الأدنى الإحصائي ${Math.round(b.winLB*100)}%، نقطة التعادل 33%)</li><li>الربح المتوقع لكل صفقة: ${b.ev.toFixed(2)}R مقابل شراء دايماً ${b.base.buy.toFixed(2)}R وبيع دايماً ${b.base.sell.toFixed(2)}R</li></ul><p style="font-size:13px;color:var(--mute)">الاختبار تقدّمي (walk-forward): كل قرار اتخذ بالبيانات اللي قبله فقط، واللحظات المختبرة متباعدة 20 شمعة على الأقل حتى ما تتداخل النتائج. ${b.sig<30?'عدد الإشارات قليل، النتيجة غير موثوقة.':''}</p>`}
 // الاختبار التاريخي يشتغل تلقائياً مرة لكل زوج وفريم، وبعدها يظهر محفوظ
 function histAuto(sym){const key=sym+'|'+$('tf').value,o=$('hbo');if(!o)return;
 if(HBT[key]){o.innerHTML=btHtml(HBT[key]);return}
