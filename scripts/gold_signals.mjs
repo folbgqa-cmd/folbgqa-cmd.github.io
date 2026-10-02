@@ -2,7 +2,8 @@ import fs from 'fs';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const Engine = require('../engine.js'); // نفس محرك الـ 30 أداة المستخدم بصفحة signals.html
+const Engine = require('../engine.js'); // نفس محرك الأدوات المستخدم بصفحة signals.html
+const Hist = require('../history.js'); // نفس طبقة التحليل التاريخي (10,000 شمعة) المستخدمة بالصفحة
 
 const { TG_TOKEN, TG_CHAT, TD_KEY } = process.env;
 if (!TG_TOKEN || !TG_CHAT || !TD_KEY) { console.error('Missing secrets'); process.exit(1); }
@@ -11,6 +12,7 @@ let cfg = { minConf: 70 };
 try { cfg = { ...cfg, ...JSON.parse(fs.readFileSync('config.json', 'utf8')) }; } catch { }
 
 const TF = '15min';
+const HW = 15; // نفس وزن الدمج بالصفحة
 const P = {
   'XAU/USD': { n: 'الذهب', d: 2, pip: .1, c: ['USD'] }, 'EUR/USD': { n: 'يورو/دولار', d: 5, pip: 1e-4, c: ['EUR', 'USD'] }, 'GBP/USD': { n: 'إسترليني/دولار', d: 5, pip: 1e-4, c: ['GBP', 'USD'] },
   'USD/JPY': { n: 'دولار/ين', d: 3, pip: .01, c: ['USD', 'JPY'] }, 'AUD/USD': { n: 'أسترالي/دولار', d: 5, pip: 1e-4, c: ['AUD', 'USD'] }, 'USD/CAD': { n: 'دولار/كندي', d: 5, pip: 1e-4, c: ['USD', 'CAD'] }, 'USD/CHF': { n: 'دولار/فرنك', d: 5, pip: 1e-4, c: ['USD', 'CHF'] }
@@ -47,18 +49,36 @@ function ses(pr, now) {
 }
 const analyze = (v, pr, now) => Engine.analyze(v, pr, now, { ses, nk, min: cfg.minConf });
 
+// تحميل آخر 10,000 شمعة (طلبين من 5000) مع كل تحليل
+async function tdPage(sym, end) {
+  const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${TF}&outputsize=5000&apikey=${TD_KEY}` + (end ? `&end_date=${encodeURIComponent(end)}` : '');
+  const j = await (await fetch(url)).json();
+  if (!j.values) throw new Error(j.message || 'data error');
+  return j.values;
+}
+async function loadAll(sym) {
+  const a = await tdPage(sym); let all = a;
+  if (a.length >= 4990) { try { all = a.concat(await tdPage(sym, a[a.length - 1].datetime)); } catch (e) { console.error(sym, 'history page 2:', e.message); } }
+  const seen = new Set(), o = [];
+  for (const x of all) if (!seen.has(x.datetime)) { seen.add(x.datetime); o.push(x); }
+  o.sort((x, y) => x.datetime < y.datetime ? -1 : 1);
+  return o.slice(-10000);
+}
+
 // فرق السعر بين Twelve Data ووسيطك (بالدولار): من config.json (offsets) وتغييره من تلي بالأمر /offset
 const offs = () => ({ ...(cfg.offsets || {}), ...(state.offs || {}) });
 // رسالة واحدة واضحة: صفقة واحدة فقط (دخول، استوب، هدف 1، هدف 2) بنقاط المحرك (700 إلى 1500)
 function message(sym, R) {
-  const o = offs()[sym] || 0, f = x => (x + o).toFixed(P[sym].d), pt = R.pts;
+  const o = offs()[sym] || 0, f = x => (x + o).toFixed(P[sym].d), pt = R.pts, h = R.hist;
+  const hl = h && h.status === 'ok' ? `\nالتحليل التاريخي (${h.data.toLocaleString('en')} شمعة): ${h.up} صعود مقابل ${h.dn} هبوط من ${h.cases} حالة مشابهة` : '';
   return `${R.side === 'buy' ? '🟢 شراء' : '🔴 بيع'} ${P[sym].n} ${sym} (M15) | قوة التوافق ${R.sc}%
 
-1. الدخول: ${f(R.px)}
+${R.order ? R.order.label : 'ادخل الآن'}
+1. الدخول: ${f(R.entry != null ? R.entry : R.px)}
 2. الاستوب: ${f(R.sl)} (${pt.sl} نقطة)
 3. الهدف 1: ${f(R.tp1)} (${pt.tp1} نقطة)
 4. الهدف 2: ${f(R.tp2)} (${pt.tp2} نقطة)
-
+${hl}
 ⚠️ إشارة تعليمية، خاطر بـ 1% أو أقل.`;
 }
 
@@ -105,11 +125,13 @@ console.log('active pairs:', active.join(', '));
 
 for (const sym of active) {
   try {
-    const res = await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${TF}&outputsize=300&apikey=${TD_KEY}`);
-    const j = await res.json();
-    if (!j.values || j.values.length < 250) { console.error(sym, 'data error:', j.message || 'not enough data'); continue; }
-    const R = analyze(j.values.slice().reverse(), P[sym], now), last = state.pairs[sym] || 'wait';
-    console.log(`${sym} side=${R.side} score=${R.sc} entry=${R.evW} last=${last} ${R.why}`);
+    const cs = await loadAll(sym);
+    if (cs.length < 250) { console.error(sym, 'data error: not enough data'); continue; }
+    // الأدوات تحلل آخر 300 شمعة، والتحليل التاريخي يفحص كل الشموع (حتى 10,000) ويدخل بقاعدة الأغلبية
+    let h;
+    try { const Pp = Hist.prep(cs); h = Hist.query(Pp, Pp.n - 1); h.data = cs.length; } catch (e) { h = { status: 'insufficient', reason: e.message }; }
+    const R = Hist.gate(analyze(cs.slice(-300), P[sym], now), h, HW, cfg.minConf), last = state.pairs[sym] || 'wait';
+    console.log(`${sym} side=${R.side} score=${R.sc} hist=${h.status === 'ok' ? h.up + 'up/' + h.dn + 'dn of ' + h.cases : h.status} last=${last} ${R.why}`);
     if (R.side === last) continue;
     if (R.side === 'wait') { state.pairs[sym] = 'wait'; changed = true; continue; }
     const tg = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
