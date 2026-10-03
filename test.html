@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>اختبار حقيقي للتحليل</title>
+<style>
+:root{--ink:#0E2233;--mute:#5A6B78;--teal:#0F766E;--red:#B4423A;--amber:#B7791F;--line:#C5D0D8;--paper:#E8EDF0}
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,'Segoe UI',Tahoma,sans-serif;background:var(--paper);color:var(--ink);line-height:1.8;padding:16px;max-width:760px;margin:0 auto}
+h1{font-size:24px;margin-bottom:6px}h3{margin:16px 0 6px}
+.box{background:#fff;border:1px solid var(--line);border-radius:6px;padding:14px;margin:12px 0}
+select,button{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:4px;background:#fff}
+button{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer}
+button:disabled{opacity:.5}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}
+label{display:grid;gap:4px;font-size:14px;color:var(--mute)}
+.bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;width:0;background:var(--teal)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}th,td{padding:6px;border-bottom:1px solid var(--line);text-align:start}
+.vd{padding:12px;border-radius:6px;font-weight:600;margin:10px 0}.ok{background:#E3F4EE;color:#0B5B54}.no{background:#FBE9E7;color:#8A2E26}.mid{background:#FFF4DC;color:#7A5410}
+.nt{font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+<a href="signals.html" style="font-size:14px">← رجوع للإشارات</a>
+<h1>اختبار حقيقي للتحليل</h1>
+<p class="nt">يشغّل نفس محرك الـ 40 أداة (نفس الملف engine.js اللي بالموقع) على شموع حقيقية من Twelve Data (حتى 10,000 شمعة) بالنظام التقدّمي: كل قرار يتخذ بآخر 300 شمعة قبله فقط، بدون ما يشوف المستقبل، ثم نشوف وش صار بعده. النتيجة هي الدليل على إذا التحليل له قيمة فعلاً أو لا.</p>
+<div class="box"><div class="row">
+<label>الزوج<select id="pair"></select></label>
+<label>الفريم<select id="tf"><option value="5min">M5</option><option value="15min" selected>M15</option><option value="1h">H1</option><option value="4h">H4</option></select></label>
+<button id="go">ابدأ الاختبار</button>
+</div>
+<p class="nt" id="msg">يستخدم مفتاح Twelve Data المحفوظ بمتصفحك من صفحة الإشارات (لازم تفتحها مرة بنفس المتصفح). يستهلك طلبين من حدك المجاني.</p>
+<div class="bar"><i id="pg"></i></div></div>
+<div id="out"></div>
+<script src="engine.js"></script>
+<script src="fulltest.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const P={"XAU/USD":{pip:.1,d:2,n:"الذهب",c:["USD"]},"EUR/USD":{pip:1e-4,d:5,n:"يورو/دولار",c:["EUR","USD"]},"GBP/USD":{pip:1e-4,d:5,n:"إسترليني/دولار",c:["GBP","USD"]},"USD/JPY":{pip:.01,d:3,n:"دولار/ين",c:["USD","JPY"]},"AUD/USD":{pip:1e-4,d:5,n:"أسترالي/دولار",c:["AUD","USD"]},"USD/CAD":{pip:1e-4,d:5,n:"دولار/كندي",c:["USD","CAD"]},"USD/CHF":{pip:1e-4,d:5,n:"دولار/فرنك",c:["USD","CHF"]}};
+$('pair').innerHTML=Object.keys(P).map(k=>`<option value="${k}">${k} - ${P[k].n}</option>`).join('');
+// نفس دالة الجلسة اللي بالموقع (تتغير حسب وقت كل شمعة تاريخية)
+function ses(pr,now){const D=new Date(now),h=D.getUTCHours()+D.getUTCMinutes()/60,w=D.getUTCDay();
+if(w===6||(w===0&&h<21)||(w===5&&h>=21))return{p:0,closed:1,t:"مغلق"};
+const ld=h>=7&&h<16,ny=h>=12&&h<21,tk=h<9,jp=pr.c.some(x=>x==='JPY'||x==='AUD');
+if(ld&&ny)return{p:15,t:"لندن+نيويورك"};if(ld)return{p:11,t:"لندن"};if(ny)return{p:11,t:"نيويورك"};
+if(tk)return{p:jp?8:3,t:"طوكيو"};return{p:jp?4:2,t:"سيدني"}}
+// الأخبار التاريخية ما نقدر نعرفها، نعاملها «غير متاحة» مثل الموقع لما ملف news.json ما يكون موجود
+const ctx={ses,nk:()=>({v:-1,t:'-'}),min:70};
+async function page(sym,tf,k,end){const r=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${tf}&outputsize=5000&apikey=${k}`+(end?`&end_date=${encodeURIComponent(end)}`:''));
+const j=await r.json();if(j.status==='error'||!j.values)throw new Error(j.code===429?'وصلت حد الاستخدام المجاني، انتظر دقيقة وجرب':(j.message||'فشل جلب البيانات'));return j.values}
+async function load(sym,tf,k){const a=await page(sym,tf,k);let all=a;
+if(a.length>=4990){try{all=a.concat(await page(sym,tf,k,a[a.length-1].datetime))}catch(e){}}
+const seen=new Set(),o=[];for(const x of all)if(!seen.has(x.datetime)){seen.add(x.datetime);o.push(x)}
+o.sort((x,y)=>x.datetime<y.datetime?-1:1);return o.slice(-10000)}
+const pc=x=>Math.round(x*100)+'%',f2=x=>(x>=0?'+':'')+x.toFixed(2);
+function row(l,s,m){return `<tr><td>${l}</td><td>${s.n}</td><td>${s.n?pc(s.winRate):'-'}</td><td>${s.n?pc(s.be):'-'}</td><td>${s.n?f2(s.ev)+'R':'-'}</td><td>${m.n?f2(m.ev)+'R':'-'}</td></tr>`}
+function render(r){const a=r.all,m=r.mir;
+let vd;if(a.n<30)vd=`<div class="vd mid">عدد الصفقات (${a.n}) قليل للحكم. النتيجة غير موثوقة.</div>`;
+else if(r.valid)vd=`<div class="vd ok">✅ بهذه البيانات للتحليل قيمة فعلية: نسبة النجاح (حدها الأدنى ${pc(a.lo)}) أعلى من نقطة التعادل (${pc(a.be)})، والربح المتوقع موجب وأفضل من عكس الإشارة.</div>`;
+else vd=`<div class="vd no">❌ ما ثبتت قيمة التحليل بهذه البيانات: لا تتفوق بشكل واضح على نقطة التعادل أو على عكس الإشارة. لا تعتمد عليها كما هي.</div>`;
+$('out').innerHTML=`<div class="box"><b>النتيجة</b>${vd}<ul style="margin:6px 22px"><li>الفترة: ${r.from} إلى ${r.to}</li><li>التحليلات المنفذة: ${r.analyses.toLocaleString('en')} | الصفقات (قوة توافق 70% أو أكثر): ${a.n} (شراء ${r.nb} | بيع ${r.ns})</li><li>الوصول للهدف الأول قبل الوقف: ${a.resolved?pc(a.winRate):'-'} (المجال الإحصائي ${pc(a.lo)} إلى ${pc(a.hi)}) — نقطة التعادل ${pc(a.be)}</li><li>الربح المتوقع لكل صفقة: ${f2(a.ev)}R</li><li>لو عكسنا كل إشارة (نفس الوقف والهدف): ${m.resolved?pc(m.winRate):'-'} وصول للهدف، ربح متوقع ${f2(m.ev)}R</li></ul>
+<h3>حسب قوة التوافق</h3><table><thead><tr><th>النطاق</th><th>صفقات</th><th>نجاح</th><th>تعادل</th><th>ربح متوقع</th><th>العكس</th></tr></thead><tbody>${r.bands.map(b=>row(b.a+'-'+b.b+'%',b.s,b.m)).join('')}</tbody></table>
+<p class="nt" style="margin-top:8px">لو نسبة التوافق معنى حقيقي، لازم النجاح يزيد مع النطاق الأعلى. وإذا ما زاد، النسبة ما تقيس شي.</p></div>
+<div class="box nt"><b>ملاحظات على طريقة الاختبار:</b> الدخول بسعر إغلاق شمعة الإشارة، والوقف والهدف الأول من نفس المحرك (بنقاط MT5). صفقة وحدة بالوقت (ما نفتح جديدة قبل ما تنتهي القديمة). إذا انلمس الوقف والهدف بنفس الشمعة تنحسب خسارة. الأخبار التاريخية غير محسوبة، والتحليل التاريخي الإضافي (HPA) غير مشمول، الاختبار للأدوات وحدها. النتائج السابقة ما تضمن المستقبل.</div>`}
+$('go').onclick=async()=>{const sym=$('pair').value,tf=$('tf').value;let k='';try{k=localStorage.getItem('td_key')||''}catch(e){}
+if(!k){$('msg').style.color='var(--red)';$('msg').textContent='ما لقيت مفتاح Twelve Data. افتح صفحة الإشارات والصق المفتاح مرة، ورجع هنا.';return}
+$('go').disabled=true;$('out').innerHTML='';$('pg').style.width='0';$('msg').style.color='var(--mute)';$('msg').textContent='جاري تحميل الشموع...';
+try{const cs=await load(sym,tf,k);if(cs.length<1200)throw new Error('الشموع المتاحة ('+cs.length+') قليلة لاختبار موثوق');
+const T=FullTest.create(cs,P[sym],Engine,ctx,{step:3});$('msg').textContent='جاري الاختبار على '+cs.length.toLocaleString('en')+' شمعة...';
+const loop=()=>{const p=T.advance(60);$('pg').style.width=Math.round(p*100)+'%';if(!T.done())setTimeout(loop,0);else{$('msg').textContent='انتهى.';render(T.result());$('go').disabled=false}};loop()}
+catch(e){$('msg').style.color='var(--red)';$('msg').textContent=e.message;$('go').disabled=false}};
+</script>
+</body>
+</html>
