@@ -106,8 +106,14 @@
   }
 
   // الدمج مع نتيجة الأدوات R (من Engine.analyze): يوافق الأدوات = يرفع التوافق، يخالفها = رفض الصفقة، بدون بيانات كافية = لا تأثير
+  // قاعدة السوق المغلق (نهاية الأسبوع): ما فيه صفقة جديدة أبداً مهما كانت النسبة، لأن الأسعار وقتها مو أسعار تداول حقيقية.
   function gate(R, h, W, min) {
     R.hist = h;
+    if (R.S && R.S.closed) {
+      if (h && h.status === 'ok' && R.d) R.hAgree = (h.maj === 'buy') === (R.d > 0);
+      R.why = 'السوق مغلق (نهاية الأسبوع): ما فيه صفقة جديدة، والأسعار الظاهرة تقريبية وما تعتمد عليها'; R.side = 'wait'; R.marketClosed = true;
+      return R;
+    }
     if (!h || h.status !== 'ok' || !R.d) return R;
     const agree = (h.maj === 'buy') === (R.d > 0);
     R.hAgree = agree; R.scTools = R.sc;
