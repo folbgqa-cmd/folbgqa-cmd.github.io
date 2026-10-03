@@ -49,6 +49,9 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 .vd.ok{background:#E3F4EE;color:#0B5B54}.vd.no{background:#FBE9E7;color:#8A2E26}.vd.mid{background:#FFF4DC;color:#7A5410}
 .nt{font-size:13px;color:var(--mute)}
 .hs details{margin-top:6px;font-size:14px}.hs summary{cursor:pointer;color:var(--mute)}
+.lb{display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.lb .pr{font-family:'Reem Kufi';font-size:36px;line-height:1.2}
+.lb small{color:var(--mute);display:block;font-size:13px}
 .wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
 th,td{padding:7px;border-bottom:1px solid var(--line);text-align:start}
@@ -81,6 +84,12 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <p id="err" class="msg"></p>
 </div>
 </section>
+
+<section style="padding-block:0"><div class="box lb">
+<div><small>السعر اللحظي <span id="ls">غير متصل</span></small><div class="pr" id="lp" dir="ltr">-</div><small>آخر تحديث: <span id="ltm" dir="ltr">-</span></small></div>
+<button id="offset" class="alt">اضبط فرق MT5</button>
+<div id="tq" style="min-width:230px;flex:1"></div>
+</div></section>
 
 <section id="outsec" hidden><div class="box" id="out"></div></section>
 
@@ -158,6 +167,7 @@ function analyze(v,pr,now){
 const R=Hist.gate(Engine.analyze(v,pr,now,{ses,nk,min:70}),HCUR,HW,70);
 R.NL=EV?EV.filter(e=>pr.c.includes(e.country)&&e.ts>now-36e5&&e.ts<now+864e5).sort((a,b)=>a.ts-b.ts).slice(0,6):[];
 return R}
+const analyzeRaw=analyze;
 async function get(sym,tf){
 const k=$('key').value.trim();if(!k)throw new Error("الصق مفتاح Twelve Data أولاً");
 try{localStorage.setItem('td_key',k)}catch(e){}
@@ -192,25 +202,66 @@ const Pp=HPR[key];if(!Pp)return;
 o.textContent='جاري الاختبار التاريخي التلقائي...';
 setTimeout(()=>{try{HBT[key]=Hist.backtest(Pp)}catch(e){HBT[key]={status:'insufficient',reason:'تعذر الاختبار: '+e.message}}
 const o2=$('hbo');if(o2)o2.innerHTML=btHtml(HBT[key])},50)}
-function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d),ent=R.entry!=null?R.entry:R.px;
+const lkey=R=>R.side+'|'+R.sc+'|'+(R.order?R.order.type:'')+'|'+R.hAgree;
+function show(sym,R){const p=P[sym],f=x=>x.toFixed(p.d),ent=R.entry!=null?R.entry:R.px;LKEY=lkey(R);LVR=R;
 $('outsec').hidden=false;
-$('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</div><div><h2>${sym} - ${p.n}</h2><p>السعر ${f(R.px)} | ${R.S.t}</p><div class="bar ${R.sc<70?'lo':''}"><i style="width:${R.sc}%"></i></div><p><b>قوة التوافق ${R.sc}%</b> (الحد الأدنى للدخول 70%)</p></div></div>`+
+$('out').innerHTML=`<div class="sig"><div class="big ${R.side}">${nm[R.side]}</div><div><h2>${sym} - ${p.n}</h2><p>السعر <span id="xpx" dir="ltr">${f(R.px)}</span> | ${R.S.t}</p><div class="bar ${R.sc<70?'lo':''}"><i style="width:${R.sc}%"></i></div><p><b>قوة التوافق ${R.sc}%</b> (الحد الأدنى للدخول 70%)</p></div></div>`+
 (R.side=="wait"?`<p style="margin:14px 0"><b>سبب الانتظار:</b> ${R.why}</p>`:
-`<div class="lv"><div class="en"><small>الدخول${R.order?' - '+R.order.label:''}</small><strong>${f(ent)}</strong></div><div class="st"><small>الاستوب (${R.pts.sl} نقطة)</small><strong>${f(R.sl)}</strong></div><div class="t1"><small>الهدف الأول (${R.pts.tp1} نقطة)</small><strong>${f(R.tp1)}</strong></div><div class="t2"><small>الهدف الثاني (${R.pts.tp2} نقطة)</small><strong>${f(R.tp2)}</strong></div></div>`)+
+`<div class="lv"><div class="en"><small>الدخول${R.order?' - '+R.order.label:''}</small><strong id="lvEn" dir="ltr">${f(ent)}</strong></div><div class="st"><small>الاستوب (<span id="pSl">${R.pts.sl}</span> نقطة)</small><strong id="lvSl" dir="ltr">${f(R.sl)}</strong></div><div class="t1"><small>الهدف الأول (<span id="pT1">${R.pts.tp1}</span> نقطة)</small><strong id="lvT1" dir="ltr">${f(R.tp1)}</strong></div><div class="t2"><small>الهدف الثاني (<span id="pT2">${R.pts.tp2}</span> نقطة)</small><strong id="lvT2" dir="ltr">${f(R.tp2)}</strong></div></div>`)+
 histCard(R)+
 `<h3>تفاصيل التحليل (${R.tools} أداة)</h3><p style="color:var(--mute);font-size:13px">وزن الأدوات المتفقة ${fx(R.ag)} مقابل المختلفة ${fx(R.dg)} = ${R.sc}%${R.scTools!=null?` (الأدوات وحدها ${R.scTools}%، ومعها التحليل التاريخي ${R.sc}%)`:''}. الدخول يعتمد على هذي النسبة (70% أو أكثر) وعلى إن أغلبية التحليل التاريخي ما تكون عكس الأدوات. ⚡ تعني أداة نقطة دخول.</p><div class="wrap"><table><thead><tr><th>الأداة</th><th>المدرسة</th><th>الرأي</th><th>الوزن</th><th>التفصيل</th></tr></thead><tbody>${R.F.map(x=>`<tr><td>${x.n}${x.ev?' ⚡':''}</td><td>${x.s}</td><td>${op(x)}</td><td>${x.w}</td><td>${x.t}</td></tr>`).join('')}</tbody></table></div>`+
 `<h3>أخبار هذا الزوج (${p.c.join(' + ')}) خلال 24 ساعة</h3><div class="wrap"><table><thead><tr><th>الوقت (بغداد)</th><th>العملة</th><th>الخبر</th><th>التأثير</th><th>المتوقع</th><th>السابق</th></tr></thead><tbody>${R.NL.map(e=>`<tr><td>${tm(e.ts)}</td><td>${e.country}</td><td>${esc(e.title)}</td><td class="${e.impact[0]}">${e.impact==='High'?'قوي':'متوسط'}</td><td>${esc(e.forecast)||'-'}</td><td>${esc(e.previous)||'-'}</td></tr>`).join('')||`<tr><td colspan="6">${EV?'لا أخبار متوسطة أو قوية بالـ 24 ساعة':'الأخبار غير متاحة'}</td></tr>`}</tbody></table></div>`+
 `<p style="color:var(--mute);font-size:13px;margin-top:8px">الوقف والأهداف ثابتة بنقاط MT5 (من 700 إلى 1500 نقطة) على كل الفريمات، وتقرب الوقف كل ما قوي التوافق. قمة 20 شمعة ${f(R.hh)}، قاع 20 شمعة ${f(R.ll)}. آخر تحديث ${new Date().toLocaleTimeString('ar-IQ')}.</p>`;
 histAuto(sym);
-ta(p.tv)}
+if(!LIVEREND)ta(p.tv)}
 async function run(){$('err').style.color='';$('err').textContent='';const sym=$('pair').value;
-try{$('go').disabled=true;const tf=$('tf').value,v=await get(sym,tf);await news();HCUR=await histFor(sym,tf,v);show(sym,analyze(v,P[sym],Date.now()))}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
-async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;
+try{$('go').disabled=true;const tf=$('tf').value,v=await get(sym,tf);await news();HCUR=await histFor(sym,tf,v);LV={sym,tf,v:v.slice()};show(sym,analyze(v,P[sym],Date.now()));if(LIVEs!==sym||(!WS&&!PT))liveStart(sym)}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
+async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;SCANNING=true;
 let wait=0;for(const sym of Object.keys(P)){try{if(wait)await sleep(wait);const tf=$('tf').value,v=await get(sym,tf);await news();const had=!!HC[sym+'|'+tf];HCUR=await histFor(sym,tf,v);wait=7500*(had?1:3);const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
 const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.entry!=null?R.entry:R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
 tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
 catch(e){$('err').textContent=e.message;break}}
-$('scan').disabled=false}
+$('scan').disabled=false;SCANNING=false}
+// ===== السعر اللحظي =====
+// المصدر: WebSocket من Twelve Data (تجريبي مجاني، 8 رموز). إذا ما اشتغل أو انقطع يتحول تلقائياً لجلب السعر كل 12 ثانية.
+// مع كل تحديث (كل 5 ثواني كحد أقصى) يُعاد التحليل بالسعر الجديد على آخر شمعة (بدون إرسال تيليجرام: الإرسال يبقى مع التحديث الكامل كل دقيقتين)،
+// والتحليل التاريخي يبقى من آخر تحديث كامل. فرق MT5 يجي من إعدادات tg.js (⚙️) ويتطبق هنا نفسه.
+const LP={};let WS=null,HB=null,PT=null,LIVEs=null,LV=null,LVR=null,LKEY='',SCANNING=false,LLAST=0,LIVEREND=false;
+function liveStatus(t,ok){const e=$('ls');if(e){e.textContent='('+t+')';e.style.color=ok?'var(--teal)':'var(--mute)'}}
+function liveStop(){try{if(WS){WS.onclose=null;WS.onerror=null;WS.close()}}catch(e){}WS=null;clearInterval(HB);clearInterval(PT);HB=PT=null}
+function livePoll(sym){if(PT)return;liveStatus('تحديث كل 12 ثانية',true);
+const go=async()=>{if(document.hidden||SCANNING||LIVEs!==sym)return;
+try{const k=$('key').value.trim(),r=await fetch(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(sym)}&apikey=${k}`),j=await r.json();
+if(j.price)liveTick(sym,+j.price);else if(j.code===429)liveStatus('وصلت حد المفتاح، انتظر',false)}catch(e){}};
+go();PT=setInterval(go,12000)}
+function liveStart(sym){liveStop();LIVEs=sym;const k=$('key').value.trim();
+if(!k){liveStatus('الصق المفتاح لتشغيل السعر اللحظي',false);return}
+liveStatus('جاري الاتصال...',false);let got=false,fell=false;
+const fall=()=>{if(fell||LIVEs!==sym)return;fell=true;try{if(WS){WS.onclose=null;WS.onerror=null;WS.close()}}catch(e){}WS=null;clearInterval(HB);HB=null;livePoll(sym)};
+try{WS=new WebSocket('wss://ws.twelvedata.com/v1/quotes/price?apikey='+encodeURIComponent(k));
+WS.onopen=()=>{WS.send(JSON.stringify({action:'subscribe',params:{symbols:sym}}));HB=setInterval(()=>{try{WS.send(JSON.stringify({action:'heartbeat'}))}catch(e){}},10000)};
+WS.onmessage=m=>{let j;try{j=JSON.parse(m.data)}catch(e){return}
+if(j.event==='price'&&j.symbol===sym&&j.price){if(!got){got=true;liveStatus('مباشر',true)}liveTick(sym,+j.price)}
+else if(j.event==='subscribe-status'&&(j.status==='error'||(j.fails&&j.fails.length)))fall()};
+WS.onerror=fall;WS.onclose=fall;
+setTimeout(()=>{if(!got)fall()},10000)}catch(e){fall()}}
+const liveOff=sym=>(LVR&&LVR.sym===sym&&LVR.off)||0;
+function liveTick(sym,price){if(!(price>0))return;LP[sym]=price;
+if(sym===$('pair').value){$('lp').textContent=(price+liveOff(sym)).toFixed(P[sym].d);$('ltm').textContent=new Date().toLocaleTimeString('ar-IQ')}
+if(LV&&LV.sym===sym&&Date.now()-LLAST>5000){LLAST=Date.now();liveAnalyze(price)}}
+function liveAnalyze(price){const sym=LV.sym,v=LV.v.slice(),i=v.length-1,c=Object.assign({},v[i]),o=liveOff(sym);
+c.close=String(price);c.high=String(Math.max(+c.high,price));c.low=String(Math.min(+c.low,price));v[i]=c;
+let R;try{R=analyzeRaw(v,P[sym],Date.now())}catch(e){return}
+// نفس تعديل فرق MT5 اللي يسويه tg.js بالتحليل الكامل
+R.sym=sym;R.off=o;R.raw=R.px;if(o)['px','entry','sl','tp1','tp2','hh','ll'].forEach(k=>{if(typeof R[k]==='number')R[k]+=o});
+if(lkey(R)!==LKEY){LIVEREND=true;try{show(sym,R)}finally{LIVEREND=false}return}
+LVR=R;const f=x=>x.toFixed(P[sym].d),set=(id,t)=>{const e=$(id);if(e)e.textContent=t};
+set('xpx',f(R.px));
+if(R.side!=='wait'){set('lvEn',f(R.entry!=null?R.entry:R.px));set('lvSl',f(R.sl));set('lvT1',f(R.tp1));set('lvT2',f(R.tp2));set('pSl',R.pts.sl);set('pT1',R.pts.tp1);set('pT2',R.pts.tp2)}}
+function tq(sym){const w=$('tq');if(!w)return;w.innerHTML='<div class="tradingview-widget-container__widget"></div>';const s=document.createElement('script');s.src='https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';s.async=true;s.text=JSON.stringify({symbol:P[sym].tv,width:"100%",colorTheme:"light",isTransparent:true,locale:"ar_AE"});w.appendChild(s)}
+// زر اختصار: يفتح لوحة ⚙️ الإعدادات عند «فرق السعر مع منصتك» (الربط الموجود بـ tg.js)
+$('offset').onclick=()=>{const b=$('settings');if(b){b.hidden=false;const m=$('mtp');if(m){m.scrollIntoView();m.focus()}}else{$('err').style.color='';$('err').textContent='افتح ⚙️ الإعدادات ← فرق السعر مع منصتك'}};
+$('pair').onchange=()=>{tq($('pair').value);if($('key').value.trim())liveStart($('pair').value)};
 $('go').onclick=run;$('scan').onclick=scan;
 $('link').onclick=async()=>{const k=$('key').value.trim();if(!k){$('err').textContent="أدخل المفتاح أولاً";return}
 const u=location.origin+location.pathname+'#key='+encodeURIComponent(k);
@@ -220,7 +271,7 @@ $('auto').onchange=e=>auto(e.target.checked);
 let sv='1';try{sv=localStorage.getItem('td_auto')??'1'}catch(e){}
 $('auto').checked=sv==='1';auto($('auto').checked);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&$('auto').checked&&$('key').value)run()});
-ta(P["XAU/USD"].tv);
+ta(P["XAU/USD"].tv);tq($('pair').value);
 if($('key').value)run();
 </script>
 <script src="tg.js"></script>
