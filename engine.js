@@ -223,25 +223,34 @@
       return 0; })();
     T('Smart Money Strategy', 'ICT/SMC', 4, smcSeq, W(smcSeq, 'سحب سيولة القاع ← كسر هيكل صاعد ← رجوع لمنطقة خصم', 'سحب سيولة القمة ← كسر هيكل هابط ← رجوع لمنطقة علاوة', 'لا تسلسل Smart Money مكتمل (سحب سيولة ← كسر هيكل ← رجوع)'), true);
 
-    // ===== تحليل زمني (Time Analysis): سلوك السعر حسب وقت اليوم =====
-    // نسترجع وقت كل شمعة من الوقت الحالي وطول الفريم (بدون الاعتماد على توقيت بيانات المصدر). يشتغل من M1 لحد H1 وبنافذة لندن ونيويورك (07:00-17:00 UTC) فقط.
-    // نقارن السعر بنطاق الجلسة الآسيوية (00:00-07:00 UTC): سحب قمة/قاع النطاق ثم رجوع (Judas Swing)، أو قبول سعري خارجه، وإلا انحياز السعر مقابل افتتاح اليوم (أكثر من نصف ATR).
+    // ===== تحليل زمني (Time Analysis): سلوك السعر حسب الجلسة والساعة، على كل ساعات اليوم (UTC) =====
+    // نسترجع وقت كل شمعة من الوقت الحالي وطول الفريم (بدون الاعتماد على توقيت بيانات المصدر). يشتغل من M1 لحد H1.
+    // كل جلسة تقارن السعر بنطاق الفترة اللي قبلها: آسيا بنطاق أمس، لندن بنطاق آسيا، التداخل بنطاق لندن (07-12)، نيويورك بنطاق لندن والتداخل (07-16)، سيدني بنطاق نيويورك (12-21).
+    // القاعدة نفسها بكل الجلسات: سحب قمة/قاع النطاق ثم رجوع (Sweep/Judas)، أو قبول سعري خارجه بإغلاقين، وإلا انحياز السعر مقابل افتتاح الجلسة (أكثر من نصف ATR).
+    // المقارنة التاريخية لأداء كل جلسة وساعة (مدى، اتجاه، ميل) تنعرض بالموقع من آخر 10,000 شمعة (ملف sessions.js)، وهنا الرأي اللحظي فقط.
     const tmAn = (() => {
       const t1 = Date.parse(String(v[n].datetime || '').replace(' ', 'T') + 'Z'), tb = Date.parse(String(v[n - 1].datetime || '').replace(' ', 'T') + 'Z'), tfm = t1 - tb;
       if (!(tfm >= 60000 && tfm <= 3600000)) return { vote: 0, text: 'التحليل الزمني يشتغل لفريمات لحد H1' };
-      const Tz = Math.floor(now / tfm) * tfm, tAt = i => Tz - (n - i) * tfm, day0 = Math.floor(now / 864e5) * 864e5, hr = (now - day0) / 36e5;
-      if (hr < 7 || hr >= 17) return { vote: 0, text: 'خارج نافذة لندن/نيويورك (07:00-17:00 UTC)، بدون رأي زمني' };
-      let AH = -Infinity, AL = Infinity, open0 = null, cn2 = 0;
-      for (let i = 0; i <= n; i++) { const t = tAt(i); if (t < day0) continue; if (open0 === null) open0 = o[i]; if (t < day0 + 7 * 36e5) { cn2++; if (h[i] > AH) AH = h[i]; if (l[i] < AL) AL = l[i]; } }
-      if (open0 === null || cn2 < 4) return { vote: 0, text: 'بيانات الجلسة الآسيوية غير كافية' };
-      const lo6 = mn(l, n - 5, n), hi6 = mx(h, n - 5, n);
-      if (lo6 < AL && c[n] > AL) return { vote: 1, text: 'سحب قاع الجلسة الآسيوية ثم رجوع (Judas Swing صاعد)' };
-      if (hi6 > AH && c[n] < AH) return { vote: -1, text: 'سحب قمة الجلسة الآسيوية ثم رجوع (Judas Swing هابط)' };
-      if (c[n] > AH && c[n - 1] > AH) return { vote: 1, text: 'قبول سعري فوق قمة الجلسة الآسيوية' };
-      if (c[n] < AL && c[n - 1] < AL) return { vote: -1, text: 'قبول سعري تحت قاع الجلسة الآسيوية' };
-      if (px > open0 + .5 * a) return { vote: 1, text: 'السعر فوق افتتاح اليوم بأكثر من نصف ATR' };
-      if (px < open0 - .5 * a) return { vote: -1, text: 'السعر تحت افتتاح اليوم بأكثر من نصف ATR' };
-      return { vote: 0, text: 'السعر داخل نطاق الجلسة الآسيوية وقرب افتتاح اليوم' };
+      const HR = 36e5, Tz = Math.floor(now / tfm) * tfm, tAt = i => Tz - (n - i) * tfm, day0 = Math.floor(now / 864e5) * 864e5, hr = (now - day0) / HR;
+      const SS = [['آسيا', 0, 7, 'نطاق أمس', -24, 0], ['لندن', 7, 12, 'نطاق آسيا', 0, 7], ['تداخل لندن ونيويورك', 12, 16, 'نطاق لندن (07-12)', 7, 12], ['نيويورك', 16, 21, 'نطاق لندن والتداخل (07-16)', 7, 16], ['سيدني', 21, 24, 'نطاق نيويورك (12-21)', 12, 21]];
+      const cur = SS.find(s => hr >= s[1] && hr < s[2]), hrI = Math.floor(hr);
+      const where = cur[0] + ' (' + String(hrI).padStart(2, '0') + ':00 UTC، الساعة ' + (hrI - cur[1] + 1) + ' من ' + (cur[2] - cur[1]) + ')';
+      let RH = -Infinity, RL = Infinity, rc = 0, so = null;
+      for (let i = 0; i <= n; i++) { const t = tAt(i);
+        if (t >= day0 + cur[4] * HR && t < day0 + cur[5] * HR) { rc++; if (h[i] > RH) RH = h[i]; if (l[i] < RL) RL = l[i]; }
+        if (so === null && t >= day0 + cur[1] * HR) so = o[i]; }
+      if (rc >= Math.max(4, Math.round(0.4 * (cur[5] - cur[4]) * HR / tfm))) {
+        const lo6 = mn(l, n - 5, n), hi6 = mx(h, n - 5, n);
+        if (lo6 < RL && c[n] > RL) return { vote: 1, text: where + ': سحب قاع ' + cur[3] + ' ثم رجوع (Sweep/Judas صاعد)' };
+        if (hi6 > RH && c[n] < RH) return { vote: -1, text: where + ': سحب قمة ' + cur[3] + ' ثم رجوع (Sweep/Judas هابط)' };
+        if (c[n] > RH && c[n - 1] > RH) return { vote: 1, text: where + ': قبول سعري فوق قمة ' + cur[3] };
+        if (c[n] < RL && c[n - 1] < RL) return { vote: -1, text: where + ': قبول سعري تحت قاع ' + cur[3] };
+      }
+      if (so !== null) {
+        if (px > so + .5 * a) return { vote: 1, text: where + ': السعر فوق افتتاح الجلسة بأكثر من نصف ATR' };
+        if (px < so - .5 * a) return { vote: -1, text: where + ': السعر تحت افتتاح الجلسة بأكثر من نصف ATR' };
+      }
+      return { vote: 0, text: where + ': السعر داخل ' + cur[3] + ' وقرب افتتاح الجلسة' };
     })();
     T('تحليل زمني (Time Analysis)', 'التحليل الزمني', 3, tmAn.vote, tmAn.text, tmAn.vote !== 0);
 
