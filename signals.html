@@ -224,8 +224,9 @@ catch(e){$('err').textContent=e.message;break}}
 $('scan').disabled=false;SCANNING=false}
 // ===== السعر اللحظي =====
 // المصدر: WebSocket من Twelve Data (تجريبي مجاني، 8 رموز). إذا ما اشتغل أو انقطع يتحول تلقائياً لجلب السعر كل 12 ثانية.
-// مع كل تحديث (كل 5 ثواني كحد أقصى) يُعاد التحليل بالسعر الجديد على آخر شمعة (بدون إرسال تيليجرام: الإرسال يبقى مع التحديث الكامل كل دقيقتين)،
+// مع كل تحديث (كل ثانية كحد أقصى) يُعاد التحليل بالسعر الجديد على آخر شمعة (بدون إرسال تيليجرام: الإرسال يبقى مع التحديث الكامل كل دقيقتين)،
 // والتحليل التاريخي يبقى من آخر تحديث كامل. فرق MT5 يجي من إعدادات tg.js (⚙️) ويتطبق هنا نفسه.
+// ملاحظة: التحديث كل ثانية يشتغل بالاتصال المباشر فقط. الجلب الاحتياطي يبقى كل 12 ثانية لأن حد المفتاح المجاني 8 طلبات بالدقيقة.
 const LP={};let WS=null,HB=null,PT=null,LIVEs=null,LV=null,LVR=null,LKEY='',SCANNING=false,LLAST=0,LIVEREND=false;
 function liveStatus(t,ok){const e=$('ls');if(e){e.textContent='('+t+')';e.style.color=ok?'var(--teal)':'var(--mute)'}}
 function liveStop(){try{if(WS){WS.onclose=null;WS.onerror=null;WS.close()}}catch(e){}WS=null;clearInterval(HB);clearInterval(PT);HB=PT=null}
@@ -248,7 +249,7 @@ setTimeout(()=>{if(!got)fall()},10000)}catch(e){fall()}}
 const liveOff=sym=>(LVR&&LVR.sym===sym&&LVR.off)||0;
 function liveTick(sym,price){if(!(price>0))return;LP[sym]=price;
 if(sym===$('pair').value){$('lp').textContent=(price+liveOff(sym)).toFixed(P[sym].d);$('ltm').textContent=new Date().toLocaleTimeString('ar-IQ')}
-if(LV&&LV.sym===sym&&Date.now()-LLAST>5000){LLAST=Date.now();liveAnalyze(price)}}
+if(LV&&LV.sym===sym&&Date.now()-LLAST>1000){LLAST=Date.now();liveAnalyze(price)}}
 function liveAnalyze(price){const sym=LV.sym,v=LV.v.slice(),i=v.length-1,c=Object.assign({},v[i]),o=liveOff(sym);
 c.close=String(price);c.high=String(Math.max(+c.high,price));c.low=String(Math.min(+c.low,price));v[i]=c;
 let R;try{R=analyzeRaw(v,P[sym],Date.now())}catch(e){return}
