@@ -192,11 +192,6 @@
     let x5 = 0, sqn = 0; for (let j = n - 6; j <= n - 1; j++) if (sqz(j)) sqn++;
     if (sqn >= 3 && !sqz(n)) { if (c[n] > e20 && c[n] > c[n - 1] && c[n] - e20 > .3 * a) x5 = 1; else if (c[n] < e20 && c[n] < c[n - 1] && e20 - c[n] > .3 * a) x5 = -1; }
     T('انفجار بعد انضغاط (Squeeze)', 'الكلاسيكي', 3, x5, W(x5, 'خروج صاعد بعد انضغاط التذبذب', 'خروج هابط بعد انضغاط التذبذب', 'لا انضغاط منتهي'), true);
-    let hao = o[n - 40], hac = (o[n - 40] + h[n - 40] + l[n - 40] + c[n - 40]) / 4; const ha = [];
-    for (let j = n - 39; j <= n; j++) { const nc = (o[j] + h[j] + l[j] + c[j]) / 4, no = (hao + hac) / 2; ha.push({ o: no, c: nc, hi: Math.max(h[j], no, nc), lo: Math.min(l[j], no, nc) }); hao = no; hac = nc; }
-    const hz = ha.slice(-3); let x6 = 0;
-    if (hz.every(x => x.c > x.o) && hz.slice(-2).every(x => x.o - x.lo < .05 * a)) x6 = 1; else if (hz.every(x => x.c < x.o) && hz.slice(-2).every(x => x.hi - x.o < .05 * a)) x6 = -1;
-    T('Heikin Ashi', 'حركة السعر', 2, x6, W(x6, 'شموع هايكن آشي صاعدة بدون ظل سفلي', 'شموع هايكن آشي هابطة بدون ظل علوي', 'لا ترند هايكن آشي نظيف'));
     const bdy = i => Math.abs(c[i] - o[i]); let x7 = 0;
     if (c[n - 2] < o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] > o[n] && c[n] > (o[n - 2] + c[n - 2]) / 2) x7 = 1;
     else if (c[n - 2] > o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] < o[n] && c[n] < (o[n - 2] + c[n - 2]) / 2) x7 = -1;
@@ -213,9 +208,42 @@
     const H100 = mx(h, n - 100, n), L100 = mn(l, n - 100, n), pdp = H100 > L100 ? (px - L100) / (H100 - L100) : .5;
     const x10 = d > 0 && pdp < .5 ? 1 : d < 0 && pdp > .5 ? -1 : 0;
     T('Premium / Discount', 'ICT/SMC', 2, x10, W(x10, 'شراء من منطقة خصم (النصف السفلي) مع ترند صاعد', 'بيع من منطقة علاوة (النصف العلوي) مع ترند هابط', 'السعر عكس منطقة الدخول المناسبة'));
-    let hiI = n - 25, loI = n - 25; for (let j = n - 25; j <= n; j++) { if (h[j] >= h[hiI]) hiI = j; if (l[j] <= l[loI]) loI = j; }
-    const aUp = 100 * (25 - (n - hiI)) / 25, aDn = 100 * (25 - (n - loI)) / 25, x13 = aUp > 70 && aDn < 30 ? 1 : aDn > 70 && aUp < 30 ? -1 : 0;
-    T('Aroon (25)', 'الكلاسيكي', 2, x13, W(x13, 'Aroon صاعد (قمة حديثة وقاع قديم)', 'Aroon هابط (قاع حديث وقمة قديمة)', 'Aroon بدون اتجاه واضح'));
+
+    // ===== Smart Money Strategy: سلسلة كاملة بالترتيب الصحيح =====
+    // سحب سيولة (اختراق قمة/قاع آخر 20 شمعة ورجوع) ← شمعة كسر هيكل بقوة (جسمها 0.7 ATR على الأقل) تتجاوز محيط السحب ← السعر يرجع لنصف الحركة الأقرب (منطقة خصم أو علاوة) بدون ما يكسر قاع/قمة السحب.
+    // أقوى من الأدوات المنفصلة لأنها تشترط التسلسل كامل، وتمتنع (صفر) إذا ما اكتمل.
+    const smcSeq = (() => { for (const sd of [1, -1]) { let jS = -1;
+        for (let j = n - 3; j >= n - 15 && j >= 25; j--) { const lvl = sd > 0 ? mn(l, j - 20, j - 1) : mx(h, j - 20, j - 1); if (sd > 0 ? (l[j] < lvl && c[j] > lvl) : (h[j] > lvl && c[j] < lvl)) { jS = j; break; } }
+        if (jS < 0) continue;
+        const ref = sd > 0 ? mx(h, jS - 5, jS) : mn(l, jS - 5, jS); let kB = -1;
+        for (let k = jS + 1; k <= n; k++) if ((sd > 0 ? c[k] > ref : c[k] < ref) && Math.abs(c[k] - o[k]) >= .7 * a) { kB = k; break; }
+        if (kB < 0 || kB >= n) continue;
+        const swing = sd > 0 ? mx(h, jS, n) : mn(l, jS, n), base = sd > 0 ? l[jS] : h[jS], half = (swing + base) / 2;
+        if (sd > 0 ? (px <= half && px > base) : (px >= half && px < base)) return sd; }
+      return 0; })();
+    T('Smart Money Strategy', 'ICT/SMC', 4, smcSeq, W(smcSeq, 'سحب سيولة القاع ← كسر هيكل صاعد ← رجوع لمنطقة خصم', 'سحب سيولة القمة ← كسر هيكل هابط ← رجوع لمنطقة علاوة', 'لا تسلسل Smart Money مكتمل (سحب سيولة ← كسر هيكل ← رجوع)'), true);
+
+    // ===== تحليل زمني (Time Analysis): سلوك السعر حسب وقت اليوم =====
+    // نسترجع وقت كل شمعة من الوقت الحالي وطول الفريم (بدون الاعتماد على توقيت بيانات المصدر). يشتغل من M1 لحد H1 وبنافذة لندن ونيويورك (07:00-17:00 UTC) فقط.
+    // نقارن السعر بنطاق الجلسة الآسيوية (00:00-07:00 UTC): سحب قمة/قاع النطاق ثم رجوع (Judas Swing)، أو قبول سعري خارجه، وإلا انحياز السعر مقابل افتتاح اليوم (أكثر من نصف ATR).
+    const tmAn = (() => {
+      const t1 = Date.parse(String(v[n].datetime || '').replace(' ', 'T') + 'Z'), tb = Date.parse(String(v[n - 1].datetime || '').replace(' ', 'T') + 'Z'), tfm = t1 - tb;
+      if (!(tfm >= 60000 && tfm <= 3600000)) return { vote: 0, text: 'التحليل الزمني يشتغل لفريمات لحد H1' };
+      const Tz = Math.floor(now / tfm) * tfm, tAt = i => Tz - (n - i) * tfm, day0 = Math.floor(now / 864e5) * 864e5, hr = (now - day0) / 36e5;
+      if (hr < 7 || hr >= 17) return { vote: 0, text: 'خارج نافذة لندن/نيويورك (07:00-17:00 UTC)، بدون رأي زمني' };
+      let AH = -Infinity, AL = Infinity, open0 = null, cn2 = 0;
+      for (let i = 0; i <= n; i++) { const t = tAt(i); if (t < day0) continue; if (open0 === null) open0 = o[i]; if (t < day0 + 7 * 36e5) { cn2++; if (h[i] > AH) AH = h[i]; if (l[i] < AL) AL = l[i]; } }
+      if (open0 === null || cn2 < 4) return { vote: 0, text: 'بيانات الجلسة الآسيوية غير كافية' };
+      const lo6 = mn(l, n - 5, n), hi6 = mx(h, n - 5, n);
+      if (lo6 < AL && c[n] > AL) return { vote: 1, text: 'سحب قاع الجلسة الآسيوية ثم رجوع (Judas Swing صاعد)' };
+      if (hi6 > AH && c[n] < AH) return { vote: -1, text: 'سحب قمة الجلسة الآسيوية ثم رجوع (Judas Swing هابط)' };
+      if (c[n] > AH && c[n - 1] > AH) return { vote: 1, text: 'قبول سعري فوق قمة الجلسة الآسيوية' };
+      if (c[n] < AL && c[n - 1] < AL) return { vote: -1, text: 'قبول سعري تحت قاع الجلسة الآسيوية' };
+      if (px > open0 + .5 * a) return { vote: 1, text: 'السعر فوق افتتاح اليوم بأكثر من نصف ATR' };
+      if (px < open0 - .5 * a) return { vote: -1, text: 'السعر تحت افتتاح اليوم بأكثر من نصف ATR' };
+      return { vote: 0, text: 'السعر داخل نطاق الجلسة الآسيوية وقرب افتتاح اليوم' };
+    })();
+    T('تحليل زمني (Time Analysis)', 'التحليل الزمني', 3, tmAn.vote, tmAn.text, tmAn.vote !== 0);
 
     // ===== بديلين من السعر فقط لأداتين تحتاج بيانات حجم (ما فيه حجم حقيقي للذهب والفوركس، فهي تقريبية مو حجم ولا أوردر فلو حقيقي) =====
     const dpf = Math.max(0, Math.round(-Math.log10(pr.pip)) + 1), cp = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x));
