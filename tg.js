@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id);
 const box=document.createElement('section');
 box.innerHTML='<div class="box"><button id="sclose" class="alt" style="float:left;padding:2px 12px" aria-label="إغلاق">✕</button><h3 style="margin-top:0">الإعدادات - إرسال تيليجرام</h3><div class="row"><label>توكن البوت<input id="tk" type="password" autocomplete="off"></label><label>رقم الشات (Chat ID)<input id="ch" inputmode="numeric" autocomplete="off"></label><button id="tgtest" class="alt">رسالة اختبار</button></div><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:10px"><input type="checkbox" id="atg">إرسال تلقائي لكل إشارة دخول جديدة</label><p style="color:var(--mute);font-size:13px">يُرسل فقط عندما يكون القرار شراء أو بيع (قوة التوافق 70% أو أكثر). يشتغل والصفحة مفتوحة. إذا فعّلت التشغيل على GitHub فلا تفعّل هذا معه حتى لا تتكرر الرسائل.</p><p id="tgm" style="font-size:14px"></p>'+
 '<h3 style="margin:16px 0 4px">ربط بوت الـ 24 ساعة بالزوج المختار</h3><label>توكن GitHub (صلاحية Actions فقط)<input id="gtk" type="password" autocomplete="off"></label><label style="display:flex;grid-auto-flow:column;align-items:center;gap:6px;margin-top:8px"><input type="checkbox" id="gsy">خلّي البوت يرسل صفقات الزوج المختار فقط</label><p style="color:var(--mute);font-size:13px">أي زوج تختاره من القائمة الرئيسية ينتقل له البوت خلال دقيقة. التوكن ينحفظ بمتصفحك فقط.</p><p id="gm" style="font-size:14px"></p>'+
-'<h3 style="margin:16px 0 4px">فرق السعر مع منصتك (MT5)</h3><p style="color:var(--mute);font-size:13px">سعر الموقع ممكن يختلف عن سعر منصتك بفرق ثابت (مصدر السعر مختلف). اضغط «حلّل»، وبعدها فوراً اكتب سعر الزوج المختار من MT5 واضغط «اضبط». الفرق ينحفظ بمتصفحك ويتطبق على الدخول والوقف والأهداف.</p>'+
+'<h3 style="margin:16px 0 4px">فرق السعر مع منصتك (MT5)</h3><p style="color:var(--mute);font-size:13px">سعر الموقع يختلف عن سعر منصتك بفرق شبه ثابت (مصدر السعر مختلف). اكتب سعر الزوج الحالي من MT5 واضغط «اضبط» بنفس اللحظة: الموقع ياخذ سعره اللحظي وقت الضغط. السعر يتحرك، فكرّر الضغط 3 مرات بفترات (كل مرة تكتب سعر MT5 اللحظي)، ويحسب الوسيط لآخر 5 قراءات فيروح الخطأ العشوائي. الفرق ينحفظ بمتصفحك ويتطبق على الدخول والوقف والأهداف.</p>'+
 '<div class="row"><label>سعر MT5 الحالي للزوج المختار<input id="mtp" inputmode="decimal" placeholder="مثال 4178.50" autocomplete="off"></label><button id="mtset" class="alt">اضبط الفرق</button><button id="mtclr" class="alt">إلغاء الفرق</button></div><p id="offm" style="color:var(--mute);font-size:13px">يتحمل...</p></div>';
 // لوحة الإعدادات: نافذة صغيرة مخفية، تنفتح من زر ⚙️ أعلى يمين الصفحة
 box.id='settings';box.hidden=true;
@@ -27,19 +27,24 @@ const r=await fetch('https://api.telegram.org/bot'+t+'/sendMessage?chat_id='+enc
 // فرق السعر بين Twelve Data ومنصتك (بالدولار): الفرق اللي تضبطه من الموقع (ينحفظ بالمتصفح) يغلب على فرق البوت من config.json وstate.json (أمر /offset بتلي)
 let SRV={},OFFS={},LASTRAW={};
 const LOC=()=>{try{return JSON.parse(localStorage.getItem('off_loc')||'{}')}catch(e){return{}}};
+const SMP=()=>{try{return JSON.parse(localStorage.getItem('off_smp')||'{}')}catch(e){return{}}};
+const med=a=>{const x=a.slice().sort((p,q)=>p-q),m=x.length>>1;return x.length%2?x[m]:(x[m-1]+x[m])/2};
 function showOffs(){OFFS={...SRV,...LOC()};
 const t=Object.keys(OFFS).filter(k=>OFFS[k]).map(k=>(P[k]?P[k].n:k)+': '+(OFFS[k]>0?'+':'')+OFFS[k]+'$').join('، ');
 $('offm').textContent=(t?'الفروق الحالية: '+t+'. ':'ما فيه فرق مضبوط. ')+'لبوت تيليجرام (اللي يشتغل على GitHub) اكتب له: /offset gold 2.5 (الرقم = سعر منصتك ناقص سعر الموقع).'}
 async function loadOffs(){try{const c=await(await fetch('config.json?'+Date.now())).json(),st=await(await fetch('state.json?'+Date.now())).json();SRV={...(c.offsets||{}),...(st.offs||{})}}catch(e){}showOffs()}
 loadOffs();setInterval(loadOffs,6e5);
 function setOff(sym,val){const l=LOC();l[sym]=val;s('off_loc',JSON.stringify(l));showOffs();if(typeof run==='function')run()}
-$('mtset').onclick=()=>{const sym=$('pair').value,raw=LASTRAW[sym],v=parseFloat(String($('mtp').value).replace(',','.'));
-if(!raw){$('offm').textContent='اضغط «حلّل» لهذا الزوج أولاً، وبعدها اكتب سعر MT5 فوراً.';return}
+// الاعتماد على السعر اللحظي (WebSocket) وقت الضغط، وإذا ما كان متوفر على آخر تحليل. وآخر 5 قراءات: الوسيط يلغي حركة السعر العشوائية بين قراءة MT5 وضغط الزر
+$('mtset').onclick=()=>{const sym=$('pair').value,live=(typeof LP!=='undefined'&&LP[sym])?LP[sym]:0,raw=live||LASTRAW[sym],v=parseFloat(String($('mtp').value).replace(',','.'));
+if(!raw){$('offm').textContent='ما فيه سعر للموقع بعد. اضغط «حلّل» لهذا الزوج أولاً.';return}
 if(!isFinite(v)){$('offm').textContent='اكتب سعر MT5 كرقم (مثال 4178.50).';return}
 const off=+(v-raw).toFixed(P[sym].d);
 if(Math.abs(off)>raw*0.02){$('offm').textContent='الفرق كبير جداً ('+off+'). تأكد إن السعر المكتوب لنفس الزوج.';return}
-setOff(sym,off);$('mtp').value=''};
-$('mtclr').onclick=()=>{setOff($('pair').value,0)};
+const sm=SMP(),arr=(sm[sym]||[]).concat(off).slice(-5);sm[sym]=arr;s('off_smp',JSON.stringify(sm));
+const m=+med(arr).toFixed(P[sym].d);setOff(sym,m);$('mtp').value='';
+$('offm').textContent='فرق '+P[sym].n+' صار '+(m>0?'+':'')+m+'$ (وسيط '+arr.length+' قراءة'+(arr.length>1?': '+arr.map(x=>(x>0?'+':'')+x).join('، '):'')+'). '+(arr.length<3?'كرّر الضغط مرتين أو ثلاث بسعر MT5 اللحظي لتثبيته.':'')};
+$('mtclr').onclick=()=>{const sym=$('pair').value,sm=SMP();delete sm[sym];s('off_smp',JSON.stringify(sm));setOff(sym,0)};
 // رسالة واحدة واضحة: صفقة واحدة فقط بنقاط MT5 من المحرك (700 إلى 1500)، مع نوع الدخول ودرجة الجودة
 function msg(sym,R){const f=x=>x.toFixed(P[sym].d),pt=R.pts,gr=R.grade,od=R.order;
 return (R.side==='buy'?'🟢 شراء ':'🔴 بيع ')+P[sym].n+' '+sym+' ('+$('tf').selectedOptions[0].text+') | قوة التوافق '+R.sc+'%\nجودة الإشارة: '+'⭐'.repeat(gr.stars)+' '+gr.label+
