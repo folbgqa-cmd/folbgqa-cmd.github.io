@@ -37,20 +37,6 @@
     for (let i = p; i < dx.length; i++) x = (x * (p - 1) + dx[i]) / p;
     return x;
   }
-  function rsiSeries(c, p = 14) {
-    const n = c.length, out = new Array(n).fill(null); if (n <= p) return out;
-    let g = 0, l = 0;
-    for (let i = 1; i <= p; i++) { const d = c[i] - c[i - 1]; d > 0 ? g += d : l -= d; }
-    g /= p; l /= p; out[p] = l ? 100 - 100 / (1 + g / l) : 100;
-    for (let i = p + 1; i < n; i++) { const d = c[i] - c[i - 1]; g = (g * (p - 1) + (d > 0 ? d : 0)) / p; l = (l * (p - 1) + (d < 0 ? -d : 0)) / p; out[i] = l ? 100 - 100 / (1 + g / l) : 100; }
-    return out;
-  }
-  function stochS(h, l, c, k = 14, s1 = 3, s2 = 3) {
-    const n = c.length, raw = new Array(n).fill(null);
-    for (let i = k - 1; i < n; i++) { const H = mx(h, i - k + 1, i), L = mn(l, i - k + 1, i); raw[i] = H > L ? 100 * (c[i] - L) / (H - L) : 50; }
-    const sma = (a, p) => a.map((_, i) => { if (i < p - 1) return null; let t = 0; for (let j = 0; j < p; j++) { if (a[i - j] == null) return null; t += a[i - j]; } return t / p; });
-    const K = sma(raw, s1), D = sma(K, s2); return { K, D };
-  }
   function pivots(h, l, n, k = 3) {
     const ph = [], pl = [];
     for (let i = k; i <= n - k; i++) {
@@ -68,7 +54,7 @@
     const e20 = E20[n], e50 = E50[n], e200 = E200[n];
     const AT = atrS(h, l, c), a = AT[n];
     const hh = mx(h, n - 20, n - 1), ll = mn(l, n - 20, n - 1);
-    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0; // ترتيب المتوسطات: أداة وحدة من الأدوات (مو شرط)
+    const d = (px > e50 && e20 > e50) ? 1 : (px < e50 && e20 < e50) ? -1 : 0; // اتجاه المتوسطات: مو أداة تصويت، يستخدمه Premium/Discount
     const P = pivots(h, l, n);
     const F = [];
     // ev: أداة حدث (تعتبر نقطة دخول). f: فلتر (يتفق مع أي اتجاه).
@@ -76,18 +62,12 @@
     const W = (vote, up, dn, none) => vote > 0 ? up : vote < 0 ? dn : none;
 
     // ===== الكلاسيكي =====
-    T('ترتيب EMA20/EMA50', 'الكلاسيكي', 5, d, W(d, 'EMA20 فوق EMA50 والسعر فوقهما', 'EMA20 تحت EMA50 والسعر تحتهما', 'لا ترند واضح'));
-    const v2 = px > e200 ? 1 : -1; T('السعر مقابل EMA200', 'الكلاسيكي', 4, v2, W(v2, 'فوق EMA200', 'تحت EMA200'));
-    const sl50 = E50[n] - E50[n - 10]; const v3 = sl50 > a * .1 ? 1 : sl50 < -a * .1 ? -1 : 0;
-    T('ميل EMA50', 'الكلاسيكي', 3, v3, W(v3, 'EMA50 صاعد', 'EMA50 هابط', 'EMA50 مسطح'));
+    const v2 = px > e200 ? 1 : -1; // يستخدم بدرجة جودة الإشارة فقط (مو أداة تصويت)
     const rs = rsiLast(c); const v4 = rs > 55 && rs < 75 ? 1 : rs < 45 && rs > 25 ? -1 : 0;
     T('RSI', 'الكلاسيكي', 3, v4, 'RSI ' + rs.toFixed(0) + W(v4, ': زخم صاعد', ': زخم هابط', ': محايد أو تشبع'));
     const m12 = ema(c, 12), m26 = ema(c, 26), macd = m12.map((x, i) => x - m26[i]), sg = ema(macd, 9), hs = macd.map((x, i) => x - sg[i]);
     const v5 = hs[n] > 0 && hs[n] > hs[n - 1] ? 1 : hs[n] < 0 && hs[n] < hs[n - 1] ? -1 : 0;
     T('MACD', 'الكلاسيكي', 4, v5, W(v5, 'هيستوغرام موجب ويزيد', 'هيستوغرام سالب ويزيد هبوطاً', 'لا زخم واضح'));
-    // قرب EMA20 = دخول مبكر (يصوّت مع الترند)، وبعده كثير = ملاحقة (يصوّت ضد الدخول الحين) فتنزل النسبة لحالها
-    const ex20 = (px - e20) / a, v6 = d && Math.abs(ex20) < .5 ? d : ex20 > 1.8 ? -1 : ex20 < -1.8 ? 1 : 0;
-    T('الارتداد من EMA20 / عدم الملاحقة', 'الكلاسيكي', 2, v6, d && Math.abs(ex20) < .5 ? 'السعر قرب EMA20 مع الترند (دخول مبكر)' : ex20 > 1.8 ? 'السعر ممتد فوق EMA20 (ملاحقة، الأفضل ينتظر رجوع)' : ex20 < -1.8 ? 'السعر ممتد تحت EMA20 (ملاحقة، الأفضل ينتظر رجوع)' : 'السعر بمسافة متوسطة من EMA20', true);
     // فيبوناتشي على آخر 50 شمعة
     const H50 = mx(h, n - 50, n), L50 = mn(l, n - 50, n); let hi = n, lo = n;
     for (let i = n - 50; i <= n; i++) { if (h[i] === H50) hi = i; if (l[i] === L50) lo = i; }
@@ -95,11 +75,6 @@
     T('فيبوناتشي 38-62%', 'الكلاسيكي', 3, v7, W(v7, 'ارتداد داخل منطقة 38-62% بعد صعود', 'ارتداد داخل منطقة 38-62% بعد هبوط', 'خارج منطقة فيبوناتشي'), true);
 
     // ===== حركة السعر =====
-    const pin = i => { const rg = h[i] - l[i], bd = Math.abs(c[i] - o[i]), up = h[i] - Math.max(o[i], c[i]), lw = Math.min(o[i], c[i]) - l[i]; if (rg < a * .5) return 0;
-      if (lw >= 2 * bd && lw >= .55 * rg && (c[i] - l[i]) / rg >= .6) return 1; if (up >= 2 * bd && up >= .55 * rg && (h[i] - c[i]) / rg >= .6) return -1; return 0; };
-    const v8 = pin(n) || pin(n - 1); T('شمعة Pin Bar', 'حركة السعر', 3, v8, W(v8, 'Pin Bar صاعدة', 'Pin Bar هابطة', 'لا Pin Bar'), true);
-    const v9 = (c[n - 1] < o[n - 1] && c[n] > o[n] && c[n] >= o[n - 1] && o[n] <= c[n - 1]) ? 1 : (c[n - 1] > o[n - 1] && c[n] < o[n] && c[n] <= o[n - 1] && o[n] >= c[n - 1]) ? -1 : 0;
-    T('شمعة ابتلاع', 'حركة السعر', 3, v9, W(v9, 'ابتلاع صاعد', 'ابتلاع هابط', 'لا ابتلاع'), true);
     const v10 = px > hh ? 1 : px < ll ? -1 : 0;
     T('اختراق آخر 20 شمعة', 'حركة السعر', 5, v10, W(v10, 'اختراق قمة آخر 20 شمعة', 'كسر قاع آخر 20 شمعة', 'لا اختراق'), true);
     const ph2 = P.ph.slice(-2), pl2 = P.pl.slice(-2); let v11 = 0;
@@ -146,34 +121,17 @@
     const m26i = n - 26, cA = (tk(m26i) + kj(m26i)) / 2, cB = sb(m26i), top = Math.max(cA, cB), bot = Math.min(cA, cB);
     const v22 = px > top ? 1 : px < bot ? -1 : 0;
     T('السحابة', 'إيشيموكو', 3, v22, W(v22, 'السعر فوق السحابة', 'السعر تحت السحابة', 'السعر داخل السحابة'));
-    const v23 = tk(n) > kj(n) ? 1 : tk(n) < kj(n) ? -1 : 0;
-    T('تقاطع Tenkan/Kijun', 'إيشيموكو', 3, v23, W(v23, 'Tenkan فوق Kijun', 'Tenkan تحت Kijun', 'متساويان'));
 
-    // ===== أدوات أقوى: فريمات أكبر وSupertrend =====
-    // (انشالت 3 أدوات متكررة: Spring/Upthrust يكرر سحب السيولة، وقمة/قاع أمس والانحدار الخطي وزنهم 1 ويكررون أدوات ثانية)
+    // ===== فريمات أكبر =====
     const agg = k => { const g = Math.floor((n + 1) / k), st = n + 1 - g * k, cc = []; for (let i = 0; i < g; i++) cc.push(c[st + i * k + k - 1]); return cc; };
     const htf = (k, f, sl) => { const cc = agg(k); if (cc.length < sl + 3) return 0; const A = ema(cc, f)[cc.length - 1], B = ema(cc, sl)[cc.length - 1], x = cc[cc.length - 1]; return x > B && A > B ? 1 : x < B && A < B ? -1 : 0; };
     const h4 = htf(4, 20, 50);
     T('اتجاه فريم أكبر (×4)', 'تعدد الفريمات', 3, h4, W(h4, 'الفريم الأكبر (×4) صاعد', 'الفريم الأكبر (×4) هابط', 'الفريم الأكبر (×4) بدون اتجاه'));
     const h12 = htf(12, 8, 21);
     T('اتجاه فريم أكبر (×12)', 'تعدد الفريمات', 2, h12, W(h12, 'الفريم الأكبر (×12) صاعد', 'الفريم الأكبر (×12) هابط', 'الفريم الأكبر (×12) بدون اتجاه'));
-    const stT = (() => { const p = 10, m = 3, A = atrS(h, l, c, p); let fu = null, fb = null, t = 1;
-      for (let i = p; i <= n; i++) { const hl2 = (h[i] + l[i]) / 2, bu = hl2 + m * A[i], bl = hl2 - m * A[i];
-        if (fu === null) { fu = bu; fb = bl; t = c[i] >= hl2 ? 1 : -1; continue; }
-        const pfu = fu, pfb = fb;
-        fu = (bu < pfu || c[i - 1] > pfu) ? bu : pfu; fb = (bl > pfb || c[i - 1] < pfb) ? bl : pfb;
-        if (t === 1 && c[i] < pfb) t = -1; else if (t === -1 && c[i] > pfu) t = 1; }
-      return t; })();
-    T('Supertrend', 'الكلاسيكي', 2, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
 
     // ===== أدوات إضافية =====
-    // كل أداة تصوّت فقط لما يكون عندها رأي واضح، وغير هذا تمتنع (صفر) فما تدخل بالنسبة. Stochastic مفلترة بالترند:
-    // تصوّت بس لما تكون نقطة دخول بعد تصحيح مع الاتجاه العام، فما تعاكس الأدوات الأساسية وما تقلل الصفقات.
-    const up50 = px > e50, dn50 = px < e50;
-    const stc = stochS(h, l, c); let x1 = 0;
-    for (let j = n - 2; j <= n; j++) { const K0 = stc.K[j], D0 = stc.D[j], K1 = stc.K[j - 1], D1 = stc.D[j - 1]; if (K0 == null || D0 == null || K1 == null || D1 == null) continue;
-      if (up50 && K0 > D0 && K1 <= D1 && Math.min(K0, K1) < 35) x1 = 1; else if (dn50 && K0 < D0 && K1 >= D1 && Math.max(K0, K1) > 65) x1 = -1; }
-    T('Stochastic', 'الكلاسيكي', 3, x1, W(x1, 'تقاطع صاعد من تشبع بيع مع الترند', 'تقاطع هابط من تشبع شراء مع الترند', 'لا تقاطع من منطقة تشبع'), true);
+    // كل أداة تصوّت فقط لما يكون عندها رأي واضح، وغير هذا تمتنع (صفر) فما تدخل بالنسبة، فما تقلل الصفقات.
     const bbAt = i => { let t = 0; for (let k = i - 19; k <= i; k++) t += c[k]; const m = t / 20; let q2 = 0; for (let k = i - 19; k <= i; k++) q2 += (c[k] - m) * (c[k] - m); return { m, sd: Math.sqrt(q2 / 20) }; }; // مستخدمة بأداة Squeeze
 
     // ===== الهيكلية السعرية (Market Structure): القمم والقيعان الكبيرة =====
@@ -202,27 +160,10 @@
       else if (dDn <= 2.5 * a && dUp > dDn * 1.5) { lq = -1; lqT = 'قيعان متساوية غير ممسوحة تحت السعر (تجذبه للأسفل)'; } }
     T('السيولة (تجمعات متساوية)', 'ICT/SMC', 3, lq, lqT, lqEv);
 
-    T('تباعد RSI', 'الكلاسيكي', 3, (() => { const RS = rsiSeries(c); let x4 = 0;
-      // تباعد حقيقي فقط: قاعين (أو قمتين) متباعدين 8-50 شمعة، فرق السعر 0.3 ATR على الأقل، فرق RSI 4 نقاط على الأقل، والقاع الثاني بمنطقة ضعف (RSI تحت 45) أو القمة الثانية بمنطقة قوة (فوق 55)
-      if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
-      else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
-      return x4; })(), W((() => { const RS = rsiSeries(c); let x4 = 0;
-      if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
-      else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
-      return x4; })(), 'تباعد صاعد (قاع أدنى بالسعر وأعلى بـ RSI)', 'تباعد هابط (قمة أعلى بالسعر وأدنى بـ RSI)', 'لا تباعد'), true);
     const sqz = i => 2 * bbAt(i).sd < 1.5 * AT[i];
     let x5 = 0, sqn = 0; for (let j = n - 6; j <= n - 1; j++) if (sqz(j)) sqn++;
     if (sqn >= 3 && !sqz(n)) { if (c[n] > e20 && c[n] > c[n - 1] && c[n] - e20 > .3 * a) x5 = 1; else if (c[n] < e20 && c[n] < c[n - 1] && e20 - c[n] > .3 * a) x5 = -1; }
     T('انفجار بعد انضغاط (Squeeze)', 'الكلاسيكي', 3, x5, W(x5, 'خروج صاعد بعد انضغاط التذبذب', 'خروج هابط بعد انضغاط التذبذب', 'لا انضغاط منتهي'), true);
-    const bdy = i => Math.abs(c[i] - o[i]); let x7 = 0;
-    if (c[n - 2] < o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] > o[n] && c[n] > (o[n - 2] + c[n - 2]) / 2) x7 = 1;
-    else if (c[n - 2] > o[n - 2] && bdy(n - 2) >= .7 * a && bdy(n - 1) <= .35 * bdy(n - 2) && c[n] < o[n] && c[n] < (o[n - 2] + c[n - 2]) / 2) x7 = -1;
-    else if ([n - 2, n - 1, n].every((i, t, A) => c[i] > o[i] && bdy(i) >= .5 * (h[i] - l[i]) && (t === 0 || c[i] > c[A[t - 1]]))) x7 = 1;
-    else if ([n - 2, n - 1, n].every((i, t, A) => c[i] < o[i] && bdy(i) >= .5 * (h[i] - l[i]) && (t === 0 || c[i] < c[A[t - 1]]))) x7 = -1;
-    T('نمط 3 شموع (نجمة/جنود)', 'حركة السعر', 3, x7, W(x7, 'نجمة صباح أو ثلاث شموع صاعدة متتالية', 'نجمة مساء أو ثلاث شموع هابطة متتالية', 'لا نمط ثلاث شموع'), true);
-    let x8 = 0;
-    if (h[n - 1] < h[n - 2] && l[n - 1] > l[n - 2] && h[n - 2] - l[n - 2] >= .8 * a) { if (c[n] > h[n - 2]) x8 = 1; else if (c[n] < l[n - 2]) x8 = -1; }
-    T('Inside Bar اختراق', 'حركة السعر', 2, x8, W(x8, 'اختراق صاعد لشمعة داخلية', 'اختراق هابط لشمعة داخلية', 'لا Inside Bar مخترق'), true);
     let x9 = 0;
     if (ph2.length === 2) { const p0 = ph2[0], p1 = ph2[1]; if (Math.abs(h[p0] - h[p1]) <= .35 * a && p1 - p0 >= 8 && p1 - p0 <= 60 && p1 >= n - 25) { const nk2 = mn(l, p0, p1); if (c[n] < nk2 && c[n] > nk2 - 2 * a) x9 = -1; } }
     if (!x9 && pl2.length === 2) { const p0 = pl2[0], p1 = pl2[1]; if (Math.abs(l[p0] - l[p1]) <= .35 * a && p1 - p0 >= 8 && p1 - p0 <= 60 && p1 >= n - 25) { const nk2 = mx(h, p0, p1); if (c[n] > nk2 && c[n] < nk2 + 2 * a) x9 = 1; } }
@@ -356,7 +297,7 @@
     if (sc >= 85) { gp += 2; gu.push('اتفاق عالي جداً ' + sc + '%'); } else if (sc >= 78) { gp += 1; gu.push('اتفاق عالي ' + sc + '%'); }
     if (evW >= 6) { gp += 2; gu.push('محفزات دخول قوية'); } else if (evW >= 3) { gp += 1; gu.push('فيه محفز دخول'); } else gd.push('بدون محفز دخول');
     if (ax >= 25) { gp += 1; gu.push('ترند قوي (ADX ' + ax.toFixed(0) + ')'); } else if (ax < 15) { gp -= 1; gd.push('ترند ضعيف (ADX ' + ax.toFixed(0) + ')'); }
-    if ([vt('MACD'), vt('RSI'), vt('Supertrend')].filter(x => x === dir).length === 3) { gp += 1; gu.push('MACD وRSI وSupertrend متفقة'); }
+    if ([vt('MACD'), vt('RSI')].filter(x => x === dir).length === 2) { gp += 1; gu.push('MACD وRSI متفقة'); }
     if (v2 !== dir) { gp -= 1; gd.push('عكس اتجاه EMA200'); }
     if ((dir > 0 && rs > 75) || (dir < 0 && rs < 25)) { gp -= 1; gd.push('RSI متطرف (احتمال انعكاس)'); }
     if (!S.closed && S.p >= 11) { gp += 1; gu.push('جلسة سيولة عالية'); } else if (!S.closed && S.p <= 3) { gp -= 1; gd.push('سيولة ضعيفة'); }
