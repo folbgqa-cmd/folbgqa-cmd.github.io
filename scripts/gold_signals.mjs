@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
 const Engine = require('../engine.js'); // نفس محرك الأدوات المستخدم بصفحة signals.html
-const Hist = require('../history.js'); // نفس طبقة التحليل التاريخي (10,000 شمعة) المستخدمة بالصفحة
+const Hist = require('../history.js'); // نفس طبقة التحليل التاريخي (5,000 شمعة) المستخدمة بالصفحة
 
 const { TG_TOKEN, TG_CHAT, TD_KEY } = process.env;
 if (!TG_TOKEN || !TG_CHAT || !TD_KEY) { console.error('Missing secrets'); process.exit(1); }
@@ -49,7 +49,7 @@ function ses(pr, now) {
 }
 const analyze = (v, pr, now) => Engine.analyze(v, pr, now, { ses, nk, min: cfg.minConf });
 
-// تحميل آخر 10,000 شمعة (طلبين من 5000) مع كل تحليل
+// تحميل آخر 5,000 شمعة (طلب واحد) مع كل تحليل
 async function tdPage(sym, end) {
   const url = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${TF}&outputsize=5000&apikey=${TD_KEY}` + (end ? `&end_date=${encodeURIComponent(end)}` : '');
   const j = await (await fetch(url)).json();
@@ -57,12 +57,11 @@ async function tdPage(sym, end) {
   return j.values;
 }
 async function loadAll(sym) {
-  const a = await tdPage(sym); let all = a;
-  if (a.length >= 4990) { try { all = a.concat(await tdPage(sym, a[a.length - 1].datetime)); } catch (e) { console.error(sym, 'history page 2:', e.message); } }
+  const a = await tdPage(sym);
   const seen = new Set(), o = [];
-  for (const x of all) if (!seen.has(x.datetime)) { seen.add(x.datetime); o.push(x); }
+  for (const x of a) if (!seen.has(x.datetime)) { seen.add(x.datetime); o.push(x); }
   o.sort((x, y) => x.datetime < y.datetime ? -1 : 1);
-  return o.slice(-10000);
+  return o.slice(-5000);
 }
 
 // فرق السعر بين Twelve Data ووسيطك (بالدولار): من config.json (offsets) وتغييره من تلي بالأمر /offset
@@ -127,7 +126,7 @@ for (const sym of active) {
   try {
     const cs = await loadAll(sym);
     if (cs.length < 250) { console.error(sym, 'data error: not enough data'); continue; }
-    // الأدوات تحلل آخر 300 شمعة، والتحليل التاريخي يفحص كل الشموع (حتى 10,000) ويدخل بقاعدة الأغلبية
+    // الأدوات تحلل آخر 300 شمعة، والتحليل التاريخي يفحص كل الشموع (حتى 5,000) ويدخل بقاعدة الأغلبية
     let h;
     try { const Pp = Hist.prep(cs); h = Hist.query(Pp, Pp.n - 1); h.data = cs.length; } catch (e) { h = { status: 'insufficient', reason: e.message }; }
     const R = Hist.gate(analyze(cs.slice(-300), P[sym], now), h, HW, cfg.minConf), last = state.pairs[sym] || 'wait';
