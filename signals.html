@@ -71,7 +71,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 <section>
 <div class="box">
 <h2>الإعداد</h2>
-<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 40 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، فريمات أكبر، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 10,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط، بعد إزالة ميل السوق العام (حتى ما يطلع شراء دايماً إذا السوق صاعد، أو بيع دايماً إذا هابط). إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
+<p style="color:var(--mute);margin-bottom:12px">كل زوج يُحلَّل بـ 40 أداة مختارة من مدارس التحليل (كلاسيكي، حركة سعر، عرض وطلب، ICT/SMC، إيشيموكو، فريمات أكبر، أخبار وجلسات). ومعها تحليل تاريخي مستقل يفحص آخر 5,000 شمعة تلقائياً مع كل تحليل: يدور على حالات مشابهة للوضع الحالي ويعدّ كم منها صعد وكم هبط، بعد إزالة ميل السوق العام (حتى ما يطلع شراء دايماً إذا السوق صاعد، أو بيع دايماً إذا هابط). إذا أغلبية الحالات بنفس اتجاه الأدوات تدخل الصفقة ويزيد التوافق، وإذا أغلبيتها عكس الأدوات ترفض الصفقة. تظهر إشارة دخول فقط إذا وصل التوافق 70% أو أكثر، وإلا يكتب «انتظر». المفتاح مجاني من <a href="https://twelvedata.com" target="_blank" rel="noopener">twelvedata.com</a> وينحفظ بمتصفحك. لجهاز ثاني استخدم «رابط دخول سريع».</p>
 <div class="row">
 <label>مفتاح Twelve Data<input id="key" type="password" placeholder="الصق المفتاح هنا" autocomplete="off"></label>
 <label>الزوج<select id="pair"></select></label>
@@ -95,7 +95,7 @@ tr.go{cursor:pointer}tr.go:hover{background:#fff}
 
 <section id="scansec" hidden>
 <h2>فحص كل الأزواج</h2>
-<p style="color:var(--mute);margin-bottom:8px">كل زوج يحمّل تاريخه (10,000 شمعة) أول مرة، فالفحص الأول ياخذ عدة دقايق (حد المفتاح المجاني 8 طلبات بالدقيقة وكل زوج يحتاج 3 طلبات). اضغط أي صف لتشوف تحليله الكامل.</p>
+<p style="color:var(--mute);margin-bottom:8px">كل زوج يحمّل تاريخه (5,000 شمعة) أول مرة، فالفحص الأول ياخذ دقايق (حد المفتاح المجاني 8 طلبات بالدقيقة وكل زوج يحتاج طلبين). اضغط أي صف لتشوف تحليله الكامل.</p>
 <div class="box wrap"><table><thead><tr><th>الزوج</th><th>القرار</th><th>الدخول</th><th>الوقف</th><th>الهدف 1</th><th>قوة التوافق</th></tr></thead><tbody id="rows"></tbody></table></div>
 </section>
 
@@ -141,25 +141,24 @@ if(ld&&ny)return{p:15,t:"تداخل لندن ونيويورك (أقوى سيول
 if(ld)return{p:11,t:"جلسة لندن"};if(ny)return{p:11,t:"جلسة نيويورك"};
 if(tk)return{p:jp?8:3,t:"جلسة طوكيو"+(jp?" (مناسبة لهذا الزوج)":" (سيولة ضعيفة لهذا الزوج)")};
 return{p:jp?4:2,t:"جلسة سيدني (سيولة ضعيفة)"}}
-// ===== التحليل التاريخي (10,000 شمعة): طبقة مستقلة، تشتغل تلقائياً مع كل تحليل =====
+// ===== التحليل التاريخي (5,000 شمعة): طبقة مستقلة، تشتغل تلقائياً مع كل تحليل =====
 // قاعدة الدمج (داخل history.js): نعدّ الحالات المشابهة اللي صعدت واللي هبطت (بعد إزالة ميل السوق العام). أغلبية بنفس اتجاه الأدوات = تدخل وتزيد التوافق (+15)،
 // أغلبية عكس الأدوات = ترفض الصفقة. بيانات غير كافية = ما تأثر.
-const HW=15,HC={},HPR={},HBT={},HF={};let HCUR=null;
+const HW=15,HN=5000,HC={},HPR={},HBT={},HF={};let HCUR=null;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function tdPage(sym,tf,end){const k=$('key').value.trim();
 const r=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${tf}&outputsize=5000&apikey=${k}`+(end?`&end_date=${encodeURIComponent(end)}`:''));
 const j=await r.json();if(j.status==='error'||!j.values)throw new Error(j.code===429?'وصلت حد الاستخدام المجاني':(j.message||'فشل جلب البيانات التاريخية'));return j.values}
-async function loadHist(sym,tf){const a=await tdPage(sym,tf);let all=a;
-if(a.length>=4990){try{all=a.concat(await tdPage(sym,tf,a[a.length-1].datetime))}catch(e){}}
-const seen=new Set(),o=[];for(const x of all)if(!seen.has(x.datetime)){seen.add(x.datetime);o.push(x)}
-o.sort((x,y)=>x.datetime<y.datetime?-1:1);return o.slice(-10000)}
+async function loadHist(sym,tf){const a=await tdPage(sym,tf);
+const seen=new Set(),o=[];for(const x of a)if(!seen.has(x.datetime)){seen.add(x.datetime);o.push(x)}
+o.sort((x,y)=>x.datetime<y.datetime?-1:1);return o.slice(-HN)}
 function histRun(sym,tf,recent){const key=sym+'|'+tf,e=HC[key];if(!e)return null;
 const f0=recent[0].datetime;if(e.cs[e.cs.length-1].datetime<f0){delete HC[key];return null}
-let cut=e.cs.length;while(cut>0&&e.cs[cut-1].datetime>=f0)cut--;e.cs=e.cs.slice(0,cut).concat(recent).slice(-10000);
+let cut=e.cs.length;while(cut>0&&e.cs[cut-1].datetime>=f0)cut--;e.cs=e.cs.slice(0,cut).concat(recent).slice(-HN);
 const Pp=Hist.prep(e.cs);HPR[key]=Pp;const q=Hist.query(Pp,Pp.n-1);q.data=e.cs.length;return q}
 async function histFor(sym,tf,recent){const key=sym+'|'+tf;let r=histRun(sym,tf,recent);if(r)return r;
 if(HF[key]&&Date.now()-HF[key].t<6e5)return{status:'insufficient',reason:HF[key].m};
-$('err').style.color='var(--mute)';$('err').textContent='جاري تحميل التاريخ ('+sym+'، حتى 10,000 شمعة)...';
+$('err').style.color='var(--mute)';$('err').textContent='جاري تحميل التاريخ ('+sym+'، حتى 5,000 شمعة)...';
 try{HC[key]={cs:await loadHist(sym,tf)}}catch(e){HF[key]={t:Date.now(),m:e.message};$('err').textContent='';return{status:'insufficient',reason:e.message}}
 $('err').textContent='';return histRun(sym,tf,recent)||{status:'insufficient',reason:'تعذر دمج البيانات'}}
 // التحليل (40 أداة) داخل engine.js. هنا نمرر له الجلسة والأخبار، وندمج الطبقة التاريخية بقاعدة الأغلبية، ونضيف قائمة أخبار الزوج
@@ -217,7 +216,7 @@ if(!LIVEREND)ta(p.tv)}
 async function run(){$('err').style.color='';$('err').textContent='';const sym=$('pair').value;
 try{$('go').disabled=true;const tf=$('tf').value,v=await get(sym,tf);await news();HCUR=await histFor(sym,tf,v);LV={sym,tf,v:v.slice()};show(sym,analyze(v,P[sym],Date.now()));if(LIVEs!==sym||(!WS&&!PT))liveStart(sym)}catch(e){$('err').textContent=e.message}finally{$('go').disabled=false}}
 async function scan(){$('err').style.color='';$('err').textContent='';$('scansec').hidden=false;$('rows').innerHTML='';$('scan').disabled=true;SCANNING=true;
-let wait=0;for(const sym of Object.keys(P)){try{if(wait)await sleep(wait);const tf=$('tf').value,v=await get(sym,tf);await news();const had=!!HC[sym+'|'+tf];HCUR=await histFor(sym,tf,v);wait=7500*(had?1:3);const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
+let wait=0;for(const sym of Object.keys(P)){try{if(wait)await sleep(wait);const tf=$('tf').value,v=await get(sym,tf);await news();const had=!!HC[sym+'|'+tf];HCUR=await histFor(sym,tf,v);wait=7500*(had?1:2);const R=analyze(v,P[sym],Date.now()),f=x=>x.toFixed(P[sym].d);
 const tr=document.createElement('tr');tr.className='go';tr.innerHTML=`<td>${sym}</td><td class="t-${R.side}">${nm[R.side]}</td><td>${R.side=="wait"?'-':f(R.entry!=null?R.entry:R.px)}</td><td>${R.side=="wait"?'-':f(R.sl)}</td><td>${R.side=="wait"?'-':f(R.tp1)}</td><td>${R.sc}%</td>`;
 tr.onclick=()=>{$('pair').value=sym;show(sym,R);$('outsec').scrollIntoView()};$('rows').appendChild(tr)}
 catch(e){$('err').textContent=e.message;break}}
