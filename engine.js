@@ -167,27 +167,49 @@
     T('Supertrend', 'الكلاسيكي', 2, stT, W(stT, 'Supertrend صاعد', 'Supertrend هابط'));
 
     // ===== أدوات إضافية =====
-    // كل أداة تصوّت فقط لما يكون عندها رأي واضح، وغير هذا تمتنع (صفر) فما تدخل بالنسبة. أدوات الارتداد (Stochastic وBollinger وCCI) مفلترة بالترند:
+    // كل أداة تصوّت فقط لما يكون عندها رأي واضح، وغير هذا تمتنع (صفر) فما تدخل بالنسبة. Stochastic مفلترة بالترند:
     // تصوّت بس لما تكون نقطة دخول بعد تصحيح مع الاتجاه العام، فما تعاكس الأدوات الأساسية وما تقلل الصفقات.
     const up50 = px > e50, dn50 = px < e50;
     const stc = stochS(h, l, c); let x1 = 0;
     for (let j = n - 2; j <= n; j++) { const K0 = stc.K[j], D0 = stc.D[j], K1 = stc.K[j - 1], D1 = stc.D[j - 1]; if (K0 == null || D0 == null || K1 == null || D1 == null) continue;
       if (up50 && K0 > D0 && K1 <= D1 && Math.min(K0, K1) < 35) x1 = 1; else if (dn50 && K0 < D0 && K1 >= D1 && Math.max(K0, K1) > 65) x1 = -1; }
     T('Stochastic', 'الكلاسيكي', 3, x1, W(x1, 'تقاطع صاعد من تشبع بيع مع الترند', 'تقاطع هابط من تشبع شراء مع الترند', 'لا تقاطع من منطقة تشبع'), true);
-    const bbAt = i => { let t = 0; for (let k = i - 19; k <= i; k++) t += c[k]; const m = t / 20; let q2 = 0; for (let k = i - 19; k <= i; k++) q2 += (c[k] - m) * (c[k] - m); return { m, sd: Math.sqrt(q2 / 20) }; };
-    let x2 = 0;
-    for (let j = n - 1; j <= n; j++) { const B = bbAt(j), lowB = B.m - 2 * B.sd, upB = B.m + 2 * B.sd;
-      if (up50 && l[j] < lowB && c[j] > lowB && c[n] > o[n]) x2 = 1; else if (dn50 && h[j] > upB && c[j] < upB && c[n] < o[n]) x2 = -1; }
-    T('Bollinger ارتداد', 'الكلاسيكي', 2, x2, W(x2, 'لمس الحد السفلي ورجع داخل النطاق مع الترند', 'لمس الحد العلوي ورجع داخل النطاق مع الترند', 'لا ارتداد من حدود بولنجر'), true);
-    const cciAt = i => { const tp = j2 => (h[j2] + l[j2] + c[j2]) / 3; let t = 0; for (let k = i - 19; k <= i; k++) t += tp(k); const m = t / 20; let md = 0; for (let k = i - 19; k <= i; k++) md += Math.abs(tp(k) - m); md /= 20; return md ? (tp(i) - m) / (0.015 * md) : 0; };
-    let x3 = 0;
-    for (let j = n - 1; j <= n; j++) { const c0 = cciAt(j), c1 = cciAt(j - 1); if (up50 && c1 < -100 && c0 > -100) x3 = 1; else if (dn50 && c1 > 100 && c0 < 100) x3 = -1; }
-    T('CCI', 'الكلاسيكي', 2, x3, W(x3, 'CCI عاد فوق -100 مع الترند', 'CCI عاد تحت +100 مع الترند', 'CCI بدون إشارة'));
-    const RS = rsiSeries(c); let x4 = 0;
-    // تباعد حقيقي فقط: قاعين (أو قمتين) متباعدين 8-50 شمعة، فرق السعر 0.3 ATR على الأقل، فرق RSI 4 نقاط على الأقل، والقاع الثاني بمنطقة ضعف (RSI تحت 45) أو القمة الثانية بمنطقة قوة (فوق 55)
-    if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
-    else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
-    T('تباعد RSI', 'الكلاسيكي', 3, x4, W(x4, 'تباعد صاعد (قاع أدنى بالسعر وأعلى بـ RSI)', 'تباعد هابط (قمة أعلى بالسعر وأدنى بـ RSI)', 'لا تباعد'), true);
+    const bbAt = i => { let t = 0; for (let k = i - 19; k <= i; k++) t += c[k]; const m = t / 20; let q2 = 0; for (let k = i - 19; k <= i; k++) q2 += (c[k] - m) * (c[k] - m); return { m, sd: Math.sqrt(q2 / 20) }; }; // مستخدمة بأداة Squeeze
+
+    // ===== الهيكلية السعرية (Market Structure): القمم والقيعان الكبيرة =====
+    // أوسع من أداة "هيكل قمم وقيعان" الصغيرة: قمتين وقاعين كبار، كل واحد مؤكد بـ 8 شموع من كل جهة.
+    // قمم وقيعان أعلى = هيكل صاعد سليم (شراء)، وأدنى = هابط (بيع). وإذا السعر كسر آخر قاع كبير بالهيكل الصاعد (أو آخر قمة كبيرة بالهابط) = تحول هيكلي CHoCH ويصوّت عكس الهيكل القديم.
+    const PM = pivots(h, l, n, 8), mh = PM.ph.slice(-2), ml = PM.pl.slice(-2); let sA = 0, tA = 'هيكل كبير غير واضح (قمم وقيعان مختلطة أو ما فيه عدد كافي)', brk = false;
+    if (mh.length === 2 && ml.length === 2) { const H1 = h[mh[1]], H0 = h[mh[0]], L1 = l[ml[1]], L0 = l[ml[0]];
+      if (H1 > H0 && L1 > L0) { if (px > L1) { sA = 1; tA = 'قمم وقيعان كبيرة أعلى والهيكل سليم'; } else { sA = -1; tA = 'كسر آخر قاع كبير: تحول هيكلي هابط (CHoCH)'; brk = true; } }
+      else if (H1 < H0 && L1 < L0) { if (px < H1) { sA = -1; tA = 'قمم وقيعان كبيرة أدنى والهيكل سليم'; } else { sA = 1; tA = 'كسر آخر قمة كبيرة: تحول هيكلي صاعد (CHoCH)'; brk = true; } } }
+    T('الهيكلية السعرية', 'حركة السعر', 3, sA, tA, brk);
+
+    // ===== السيولة (Liquidity Pools): تجمعات قمم أو قيعان متساوية =====
+    // تجمّع سيولة = قمتين (EQH) أو قاعين (EQL) متساويين تقريباً (فرق 0.3 ATR) بآخر 100 شمعة وما انكسروا. هذا مكان أوامر الوقف المتراكمة.
+    // سحب تجمّع (الذيل يتجاوزه والإغلاق يرجع داخله) = رفض وانعكاس: سحب EQL شراء، سحب EQH بيع. وإذا ما فيه سحب حديث: تجمّع واحد غير ممسوح قريب (أقل من 2.5 ATR) وأقرب بوضوح من التجمّع المعاكس = يجذب السعر نحوه.
+    const PLq = pivots(h, l, n, 3), fq = Math.max(0, n - 100), iiH = PLq.ph.filter(i => i >= fq && i <= n - 3), iiL = PLq.pl.filter(i => i >= fq && i <= n - 3), eqH = [], eqL = [];
+    for (let x = 0; x < iiH.length; x++) for (let y = x + 1; y < iiH.length; y++) if (Math.abs(h[iiH[x]] - h[iiH[y]]) <= .3 * a && iiH[y] - iiH[x] >= 5) eqH.push({ lvl: Math.max(h[iiH[x]], h[iiH[y]]), i: iiH[y] });
+    for (let x = 0; x < iiL.length; x++) for (let y = x + 1; y < iiL.length; y++) if (Math.abs(l[iiL[x]] - l[iiL[y]]) <= .3 * a && iiL[y] - iiL[x] >= 5) eqL.push({ lvl: Math.min(l[iiL[x]], l[iiL[y]]), i: iiL[y] });
+    let swH = false, swL = false;
+    for (const p of eqH) for (let j = n - 3; j <= n; j++) if (j > p.i + 1 && h[j] > p.lvl && c[j] < p.lvl && mx(c, p.i + 1, j - 1) <= p.lvl) swH = true;
+    for (const p of eqL) for (let j = n - 3; j <= n; j++) if (j > p.i + 1 && l[j] < p.lvl && c[j] > p.lvl && mn(c, p.i + 1, j - 1) >= p.lvl) swL = true;
+    let lq = swL && !swH ? 1 : swH && !swL ? -1 : 0, lqT = swL && swH ? 'سحب سيولة من الجهتين (متعارض)' : swL ? 'سحب سيولة قيعان متساوية (EQL) ثم رفض' : swH ? 'سحب سيولة قمم متساوية (EQH) ثم رفض' : 'لا سحب لتجمّع سيولة حديثاً', lqEv = lq !== 0;
+    if (!swH && !swL) { let dUp = Infinity, dDn = Infinity;
+      for (const p of eqH) if (mx(h, p.i + 1, n) <= p.lvl && p.lvl > px) dUp = Math.min(dUp, p.lvl - px);
+      for (const p of eqL) if (mn(l, p.i + 1, n) >= p.lvl && p.lvl < px) dDn = Math.min(dDn, px - p.lvl);
+      if (dUp <= 2.5 * a && dDn > dUp * 1.5) { lq = 1; lqT = 'قمم متساوية غير ممسوحة فوق السعر (تجذبه للأعلى)'; }
+      else if (dDn <= 2.5 * a && dUp > dDn * 1.5) { lq = -1; lqT = 'قيعان متساوية غير ممسوحة تحت السعر (تجذبه للأسفل)'; } }
+    T('السيولة (تجمعات متساوية)', 'ICT/SMC', 3, lq, lqT, lqEv);
+
+    T('تباعد RSI', 'الكلاسيكي', 3, (() => { const RS = rsiSeries(c); let x4 = 0;
+      // تباعد حقيقي فقط: قاعين (أو قمتين) متباعدين 8-50 شمعة، فرق السعر 0.3 ATR على الأقل، فرق RSI 4 نقاط على الأقل، والقاع الثاني بمنطقة ضعف (RSI تحت 45) أو القمة الثانية بمنطقة قوة (فوق 55)
+      if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
+      else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
+      return x4; })(), W((() => { const RS = rsiSeries(c); let x4 = 0;
+      if (pl2.length === 2 && RS[pl2[0]] != null && RS[pl2[1]] != null && pl2[1] >= n - 15 && pl2[1] - pl2[0] >= 8 && pl2[1] - pl2[0] <= 50 && l[pl2[0]] - l[pl2[1]] >= .3 * a && RS[pl2[1]] > RS[pl2[0]] + 4 && RS[pl2[1]] < 45) x4 = 1;
+      else if (ph2.length === 2 && RS[ph2[0]] != null && RS[ph2[1]] != null && ph2[1] >= n - 15 && ph2[1] - ph2[0] >= 8 && ph2[1] - ph2[0] <= 50 && h[ph2[1]] - h[ph2[0]] >= .3 * a && RS[ph2[1]] < RS[ph2[0]] - 4 && RS[ph2[1]] > 55) x4 = -1;
+      return x4; })(), 'تباعد صاعد (قاع أدنى بالسعر وأعلى بـ RSI)', 'تباعد هابط (قمة أعلى بالسعر وأدنى بـ RSI)', 'لا تباعد'), true);
     const sqz = i => 2 * bbAt(i).sd < 1.5 * AT[i];
     let x5 = 0, sqn = 0; for (let j = n - 6; j <= n - 1; j++) if (sqz(j)) sqn++;
     if (sqn >= 3 && !sqz(n)) { if (c[n] > e20 && c[n] > c[n - 1] && c[n] - e20 > .3 * a) x5 = 1; else if (c[n] < e20 && c[n] < c[n - 1] && e20 - c[n] > .3 * a) x5 = -1; }
