@@ -217,6 +217,68 @@
     })();
     T('تحليل زمني (Time Analysis)', 'التحليل الزمني', 3, tmAn.vote, tmAn.text, tmAn.vote !== 0);
 
+    // ===== الزجزاج (ZigZag): نقاط التحول الكبيرة، يعتمد عليها التحليل الهارمونك والتحليل الموجي =====
+    // قمم وقيعان مؤكدة بـ 4 شموع من كل جهة، بالتناوب (قمة ثم قاع)، وأي حركة أقل من 0.8 ATR تتجاهل (ضجيج).
+    const zz = (() => { const PK = pivots(h, l, n, 4), arr = [], out = [];
+      for (const i of PK.ph) if (i >= n - 300) arr.push({ i, t: 1, p: h[i] });
+      for (const i of PK.pl) if (i >= n - 300) arr.push({ i, t: -1, p: l[i] });
+      arr.sort((x, y) => x.i - y.i);
+      for (const x of arr) { const L = out[out.length - 1];
+        if (L && L.t === x.t) { if (x.t === 1 ? x.p > L.p : x.p < L.p) out[out.length - 1] = x; }
+        else if (L && Math.abs(x.p - L.p) < .8 * a) continue;
+        else out.push(x); }
+      return out; })();
+
+    // ===== التحليل الهارمونك (Harmonic): Gartley وBat وButterfly وCrab =====
+    // نمط من 5 نقاط X-A-B-C-D. النقاط X وA وB وC آخر 4 نقاط زجزاج مؤكدة، والنقطة D هي السعر الحالي. شروط النسب (مع هامش 6%):
+    // AB/XA: Gartley 0.618، Bat 0.382-0.5، Butterfly 0.786، Crab 0.382-0.618. BC/AB بين 0.382 و0.886. ومستوى D من XA: Gartley 0.786، Bat 0.886، Butterfly 1.272، Crab 1.618.
+    // يصوّت فقط إذا السعر الحالي داخل نصف ATR (0.6) من مستوى D المحسوب، ونسبة CD/BC ضمن نطاق النمط. النمط الصاعد (XA صاعد) = شراء عند D، والهابط = بيع.
+    const dp2 = Math.max(0, Math.round(-Math.log10(pr.pip)) + 1);
+    const hmn = (() => {
+      const none = { v: 0, t: 'لا نمط هارمونيك مكتمل عند السعر الحالي' };
+      if (zz.length < 4) return none;
+      const [X, A, B, C] = zz.slice(-4);
+      if (n - C.i > 60) return none;
+      const xa = A.p - X.p, sd = xa > 0 ? 1 : -1, XA = Math.abs(xa), AB = Math.abs(B.p - A.p), BC = Math.abs(C.p - B.p);
+      if (XA < 2.5 * a || AB <= 0 || BC <= 0) return none;
+      const shape = sd > 0 ? (B.p < A.p && B.p > X.p && C.p > B.p && C.p < A.p) : (B.p > A.p && B.p < X.p && C.p < B.p && C.p > A.p);
+      if (!shape) return none;
+      const rAB = AB / XA, rBC = BC / AB, tol = .06;
+      const PT = [{ n: 'Gartley', ab: [.568, .668], dx: .786, cd: [1.13, 1.618] }, { n: 'Bat', ab: [.382, .5], dx: .886, cd: [1.618, 2.618] },
+        { n: 'Butterfly', ab: [.736, .836], dx: 1.272, cd: [1.618, 2.24] }, { n: 'Crab', ab: [.382, .618], dx: 1.618, cd: [2.24, 3.618] }];
+      let best = null;
+      for (const p of PT) {
+        if (rAB < p.ab[0] - tol || rAB > p.ab[1] + tol || rBC < .382 - tol || rBC > .886 + tol) continue;
+        const D = A.p - p.dx * xa, dist = Math.abs(px - D), rCD = Math.abs(C.p - px) / BC;
+        if (dist > .6 * a || rCD < p.cd[0] - .15 || rCD > p.cd[1] + .15) continue;
+        if (sd > 0 ? px >= C.p : px <= C.p) continue; // السعر لازم يكون نزل (أو صعد) من C باتجاه D
+        if (!best || dist < best.dist) best = { p, D, dist };
+      }
+      if (!best) return none;
+      return { v: sd, t: best.p.n + (sd > 0 ? ' صاعد' : ' هابط') + ' مكتمل: السعر عند منطقة D (' + best.D.toFixed(dp2) + ') بعد حركة XA بحجم ' + (XA / a).toFixed(1) + ' ATR' };
+    })();
+    T('تحليل هارمونيك (Gartley/Bat/Butterfly/Crab)', 'الهارمونك', 3, hmn.v, hmn.t, true);
+
+    // ===== التحليل الموجي (Elliott Wave): عدّ آلي بقواعد إليوت الأساسية على نقاط الزجزاج =====
+    // القواعد: الموجة 2 ما تتجاوز بداية الموجة 1، والموجة 3 مو أقصر الموجات الدافعة (1 و3 و5)، والموجة 4 ما تدخل منطقة الموجة 1. كل موجة لازم تكون 1.5 ATR على الأقل ولأقل من 40 شمعة من آخر نقطة.
+    // يصوّت بثلاث حالات: الموجة 3 جارية (كسر قمة/قاع الموجة 1 بعد تصحيح 24-89%)، أو الموجة 5 جارية بعد اكتمال 4 موجات، أو اكتمال 5 موجات وكسر قاع/قمة الموجة 4 (تصحيح عكس الاتجاه). غير هذا يمتنع.
+    // تنبيه: عدّ إليوت فيه اجتهاد، وهذا عدّ آلي بقواعد صارمة وليس تحليل مؤكد.
+    const wvn = (() => {
+      const none = { v: 0, t: 'لا عدّ موجي واضح (لا موجة 3 أو 5 جارية، ولا 5 موجات مكتملة)' };
+      if (zz.length < 3) return none;
+      const imp = sd => { const Z = zz.map(z => ({ i: z.i, t: z.t * sd, q: z.p * sd })), m = Z.length, pq = px * sd, wn = sd > 0 ? 'صاعدة' : 'هابطة';
+        if (m >= 6 && Z[m - 6].t === -1) { const [s0, s1, s2, s3, s4, s5] = Z.slice(-6), w1 = s1.q - s0.q, w3 = s3.q - s2.q, w5 = s5.q - s4.q;
+          if (w1 >= 1.5 * a && s2.q > s0.q && s3.q > s1.q && s4.q > s1.q && w3 > 0 && w5 > 0 && w3 >= Math.min(w1, w5) && n - s5.i <= 40 && pq < s4.q) return { v: -sd, t: 'اكتملت 5 موجات ' + wn + ' وانكسر قاع الموجة 4: بداية تصحيح (A-B-C) عكس الاتجاه' }; }
+        if (m >= 5 && Z[m - 5].t === -1) { const [s0, s1, s2, s3, s4] = Z.slice(-5), w1 = s1.q - s0.q, w3 = s3.q - s2.q;
+          if (w1 >= 1.5 * a && s2.q > s0.q && s3.q > s1.q && s4.q > s1.q && w3 >= w1 && n - s4.i <= 40 && pq > s4.q + .3 * a && pq - s4.q < w1) return { v: sd, t: 'الموجة 5 ' + wn + ' جارية بعد اكتمال 4 موجات (الموجة 3 تساوي ' + (w3 / w1).toFixed(1) + '× الأولى)' }; }
+        if (m >= 3 && Z[m - 3].t === -1) { const [s0, s1, s2] = Z.slice(-3), w1 = s1.q - s0.q, r2 = (s1.q - s2.q) / (w1 || 1);
+          if (w1 >= 1.5 * a && s2.q > s0.q && r2 >= .236 && r2 <= .886 && n - s2.i <= 40 && pq > s1.q && pq < s1.q + 2.618 * w1) return { v: sd, t: 'الموجة 3 ' + wn + ' جارية: كسر قمة الموجة 1 بعد تصحيح ' + Math.round(r2 * 100) + '%' }; }
+        return null; };
+      const bu = imp(1), be = imp(-1);
+      if (bu && be) return { v: 0, t: 'عدّ موجي متعارض (صاعد وهابط)' };
+      return bu || be || none; })();
+    T('التحليل الموجي (Elliott)', 'الموجات', 3, wvn.v, wvn.t, true);
+
     // ===== بديلين من السعر فقط لأداتين تحتاج بيانات حجم (ما فيه حجم حقيقي للذهب والفوركس، فهي تقريبية مو حجم ولا أوردر فلو حقيقي) =====
     const dpf = Math.max(0, Math.round(-Math.log10(pr.pip)) + 1), cp = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x));
     // Volume Profile (بروفايل زمني TPO): كم شمعة لمست كل مستوى سعري خلال آخر 100 شمعة. POC = أكثر مستوى لمسه السعر، ومنطقة القيمة (VA) = 70% من الوقت حوله.
