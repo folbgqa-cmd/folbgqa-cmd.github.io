@@ -2,6 +2,7 @@
 // نفس الملف يستخدمه الموقع (signals.html) وبوت تيليجرام (scripts/gold_signals.mjs).
 (function (root) {
   'use strict';
+  const MEMO = {}; // ذاكرة مؤقتة لحسابات التاريخ الثقيلة (إحصائيات الجلسات والتحليل الاحتمالي)، تتغير فقط لما يتغير التاريخ
   const ema = (a, p) => { const k = 2 / (p + 1); let e = a[0]; return a.map((v, i) => (e = i ? v * k + e * (1 - k) : v)); };
   const mx = (a, s, e) => { let m = -Infinity; for (let i = s; i <= e; i++) if (a[i] > m) m = a[i]; return m; };
   const mn = (a, s, e) => { let m = Infinity; for (let i = s; i <= e; i++) if (a[i] < m) m = a[i]; return m; };
@@ -278,6 +279,119 @@
       if (bu && be) return { v: 0, t: 'عدّ موجي متعارض (صاعد وهابط)' };
       return bu || be || none; })();
     T('التحليل الموجي (Elliott)', 'الموجات', 3, wvn.v, wvn.t, true);
+
+    // ===== أدوات التدفق والتحليل الإحصائي (10 أدوات) =====
+    // ملاحظة صريحة: ما فيه حجم حقيقي للذهب والفوركس من مصدر البيانات (Twelve Data). فأدوات الحجم والتدفق (VWAP ودلتا الحجم واختلال التدفق وCVD) تستعمل مدى الشمعة بديلاً عن الحجم، وتنكتب "تقريبي" بالاسم.
+    // وإذا توفر حجم حقيقي بالبيانات تستعمله تلقائياً. الإحصائيات (الجلسات والاحتمالي) تحتاج التاريخ (ctx.deep)، والارتباطات تحتاج أزواج مرتبطة (ctx.peers). إذا ما توفرت هذي البيانات تمتنع الأداة (صفر) وما تدخل بالنسبة.
+    const hasVol = v.slice(-50).some(x => +x.volume > 0), vol = v.map((x, i) => hasVol && +x.volume > 0 ? +x.volume : (h[i] - l[i]) || 1e-9), apx = hasVol ? '' : ' تقريبي';
+    const dl = i => { const r2 = h[i] - l[i]; return r2 > 0 ? vol[i] * ((c[i] - l[i]) - (h[i] - c[i])) / r2 : 0; }; // دلتا الشمعة: وين أغلقت داخل مداها مضروبة بالحجم
+    const parseT = s => Date.parse(String(s || '').replace(' ', 'T') + 'Z');
+    const wl = (p, nn) => { const z = 1.28, z2 = z * z, ct = (p + z2 / (2 * nn)) / (1 + z2 / nn), hf = z * Math.sqrt(p * (1 - p) / nn + z2 / (4 * nn * nn)) / (1 + z2 / nn); return ct - hf; }; // الحد الأدنى الإحصائي (Wilson) بثقة 90%
+
+    // 1) VWAP: متوسط السعر المرجح بالحجم من بداية اليوم (UTC)، وإذا الفريم كبير أو اليوم بدأ للتو يستخدم آخر 50 شمعة.
+    // فوق VWAP وميله صاعد = شراء، تحته وميله هابط = بيع. وارتداد من VWAP مع الاتجاه = نقطة دخول.
+    const vw = (() => {
+      const tfm = parseT(v[n].datetime) - parseT(v[n - 1].datetime); let i0 = Math.max(0, n - 49), anch = 'آخر 50 شمعة';
+      if (tfm >= 60000 && tfm <= 3600000) { const Tz = Math.floor(now / tfm) * tfm, day0 = Math.floor(now / 864e5) * 864e5;
+        for (let i = 0; i <= n; i++) if (Tz - (n - i) * tfm >= day0) { if (n - i >= 12) { i0 = i; anch = 'بداية اليوم (UTC)'; } break; } }
+      const vwAt = k => { let pv = 0, vs = 0; for (let i = i0; i <= k; i++) { pv += (h[i] + l[i] + c[i]) / 3 * vol[i]; vs += vol[i]; } return vs ? pv / vs : c[k]; };
+      const V = vwAt(n), sl = V - vwAt(n - 5), dist = px - V, tag = 'VWAP ' + V.toFixed(dp2) + ' (' + anch + ')';
+      const bu = Math.min(l[n], l[n - 1], l[n - 2]) <= V + .2 * a && dist > .1 * a && sl >= 0, be = Math.max(h[n], h[n - 1], h[n - 2]) >= V - .2 * a && dist < -.1 * a && sl <= 0;
+      if (bu) return { v: 1, t: 'ارتداد صاعد من ' + tag, ev: true };
+      if (be) return { v: -1, t: 'ارتداد هابط من ' + tag, ev: true };
+      if (dist > .3 * a && sl >= 0) return { v: 1, t: 'السعر فوق ' + tag + ' وميله صاعد', ev: false };
+      if (dist < -.3 * a && sl <= 0) return { v: -1, t: 'السعر تحت ' + tag + ' وميله هابط', ev: false };
+      return { v: 0, t: 'السعر قرب ' + tag + ' أو عكس ميله', ev: false }; })();
+    T('VWAP' + apx, 'الحجم والتدفق', 3, vw.v, vw.t, vw.ev);
+
+    // 2) دلتا الحجم: صافي ضغط الشراء والبيع بآخر 3 شموع (من -1 إلى +1). فوق 0.4 = ضغط شراء قوي، تحت -0.4 = ضغط بيع قوي.
+    const d3 = (() => { let s2 = 0, vs = 0; for (let i = n - 2; i <= n; i++) { s2 += dl(i); vs += vol[i]; } return vs ? s2 / vs : 0; })(), vD = d3 > .4 ? 1 : d3 < -.4 ? -1 : 0;
+    T('دلتا الحجم' + apx, 'الحجم والتدفق', 2, vD, 'دلتا آخر 3 شموع ' + (d3 >= 0 ? '+' : '') + d3.toFixed(2) + W(vD, ': ضغط شراء قوي', ': ضغط بيع قوي', ': متوازن'));
+
+    // 3) اختلال تدفق الأوامر: بآخر 20 شمعة نعدّ الشموع اللي أغلقت قرب قمتها (أعلى 25% من مداها) مقابل قرب قاعها (أدنى 25%). فرق 35% أو أكثر = اختلال.
+    const ofi = (() => { let nt = 0, nb = 0; for (let i = n - 19; i <= n; i++) { const r2 = h[i] - l[i]; if (r2 <= 0) continue; const ps = (c[i] - l[i]) / r2; if (ps >= .75) nt++; else if (ps <= .25) nb++; } return { nt, nb, x: nt + nb >= 4 ? (nt - nb) / (nt + nb) : 0 }; })(), vO = ofi.x >= .35 ? 1 : ofi.x <= -.35 ? -1 : 0;
+    T('اختلال تدفق الأوامر' + apx, 'الحجم والتدفق', 2, vO, 'آخر 20 شمعة: ' + ofi.nt + ' إغلاق قرب القمة مقابل ' + ofi.nb + ' قرب القاع' + W(vO, ': اختلال شرائي', ': اختلال بيعي', ': متوازن'));
+
+    // 4) CVD (دلتا الحجم التراكمية) على آخر 60 شمعة. تباعد: السعر عند قمة/قاع جديد والـ CVD ما كسر قمته/قاعه = ضعف الحركة (انعكاس). وإلا ميل CVD بآخر 10 شموع.
+    const cvd = (() => { const L = 60, cv = []; let s2 = 0; for (let i = n - L + 1; i <= n; i++) { s2 += dl(i); cv.push(s2); }
+      const last = cv.length - 1, hi20 = Math.max(...cv.slice(last - 19, last)), lo20 = Math.min(...cv.slice(last - 19, last)); let tot = 0; for (let i = n - 19; i <= n; i++) tot += Math.abs(dl(i));
+      if (px >= hh && cv[last] < hi20 - .1 * tot) return { v: -1, t: 'تباعد هابط: السعر عند قمة جديدة والـ CVD ما كسر قمته', ev: true };
+      if (px <= ll && cv[last] > lo20 + .1 * tot) return { v: 1, t: 'تباعد صاعد: السعر عند قاع جديد والـ CVD ما كسر قاعه', ev: true };
+      let vs10 = 0; for (let i = n - 9; i <= n; i++) vs10 += vol[i]; const k10 = vs10 ? (cv[last] - cv[last - 10]) / vs10 : 0;
+      return { v: k10 > .15 ? 1 : k10 < -.15 ? -1 : 0, t: 'ميل CVD بآخر 10 شموع ' + (k10 >= 0 ? '+' : '') + k10.toFixed(2), ev: false }; })();
+    T('دلتا الحجم التراكمية (CVD)' + apx, 'الحجم والتدفق', 3, cvd.v, cvd.t, cvd.ev);
+
+    // 5) خريطة السيولة: نقاط التحول (قمم وقيعان) بآخر 200 شمعة. المستوى اللي تتجمع حوله 3 نقاط تحول أو أكثر (ضمن نصف ATR) = منطقة سيولة كثيفة. السعر ينجذب لأقرب منطقة كثيفة (حتى 6 ATR) إذا كانت أقرب بوضوح (1.5 مرة) من المعاكسة.
+    const lmp = (() => { const pv = [...P.ph.filter(i => i >= n - 200).map(i => h[i]), ...P.pl.filter(i => i >= n - 200).map(i => l[i])];
+      if (pv.length < 6) return { v: 0, t: 'نقاط التحول قليلة لرسم خريطة السيولة' };
+      let upC = null, dnC = null;
+      for (const lv of pv) { const cn = pv.filter(x => Math.abs(x - lv) <= .5 * a).length; if (cn < 3) continue; const ds = lv - px;
+        if (ds > .3 * a && ds <= 6 * a && (!upC || ds < upC.d)) upC = { lv, d: ds, cn }; if (ds < -.3 * a && ds >= -6 * a && (!dnC || -ds < dnC.d)) dnC = { lv, d: -ds, cn }; }
+      if (upC && (!dnC || dnC.d > upC.d * 1.5)) return { v: 1, t: 'منطقة سيولة كثيفة (' + upC.cn + ' نقاط تحول) عند ' + upC.lv.toFixed(dp2) + ' فوق السعر بـ ' + (upC.d / a).toFixed(1) + ' ATR (تجذبه للأعلى)' };
+      if (dnC && (!upC || upC.d > dnC.d * 1.5)) return { v: -1, t: 'منطقة سيولة كثيفة (' + dnC.cn + ' نقاط تحول) عند ' + dnC.lv.toFixed(dp2) + ' تحت السعر بـ ' + (dnC.d / a).toFixed(1) + ' ATR (تجذبه للأسفل)' };
+      return { v: 0, t: upC || dnC ? 'مناطق سيولة قريبة من الجهتين بنفس المسافة تقريباً' : 'لا منطقة سيولة كثيفة قريبة' }; })();
+    T('خريطة السيولة', 'ICT/SMC', 3, lmp.v, lmp.t, false);
+
+    // 6) كشف حالة السوق: ترندي (ADX 25 أو أكثر وكفاءة حركة 0.35 أو أكثر) فنتبع اتجاه آخر 20 شمعة. عرضي (ADX أقل من 20 وكفاءة أقل من 0.25) فنرتد من أطراف النطاق (أدنى/أعلى 20% من آخر 50 شمعة). غير هذا انتقالي (صفر).
+    const rg6 = (() => { const axR = adxLast(h, l, c); let pth = 0; for (let i = n - 19; i <= n; i++) pth += Math.abs(c[i] - c[i - 1]);
+      const er = pth ? Math.abs(c[n] - c[n - 20]) / pth : 0, dr = c[n] > c[n - 20] ? 1 : -1, ps = H50 > L50 ? (px - L50) / (H50 - L50) : .5;
+      if (axR >= 25 && er >= .35) return { v: dr, t: 'سوق ترندي (ADX ' + axR.toFixed(0) + '، كفاءة الحركة ' + er.toFixed(2) + ') باتجاه ' + (dr > 0 ? 'صاعد' : 'هابط'), ev: false };
+      if (axR < 20 && er < .25) { if (ps < .2) return { v: 1, t: 'سوق عرضي والسعر قرب قاع النطاق (ارتداد)', ev: true }; if (ps > .8) return { v: -1, t: 'سوق عرضي والسعر قرب قمة النطاق (ارتداد)', ev: true }; return { v: 0, t: 'سوق عرضي والسعر وسط النطاق', ev: false }; }
+      return { v: 0, t: 'حالة انتقالية (ADX ' + axR.toFixed(0) + '، كفاءة ' + er.toFixed(2) + ')', ev: false }; })();
+    T('كشف حالة السوق (Regime)', 'حالة السوق', 3, rg6.v, rg6.t, rg6.ev);
+
+    // 7) أنظمة التقلب: مرتبة ATR الحالي بين آخر 200 قيمة. منخفض (أقل من 25%) مع اختراق = اتجاه الاختراق. مرتفع (أكثر من 80%) والسعر ممتد أكثر من 2.5 ATR عن EMA20 = ارتداد عكس التمدد.
+    const vr7 = (() => { const arr = AT.slice(-200).filter(x => x != null), pct = arr.filter(x => x <= a).length / (arr.length || 1), exT = (px - e20) / a;
+      const lab = pct <= .25 ? 'منخفض (انضغاط)' : pct >= .8 ? 'مرتفع' : 'عادي', base = 'التقلب ' + lab + ' (مرتبته ' + Math.round(pct * 100) + '%)';
+      if (pct <= .25) { if (px > hh) return { v: 1, t: base + ': اختراق صاعد من انضغاط', ev: true }; if (px < ll) return { v: -1, t: base + ': كسر هابط من انضغاط', ev: true }; }
+      if (pct >= .8) { if (exT > 2.5) return { v: -1, t: base + ': السعر ممتد ' + exT.toFixed(1) + ' ATR فوق EMA20 (احتمال ارتداد)', ev: true }; if (exT < -2.5) return { v: 1, t: base + ': السعر ممتد ' + Math.abs(exT).toFixed(1) + ' ATR تحت EMA20 (احتمال ارتداد)', ev: true }; }
+      return { v: 0, t: base + ': لا إشارة تقلب واضحة', ev: false }; })();
+    T('أنظمة التقلب (Volatility Regimes)', 'حالة السوق', 2, vr7.v, vr7.t, vr7.ev);
+
+    // 8) التحليل الإحصائي للجلسات: من التاريخ (حتى 5,000 شمعة) نحسب كم مرة صعدت الجلسة الحالية (من افتتاحها لإغلاقها) بالأيام السابقة. يصوّت فقط إذا الميل حاسم إحصائياً (حد Wilson بثقة 90% فوق 50%) وبعينة 30 جلسة على الأقل.
+    const ssn = (() => { const D = ctx.deep; if (!D || D.length < 300) return { v: 0, t: 'يحتاج التاريخ (5,000 شمعة) لإحصائيات الجلسات' };
+      const m = D.length, curH = Math.floor((now % 864e5) / 36e5), mk = 's' + m + D[m - 1].datetime + Math.floor(now / 864e5) + '_' + (curH < 7 ? 0 : curH < 12 ? 1 : curH < 16 ? 2 : curH < 21 ? 3 : 4); if (MEMO.ssn && MEMO.ssn.k === mk) return MEMO.ssn.r;
+      const tfm = parseT(D[m - 1].datetime) - parseT(D[m - 2].datetime), done = r => { MEMO.ssn = { k: mk, r }; return r; };
+      if (!(tfm >= 60000 && tfm <= 3600000)) return done({ v: 0, t: 'إحصائيات الجلسات تشتغل لفريمات لحد H1' });
+      const B = [0, 7, 12, 16, 21, 24], NM = ['آسيا', 'لندن', 'تداخل لندن ونيويورك', 'نيويورك', 'سيدني'], sesOf = hr => { for (let s2 = 0; s2 < 5; s2++) if (hr >= B[s2] && hr < B[s2 + 1]) return s2; return 0; };
+      const curS = sesOf((now - Math.floor(now / 864e5) * 864e5) / 36e5), g = {};
+      for (let i = 0; i < m; i++) { const t = parseT(D[i].datetime), dk = Math.floor(t / 864e5); if (sesOf((t - dk * 864e5) / 36e5) !== curS) continue; if (!g[dk]) g[dk] = { o: +D[i].open, c: +D[i].close, n: 0 }; g[dk].c = +D[i].close; g[dk].n++; }
+      const need = Math.round(.7 * (B[curS + 1] - B[curS]) * 36e5 / tfm), today = Math.floor(now / 864e5), rr = Object.keys(g).filter(k => g[k].n >= need && +k !== today).map(k => (g[k].c - g[k].o) / g[k].o * 100), N = rr.length;
+      if (N < 30) return done({ v: 0, t: NM[curS] + ': عينة قليلة (' + N + ' جلسة، المطلوب 30)' });
+      const pu = rr.filter(x => x > 0).length / N, avg = rr.reduce((s2, x) => s2 + x, 0) / N, vv = wl(pu, N) > .5 ? 1 : wl(1 - pu, N) > .5 ? -1 : 0;
+      return done({ v: vv, t: NM[curS] + ': صعدت ' + Math.round(pu * 100) + '% من آخر ' + N + ' جلسة (متوسط ' + (avg >= 0 ? '+' : '') + avg.toFixed(2) + '%)' + (vv ? '' : ' - الفرق غير حاسم إحصائياً') }); })();
+    T('التحليل الإحصائي للجلسات', 'التحليل الإحصائي', 2, ssn.v, ssn.t, false);
+
+    // 9) التحليل الاحتمالي الإحصائي: نصنّف الحالة الحالية بـ 18 حالة (حركة آخر 3 شموع × موقع السعر بنطاق 50 شمعة × اتجاه EMA20/EMA50)، ونعدّ كم مرة صعد السعر أو هبط بعد 10 شموع كلما ظهرت نفس الحالة بالتاريخ. يصوّت إذا الحد الأدنى الإحصائي (Wilson 90%) فوق 55% بعينة 60 حالة على الأقل.
+    const prb = (() => { const D = ctx.deep; if (!D || D.length < 600) return { v: 0, t: 'يحتاج التاريخ (5,000 شمعة) للتحليل الاحتمالي' };
+      const m = D.length, mk = 'p' + m + D[m - 1].datetime; if (MEMO.prb && MEMO.prb.k === mk) return MEMO.prb.r;
+      const cc = D.map(x => +x.close), hD = D.map(x => +x.high), lD = D.map(x => +x.low), AD = atrS(hD, lD, cc), E1 = ema(cc, 20), E2 = ema(cc, 50), done = r => { MEMO.prb = { k: mk, r }; return r; };
+      const st = i => { const A = AD[i]; if (!A) return -1; const r3 = (cc[i] - cc[i - 3]) / A, b1 = r3 > .5 ? 2 : r3 < -.5 ? 0 : 1; let mxx = -Infinity, mnn = Infinity; for (let j = i - 49; j <= i; j++) { if (hD[j] > mxx) mxx = hD[j]; if (lD[j] < mnn) mnn = lD[j]; }
+        const ps = mxx > mnn ? (cc[i] - mnn) / (mxx - mnn) : .5, b2 = ps > .66 ? 2 : ps < .33 ? 0 : 1; return b1 * 6 + b2 * 2 + (E1[i] > E2[i] ? 1 : 0); };
+      const cs2 = st(m - 1); if (cs2 < 0) return done({ v: 0, t: 'الحالة الحالية غير قابلة للقياس' });
+      let u2 = 0, d2 = 0; for (let i = 60; i < m - 11; i++) { if (st(i) !== cs2) continue; if (cc[i + 10] > cc[i]) u2++; else if (cc[i + 10] < cc[i]) d2++; }
+      const N = u2 + d2; if (N < 60) return done({ v: 0, t: 'الحالة الحالية ظهرت ' + N + ' مرة فقط (المطلوب 60)' });
+      const pu = u2 / N, vv = wl(pu, N) > .55 ? 1 : wl(1 - pu, N) > .55 ? -1 : 0;
+      return done({ v: vv, t: 'الحالة الحالية ظهرت ' + N + ' مرة: بعد 10 شموع صعد السعر ' + Math.round(pu * 100) + '% وهبط ' + Math.round((1 - pu) * 100) + '%' + (vv ? '' : ' - الفرق غير حاسم إحصائياً') }); })();
+    T('التحليل الاحتمالي الإحصائي', 'التحليل الإحصائي', 3, prb.v, prb.t, false);
+
+    // 10) تحليل الارتباطات السوقية: ارتباط عوائد آخر 60 شمعة بين الزوج وأزواج مرتبطة (ctx.peers). إذا الارتباط قوي (0.4 أو أكثر بالقيمة المطلقة) وزوج مرتبط تحرك بقوة (أكثر من 1 ATR بآخر 10 شموع) بينما زوجنا متأخر عنه (أقل من نصف حركته المتوقعة)، نتوقع اللحاق باتجاه الارتباط.
+    const cor = (() => { const PE = ctx.peers; if (!PE || !PE.length) return { v: 0, t: 'يحتاج بيانات أزواج مرتبطة (جاري التحميل)' };
+      let sc3 = 0; const tx = [], m10 = (px - c[n - 10]) / a;
+      for (const pe of PE) { const pv = pe.v; if (!pv || pv.length < 40) continue;
+        const pc = pv.map(x => +x.close), pA = atrS(pv.map(x => +x.high), pv.map(x => +x.low), pc), pi = {}; pv.forEach((x, i) => { pi[x.datetime] = i; });
+        const xs = [], ys = [];
+        for (let i = n - 59; i <= n; i++) { if (i < 1) continue; const k = pi[v[i].datetime], k0 = pi[v[i - 1].datetime]; if (k === undefined || k0 === undefined) continue; xs.push(c[i] - c[i - 1]); ys.push(pc[k] - pc[k0]); }
+        if (xs.length < 30) continue;
+        const mxm = xs.reduce((s2, x) => s2 + x, 0) / xs.length, mym = ys.reduce((s2, x) => s2 + x, 0) / ys.length; let sxy = 0, sxx = 0, syy = 0;
+        for (let i = 0; i < xs.length; i++) { sxy += (xs[i] - mxm) * (ys[i] - mym); sxx += (xs[i] - mxm) * (xs[i] - mxm); syy += (ys[i] - mym) * (ys[i] - mym); }
+        const rr = sxx && syy ? sxy / Math.sqrt(sxx * syy) : 0, kl = pi[v[n].datetime], k10 = pi[v[n - 10].datetime];
+        if (kl === undefined || k10 === undefined || Math.abs(rr) < .4 || !pA[kl]) continue;
+        const pm = (pc[kl] - pc[k10]) / pA[kl];
+        if (Math.abs(pm) >= 1 && Math.abs(m10) < .5 * Math.abs(pm)) { sc3 += Math.sign(rr) * Math.sign(pm); tx.push(pe.n + ' (ارتباط ' + (rr >= 0 ? '+' : '') + rr.toFixed(2) + ') ' + (pm > 0 ? 'صاعد' : 'هابط') + ' وزوجك متأخر عنه'); } }
+      if (!tx.length) return { v: 0, t: 'لا فجوة بين الزوج والأزواج المرتبطة (أو الارتباط أقل من 0.4)' };
+      return { v: sc3 > 0 ? 1 : sc3 < 0 ? -1 : 0, t: tx.join(' | ') }; })();
+    T('تحليل الارتباطات السوقية', 'ارتباطات السوق', 3, cor.v, cor.t, false);
 
     // ===== بديلين من السعر فقط لأداتين تحتاج بيانات حجم (ما فيه حجم حقيقي للذهب والفوركس، فهي تقريبية مو حجم ولا أوردر فلو حقيقي) =====
     const dpf = Math.max(0, Math.round(-Math.log10(pr.pip)) + 1), cp = (x, lo2, hi2) => Math.max(lo2, Math.min(hi2, x));
